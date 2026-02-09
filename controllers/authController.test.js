@@ -20,6 +20,28 @@
  *   - Positive Testing: Happy path with valid data
  *   - Negative Testing: Invalid inputs and error conditions
  *
+ * Scenario Plan:
+ * #  | Category    | Technique | Scenario                        | Expected
+ * 1  | Happy       | —         | all valid fields                | 201 + user
+ * 2  | Happy       | —         | all fields with full address    | 201 + all fields saved
+ * 3  | Validation  | EP+BVA    | name: missing / empty / null    | "Name is Required" (full)
+ * 4  | Validation  | EP        | email: missing                  | "Email is Required"
+ * 5  | Validation  | EP        | password: missing               | "Password is Required"
+ * 6  | Validation  | EP        | phone: missing                  | "Phone no is Required"
+ * 7  | Validation  | EP        | address: missing                | "Address is Required"
+ * 8  | Validation  | EP        | answer: missing                 | "Answer is Required"
+ * 9  | Boundary    | BVA       | address: {} (empty object)      | 201 (truthy, passes)
+ * 10 | Duplicate   | —         | existing email                  | 200 + "Already Register"
+ * 11 | Error       | —         | findOne throws                  | 500
+ * 12 | Error       | —         | hashPassword throws             | 500
+ * 13 | Error       | —         | save throws                     | 500
+ * 14 | Side Effect | —         | valid → findOne called w/ email | findOne({email})
+ * 15 | Side Effect | —         | valid → hashPassword called     | hashPassword(raw)
+ * 16 | Side Effect | —         | valid → save called             | save() invoked
+ * 17 | Side Effect | —         | validation fail → findOne skip  | findOne NOT called
+ * 18 | Side Effect | —         | duplicate → hash skip           | hashPassword NOT called
+ * 19 | Security    | —         | response contains hashed pw     | NOT raw password
+ *
  * @see ../controllers/authController.js
  */
 
@@ -139,12 +161,16 @@ describe('registerController', () => {
   });
 
   // ═══════════════════════════════════════════════════════════
-  // VALIDATION TESTS (EQUIVALENCE PARTITIONING)
+  // VALIDATION TESTS — REQUIRED FIELDS (EP + BVA)
   // ═══════════════════════════════════════════════════════════
+  // Representative testing: name field fully tested (missing/empty/null)
+  // Other fields: one test each (missing) — same code path, same behavior
 
-  describe('Validation - Missing Required Fields (EP)', () => {
+  describe('Validation — Required Fields (EP + BVA)', () => {
+    // "name" field: FULLY TESTED representative (all falsy variants)
     test('test_registerController_missingName_returnsNameRequiredError', async () => {
       // ── ARRANGE ──────────────────────────────────
+      // EP: invalid partition (undefined/missing field)
       req = createMockReq({
         email: 'test@example.com',
         password: 'password',
@@ -164,6 +190,53 @@ describe('registerController', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
+    test('test_registerController_emptyName_returnsNameRequiredError', async () => {
+      // ── ARRANGE ──────────────────────────────────
+      // BVA: empty string (exact boundary between valid/invalid, evaluates to falsy)
+      req = createMockReq({
+        name: '',
+        email: 'test@example.com',
+        password: 'password',
+        phone: '1234567890',
+        address: { street: '123 Main' },
+        answer: 'Blue',
+      });
+      res = createMockRes();
+
+      // ── ACT ──────────────────────────────────────
+      await registerController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.send).toHaveBeenCalledWith({
+        message: 'Name is Required',
+      });
+    });
+
+    test('test_registerController_nullName_returnsNameRequiredError', async () => {
+      // ── ARRANGE ──────────────────────────────────
+      // EP: invalid partition (null is falsy, fails validation)
+      // WHY: Test explicit null vs undefined to ensure both handled
+      req = createMockReq({
+        name: null,
+        email: 'test@example.com',
+        password: 'password',
+        phone: '1234567890',
+        address: { street: '123 Main' },
+        answer: 'Blue',
+      });
+      res = createMockRes();
+
+      // ── ACT ──────────────────────────────────────
+      await registerController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.send).toHaveBeenCalledWith({
+        message: 'Name is Required',
+      });
+    });
+
+    // Remaining fields: ONE representative test each (missing/undefined)
+    // WHY: Same code path (if (!field)), same behavior, redundant to test all variants
     test('test_registerController_missingEmail_returnsEmailRequiredError', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
@@ -268,119 +341,8 @@ describe('registerController', () => {
       });
       expect(res.status).not.toHaveBeenCalled();
     });
-  });
 
-  // ═══════════════════════════════════════════════════════════
-  // BOUNDARY VALUE ANALYSIS TESTS
-  // ═══════════════════════════════════════════════════════════
-
-  describe('Boundary Value Analysis - Empty Strings', () => {
-    test('test_registerController_emptyName_returnsNameRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: '',                   // BVA: empty string (exact boundary between valid/invalid, evaluates to falsy)
-        email: 'test@example.com',
-        password: 'password',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Observable behavior: Validation error message returned
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Name is Required',
-      });
-    });
-
-    test('test_registerController_emptyEmail_returnsEmailRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: '',
-        password: 'password',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Email is Required',
-      });
-    });
-
-    test('test_registerController_emptyPassword_returnsPasswordRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: '',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Password is Required',
-      });
-    });
-
-    test('test_registerController_emptyPhone_returnsPhoneRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password',
-        phone: '',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Phone no is Required',
-      });
-    });
-
-    test('test_registerController_emptyAnswer_returnsAnswerRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: '',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Answer is Required',
-      });
-    });
-
+    // BVA: Empty object for address (distinct behavior - {} is truthy, passes validation)
     test('test_registerController_emptyObjectAddress_passesValidation', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
@@ -409,140 +371,6 @@ describe('registerController', () => {
           message: 'User Register Successfully',
         })
       );
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════
-  // NEGATIVE INPUT TESTS (NULL VALUES)
-  // ═══════════════════════════════════════════════════════════
-
-  describe('Negative Inputs - Null Values', () => {
-    test('test_registerController_nullName_returnsNameRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: null,               // EP: invalid partition (null is falsy, fails validation)
-                                  // WHY: Test explicit null vs undefined to ensure both handled
-        email: 'test@example.com',
-        password: 'password',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Observable behavior: Validation rejects null values
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Name is Required',
-      });
-    });
-
-    test('test_registerController_nullEmail_returnsEmailRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: null,
-        password: 'password',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Email is Required',
-      });
-    });
-
-    test('test_registerController_nullPassword_returnsPasswordRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: null,
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Password is Required',
-      });
-    });
-
-    test('test_registerController_nullPhone_returnsPhoneRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password',
-        phone: null,
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Phone no is Required',
-      });
-    });
-
-    test('test_registerController_nullAddress_returnsAddressRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password',
-        phone: '1234567890',
-        address: null,
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Address is Required',
-      });
-    });
-
-    test('test_registerController_nullAnswer_returnsAnswerRequiredError', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: null,
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Answer is Required',
-      });
     });
   });
 
@@ -672,6 +500,140 @@ describe('registerController', () => {
         message: 'Error in Registration',
         error: saveError,
       });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // SECURITY INVARIANTS
+  // ═══════════════════════════════════════════════════════════
+  // Verify security-critical contracts: passwords hashed, sensitive data excluded
+
+  describe('Security Invariants', () => {
+    test('test_registerController_validData_storesHashedPasswordNotRaw', async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const rawPassword = 'password123';
+      req = createMockReq({
+        name: 'John Doe',
+        email: 'test@example.com',
+        password: rawPassword,      // Raw password from user input
+        phone: '1234567890',
+        address: { street: '123 Main St' },
+        answer: 'Blue',
+      });
+      res = createMockRes();
+
+      userModel.findOne.mockResolvedValue(null);
+      hashPassword.mockResolvedValue('hashedPassword123');
+
+      // ── ACT ──────────────────────────────────────
+      await registerController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      // Security invariant: Response contains HASHED password, NOT raw password
+      // WHY: Critical security requirement - never expose or store raw passwords
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: expect.objectContaining({
+            password: 'hashedPassword123',  // Hashed version
+          }),
+        })
+      );
+      // Verify raw password is NOT in response
+      expect(res.send).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          user: expect.objectContaining({
+            password: rawPassword,  // Raw password should NOT be here
+          }),
+        })
+      );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // SIDE EFFECTS — EARLY EXIT CHAIN
+  // ═══════════════════════════════════════════════════════════
+  // Verify that downstream operations are NOT called when early exits occur
+  // Flow: validate fields → check duplicate email → hash password → save user
+
+  describe('Side Effects — Early Exit Chain', () => {
+    test('test_registerController_missingName_doesNotCallFindOne', async () => {
+      // ── ARRANGE ──────────────────────────────────
+      // Validation failure scenario (name missing)
+      req = createMockReq({
+        email: 'test@example.com',
+        password: 'password123',
+        phone: '1234567890',
+        address: { street: '123 Main' },
+        answer: 'Blue',
+      });
+      res = createMockRes();
+
+      // ── ACT ──────────────────────────────────────
+      await registerController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      // Early exit: validation fails → findOne should NOT be called
+      // WHY: Optimization + correctness - no point checking DB if validation failed
+      expect(userModel.findOne).not.toHaveBeenCalled();
+      expect(hashPassword).not.toHaveBeenCalled();
+    });
+
+    test('test_registerController_duplicateEmail_doesNotCallHashPassword', async () => {
+      // ── ARRANGE ──────────────────────────────────
+      // Duplicate email scenario
+      req = createMockReq({
+        name: 'John Doe',
+        email: 'existing@example.com',
+        password: 'password123',
+        phone: '1234567890',
+        address: { street: '123 Main' },
+        answer: 'Blue',
+      });
+      res = createMockRes();
+
+      const existingUser = {
+        _id: 'user123',
+        email: 'existing@example.com',
+      };
+      userModel.findOne.mockResolvedValue(existingUser);
+
+      // ── ACT ──────────────────────────────────────
+      await registerController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      // Early exit: duplicate found → hashPassword should NOT be called
+      // WHY: User won't be created, so no point hashing password
+      expect(hashPassword).not.toHaveBeenCalled();
+    });
+
+    test('test_registerController_hashFails_doesNotCallSave', async () => {
+      // ── ARRANGE ──────────────────────────────────
+      req = createMockReq({
+        name: 'John Doe',
+        email: 'test@example.com',
+        password: 'password123',
+        phone: '1234567890',
+        address: { street: '123 Main' },
+        answer: 'Blue',
+      });
+      res = createMockRes();
+
+      userModel.findOne.mockResolvedValue(null);
+      const hashError = new Error('Hashing failed');
+      hashPassword.mockRejectedValue(hashError);
+
+      const saveMock = jest.fn();
+      userModel.mockImplementation(() => ({
+        save: saveMock,
+      }));
+
+      // ── ACT ──────────────────────────────────────
+      await registerController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      // Early exit: hash fails → save should NOT be called
+      // WHY: Error caught before user object creation
+      expect(saveMock).not.toHaveBeenCalled();
     });
   });
 
