@@ -490,10 +490,10 @@ describe('updateProfileController', () => {
 
       await updateProfileController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.status).toHaveBeenCalledWith(401);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
-        message: 'User ID is required'
+        message: 'Unauthorized: User not authenticated'
       });
     });
 
@@ -503,10 +503,10 @@ describe('updateProfileController', () => {
 
       await updateProfileController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.status).toHaveBeenCalledWith(401);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
-        message: 'User ID is required'
+        message: 'Unauthorized: User not authenticated'
       });
     });
   });

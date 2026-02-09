@@ -169,9 +169,9 @@ export const testController = (req, res) => {
 export const updateProfileController = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
-      return res.status(404).send({
+      return res.status(401).send({
         success: false,
-        message: "User ID is required",
+        message: "Unauthorized: User not authenticated",
       });
     }
 
