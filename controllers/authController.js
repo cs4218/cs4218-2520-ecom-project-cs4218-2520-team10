@@ -220,13 +220,6 @@ export const updateProfileController = async (req, res) => {
 //orders
 export const getOrdersController = async (req, res) => {
   try {
-    if (!req.user || !req.user._id) {
-      return res.status(401).send({
-        success: false,
-        message: "Unauthorized: User not authenticated"
-      });
-    }
-
     const orders = await orderModel
       .find({ buyer: req.user._id })
       .populate("products", "-photo")
