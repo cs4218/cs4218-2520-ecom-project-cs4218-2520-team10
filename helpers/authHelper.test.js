@@ -1,0 +1,492 @@
+/**
+ * Unit Tests: authHelper
+ *
+ * Units Under Test:
+ *   1. hashPassword (authHelper.js:3-12)
+ *      - Hashes plain text passwords using bcrypt
+ *      - Uses 10 salt rounds
+ *      - Catches and logs errors, returns undefined on failure
+ *
+ *   2. comparePassword (authHelper.js:14-16)
+ *      - Compares plain text password with hashed password
+ *      - Returns boolean result from bcrypt.compare
+ *      - Does not catch errors (propagates to caller)
+ *
+ * Test Doubles:
+ *   - bcrypt.hash: Stub (returns predetermined hash or throws error)
+ *   - bcrypt.compare: Stub (returns true/false or throws error)
+ *   - console.log: Mock (verify error logging)
+ *
+ * Techniques Applied:
+ *   - Equivalence Partitioning (EP): Valid vs invalid inputs
+ *   - Boundary Value Analysis (BVA): Empty strings, very long strings
+ *   - Error Guessing: bcrypt failures, null inputs
+ *   - Positive Testing: Happy path with valid data
+ *   - Negative Testing: Invalid inputs and error conditions
+ *
+ * Scenario Plan - hashPassword:
+ * #  | Category    | Technique | Scenario                        | Expected
+ * 1  | Happy       | —         | valid password string           | hashed string
+ * 2  | Happy       | —         | password with special chars     | hashed string
+ * 3  | Boundary    | BVA       | empty string ""                 | hashed string
+ * 4  | Boundary    | BVA       | very long password (1000 chars) | hashed string
+ * 5  | Negative    | EP        | null password                   | undefined (error caught)
+ * 6  | Error       | —         | bcrypt.hash throws              | undefined (error caught)
+ * 7  | Side Effect | —         | valid → bcrypt.hash called      | bcrypt.hash(password, 10)
+ * 8  | Side Effect | —         | error → console.log called      | console.log(error)
+ * 9  | Security    | —         | same password twice             | different hashes (salt)
+ *
+ * Scenario Plan - comparePassword:
+ * #  | Category    | Technique | Scenario                        | Expected
+ * 1  | Happy       | —         | correct password vs hash        | true
+ * 2  | Happy       | —         | wrong password vs hash          | false
+ * 3  | Partition   | EP        | similar password (1 char diff)  | false
+ * 4  | Boundary    | BVA       | empty string vs empty hash      | true
+ * 5  | Negative    | EP        | invalid hash format             | error thrown
+ * 6  | Error       | —         | bcrypt.compare throws           | error propagates
+ * 7  | Side Effect | —         | valid → bcrypt.compare called   | bcrypt.compare(pwd, hash)
+ *
+ * @see ../helpers/authHelper.js
+ */
+
+import { hashPassword, comparePassword } from './authHelper.js';
+import bcrypt from 'bcrypt';
+
+// Mock dependencies
+jest.mock('bcrypt');
+
+describe('authHelper', () => {
+  // ═══════════════════════════════════════════════════════════
+  // hashPassword TESTS
+  // ═══════════════════════════════════════════════════════════
+
+  describe('hashPassword', () => {
+    let consoleLogSpy;
+
+    beforeEach(() => {
+      // Reset all mocks before each test
+      jest.clearAllMocks();
+
+      // Spy on console.log to verify error logging
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      // Restore console.log after each test
+      consoleLogSpy.mockRestore();
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // HAPPY PATH TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Happy Path', () => {
+      test('test_hashPassword_validPassword_returnsHashedString', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // EP: valid partition (non-empty string)
+        const password = 'password123';
+        const expectedHash = '$2b$10$hashedPassword123';
+        bcrypt.hash.mockResolvedValue(expectedHash);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable behavior: Returns hashed password string
+        expect(result).toBe(expectedHash);
+      });
+
+      test('test_hashPassword_passwordWithSpecialChars_returnsHashedString', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // EP: valid partition with special characters
+        // WHY: Test that special chars don't break hashing
+        const password = 'P@ssw0rd!#$%^&*()_+-=[]{}|;:,.<>?';
+        const expectedHash = '$2b$10$hashedSpecialChars';
+        bcrypt.hash.mockResolvedValue(expectedHash);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(result).toBe(expectedHash);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // BOUNDARY VALUE ANALYSIS (BVA)
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Boundary Values (BVA)', () => {
+      test('test_hashPassword_emptyString_returnsHashedString', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: empty string (minimum boundary - 0 characters)
+        // WHY: Test lower boundary of string length
+        const password = '';
+        const expectedHash = '$2b$10$hashedEmptyString';
+        bcrypt.hash.mockResolvedValue(expectedHash);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable behavior: bcrypt accepts empty strings
+        expect(result).toBe(expectedHash);
+      });
+
+      test('test_hashPassword_veryLongPassword_returnsHashedString', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: very long string (upper boundary test - 1000 chars)
+        // WHY: Test that long passwords don't break hashing
+        const password = 'a'.repeat(1000);
+        const expectedHash = '$2b$10$hashedLongPassword';
+        bcrypt.hash.mockResolvedValue(expectedHash);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(result).toBe(expectedHash);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // NEGATIVE / INVALID INPUT TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Negative / Invalid Input', () => {
+      test('test_hashPassword_nullPassword_returnsUndefined', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // EP: invalid partition (null)
+        // WHY: bcrypt.hash will throw when given null
+        const password = null;
+        const bcryptError = new Error('data must be a string');
+        bcrypt.hash.mockRejectedValue(bcryptError);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable behavior: Error is caught, undefined returned
+        // WHY: Current implementation catches errors and returns undefined
+        expect(result).toBeUndefined();
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // ERROR HANDLING TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Error Handling', () => {
+      test('test_hashPassword_bcryptThrowsError_returnsUndefined', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        const bcryptError = new Error('bcrypt internal error');
+        bcrypt.hash.mockRejectedValue(bcryptError);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable behavior: Error is caught, undefined returned
+        expect(result).toBeUndefined();
+      });
+
+      test('test_hashPassword_bcryptThrowsError_logsErrorToConsole', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        const bcryptError = new Error('bcrypt failure');
+        bcrypt.hash.mockRejectedValue(bcryptError);
+
+        // ── ACT ──────────────────────────────────────
+        await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable side effect: Error logged to console
+        // WHY: Implementation uses console.log(error) in catch block
+        expect(consoleLogSpy).toHaveBeenCalledWith(bcryptError);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // SIDE EFFECTS — INTEGRATION TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Side Effects — Integration', () => {
+      test('test_hashPassword_validPassword_callsBcryptHashWithPassword', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        const expectedHash = '$2b$10$hashedPassword';
+        bcrypt.hash.mockResolvedValue(expectedHash);
+
+        // ── ACT ──────────────────────────────────────
+        await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable side effect: bcrypt.hash called with correct arguments
+        // WHY: Verify integration with bcrypt library
+        expect(bcrypt.hash).toHaveBeenCalledWith(password, 10);
+      });
+
+      test('test_hashPassword_validPassword_callsBcryptHashOnce', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        bcrypt.hash.mockResolvedValue('$2b$10$hash');
+
+        // ── ACT ──────────────────────────────────────
+        await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable side effect: bcrypt.hash called exactly once
+        expect(bcrypt.hash).toHaveBeenCalledTimes(1);
+      });
+
+      test('test_hashPassword_errorOccurs_doesNotCallBcryptHashMultipleTimes', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        bcrypt.hash.mockRejectedValue(new Error('bcrypt error'));
+
+        // ── ACT ──────────────────────────────────────
+        await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable side effect: bcrypt.hash only attempted once, no retry
+        expect(bcrypt.hash).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // SECURITY INVARIANTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Security Invariants', () => {
+      test('test_hashPassword_samePasswordHashedTwice_producesDifferentHashes', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        // Restore real bcrypt for this test to verify actual salt randomness
+        bcrypt.hash.mockRestore();
+        const bcrypt_real = jest.requireActual('bcrypt');
+        bcrypt.hash = bcrypt_real.hash;
+
+        // ── ACT ──────────────────────────────────────
+        const hash1 = await hashPassword(password);
+        const hash2 = await hashPassword(password);
+
+        // ── ASSERT ───────────────────────────────────
+        // Security invariant: Same password produces different hashes
+        // WHY: bcrypt generates random salt each time - critical for security
+        expect(hash1).not.toBe(hash2);
+        expect(hash1).toBeDefined();
+        expect(hash2).toBeDefined();
+
+        // Both should be valid bcrypt hashes (start with $2b$10$)
+        expect(hash1).toMatch(/^\$2b\$10\$/);
+        expect(hash2).toMatch(/^\$2b\$10\$/);
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // comparePassword TESTS
+  // ═══════════════════════════════════════════════════════════
+
+  describe('comparePassword', () => {
+    beforeEach(() => {
+      // Reset all mocks before each test
+      jest.clearAllMocks();
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // HAPPY PATH TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Happy Path', () => {
+      test('test_comparePassword_correctPassword_returnsTrue', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // EP: valid partition (password matches hash)
+        const password = 'password123';
+        const hashedPassword = '$2b$10$hashedPassword123';
+        bcrypt.compare.mockResolvedValue(true);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await comparePassword(password, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable behavior: Returns true for matching password
+        expect(result).toBe(true);
+      });
+
+      test('test_comparePassword_wrongPassword_returnsFalse', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // EP: valid partition (password does not match hash)
+        const password = 'wrongPassword';
+        const hashedPassword = '$2b$10$hashedPassword123';
+        bcrypt.compare.mockResolvedValue(false);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await comparePassword(password, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable behavior: Returns false for non-matching password
+        expect(result).toBe(false);
+      });
+
+      test('test_comparePassword_similarPasswordOneDiff_returnsFalse', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // EP: invalid partition (similar but not identical)
+        // WHY: Test that even 1 character difference is detected
+        const password = 'password124';        // Last char differs
+        const hashedPassword = '$2b$10$hashOfPassword123';
+        bcrypt.compare.mockResolvedValue(false);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await comparePassword(password, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(result).toBe(false);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // BOUNDARY VALUE ANALYSIS (BVA)
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Boundary Values (BVA)', () => {
+      test('test_comparePassword_emptyStringVsEmptyHash_returnsTrue', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: empty string (minimum boundary)
+        // WHY: Test lower boundary - empty password vs its hash
+        const password = '';
+        const hashedPassword = '$2b$10$hashOfEmptyString';
+        bcrypt.compare.mockResolvedValue(true);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await comparePassword(password, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable behavior: Empty string can match its hash
+        expect(result).toBe(true);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // NEGATIVE / INVALID INPUT TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Negative / Invalid Input', () => {
+      test('test_comparePassword_invalidHashFormat_throwsError', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // EP: invalid partition (malformed hash)
+        // WHY: bcrypt.compare should reject invalid hash format
+        const password = 'password123';
+        const invalidHash = 'notAValidBcryptHash';
+        const bcryptError = new Error('Invalid bcrypt hash');
+        bcrypt.compare.mockRejectedValue(bcryptError);
+
+        // ── ACT & ASSERT ─────────────────────────────
+        // Observable behavior: Error propagates (not caught)
+        await expect(comparePassword(password, invalidHash)).rejects.toThrow('Invalid bcrypt hash');
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // ERROR HANDLING TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Error Handling', () => {
+      test('test_comparePassword_bcryptThrowsError_propagatesError', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        const hashedPassword = '$2b$10$hash';
+        const bcryptError = new Error('bcrypt comparison failed');
+        bcrypt.compare.mockRejectedValue(bcryptError);
+
+        // ── ACT & ASSERT ─────────────────────────────
+        // Observable behavior: Error propagates to caller
+        // WHY: comparePassword does NOT catch errors
+        await expect(comparePassword(password, hashedPassword)).rejects.toThrow('bcrypt comparison failed');
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // SIDE EFFECTS — INTEGRATION TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Side Effects — Integration', () => {
+      test('test_comparePassword_validInputs_callsBcryptCompareWithCorrectArgs', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        const hashedPassword = '$2b$10$hashedPassword123';
+        bcrypt.compare.mockResolvedValue(true);
+
+        // ── ACT ──────────────────────────────────────
+        await comparePassword(password, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable side effect: bcrypt.compare called with correct arguments
+        // WHY: Verify integration with bcrypt library
+        expect(bcrypt.compare).toHaveBeenCalledWith(password, hashedPassword);
+      });
+
+      test('test_comparePassword_validInputs_callsBcryptCompareOnce', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        const password = 'password123';
+        const hashedPassword = '$2b$10$hash';
+        bcrypt.compare.mockResolvedValue(true);
+
+        // ── ACT ──────────────────────────────────────
+        await comparePassword(password, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        // Observable side effect: bcrypt.compare called exactly once
+        expect(bcrypt.compare).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // SECURITY INVARIANTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Security Invariants', () => {
+      test('test_comparePassword_actualBcrypt_correctPasswordReturnsTrue', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // Use real bcrypt for end-to-end security verification
+        const bcrypt_real = jest.requireActual('bcrypt');
+
+        const password = 'securePassword123';
+        const hashedPassword = await bcrypt_real.hash(password, 10);
+
+        // Stub bcrypt.compare to use real implementation
+        bcrypt.compare.mockImplementation(bcrypt_real.compare);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await comparePassword(password, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        // Security invariant: Correct password validates against its hash
+        // WHY: End-to-end verification with real bcrypt
+        expect(result).toBe(true);
+      });
+
+      test('test_comparePassword_actualBcrypt_wrongPasswordReturnsFalse', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // Use real bcrypt for end-to-end security verification
+        const bcrypt_real = jest.requireActual('bcrypt');
+
+        const correctPassword = 'correctPassword';
+        const wrongPassword = 'wrongPassword';
+        const hashedPassword = await bcrypt_real.hash(correctPassword, 10);
+
+        // Stub bcrypt.compare to use real implementation
+        bcrypt.compare.mockImplementation(bcrypt_real.compare);
+
+        // ── ACT ──────────────────────────────────────
+        const result = await comparePassword(wrongPassword, hashedPassword);
+
+        // ── ASSERT ───────────────────────────────────
+        // Security invariant: Wrong password does NOT validate
+        // WHY: Verify bcrypt correctly rejects non-matching passwords
+        expect(result).toBe(false);
+      });
+    });
+  });
+});
