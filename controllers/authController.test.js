@@ -35,12 +35,13 @@
  * 11 | Error       | —         | findOne throws                  | 500
  * 12 | Error       | —         | hashPassword throws             | 500
  * 13 | Error       | —         | save throws                     | 500
- * 14 | Side Effect | —         | valid → findOne called w/ email | findOne({email})
- * 15 | Side Effect | —         | valid → hashPassword called     | hashPassword(raw)
- * 16 | Side Effect | —         | valid → save called             | save() invoked
- * 17 | Side Effect | —         | validation fail → findOne skip  | findOne NOT called
- * 18 | Side Effect | —         | duplicate → hash skip           | hashPassword NOT called
- * 19 | Security    | —         | response contains hashed pw     | NOT raw password
+ * 14 | Side Effect | —         | validation fail → findOne skip  | findOne NOT called
+ * 15 | Side Effect | —         | duplicate → hash skip           | hashPassword NOT called
+ * 16 | Side Effect | —         | hash fail → save skip           | save() NOT called
+ * 17 | Side Effect | —         | valid → findOne called w/ email | findOne({email})
+ * 18 | Side Effect | —         | valid → hashPassword called     | hashPassword(raw)
+ * 19 | Side Effect | —         | valid → save called             | save() invoked
+ * 20 | Security    | —         | response contains hashed pw     | NOT raw password
  *
  * @see ../controllers/authController.js
  */
@@ -550,12 +551,14 @@ describe('registerController', () => {
   });
 
   // ═══════════════════════════════════════════════════════════
-  // SIDE EFFECTS — EARLY EXIT CHAIN
+  // SIDE EFFECTS
   // ═══════════════════════════════════════════════════════════
-  // Verify that downstream operations are NOT called when early exits occur
+  // Verify side effects (calls to collaborators) — both positive and negative paths:
+  //   1. Early exit chain: downstream operations NOT called when early exits occur
+  //   2. Success path: operations ARE called with correct parameters
   // Flow: validate fields → check duplicate email → hash password → save user
 
-  describe('Side Effects — Early Exit Chain', () => {
+  describe('Side Effects', () => {
     test('test_registerController_missingName_doesNotCallFindOne', async () => {
       // ── ARRANGE ──────────────────────────────────
       // Validation failure scenario (name missing)
@@ -635,15 +638,11 @@ describe('registerController', () => {
       // WHY: Error caught before user object creation
       expect(saveMock).not.toHaveBeenCalled();
     });
-  });
 
-  // ═══════════════════════════════════════════════════════════
-  // INTEGRATION TESTS - CRITICAL SIDE EFFECTS
-  // ═══════════════════════════════════════════════════════════
-  // These tests verify important integration points with external dependencies.
-  // They focus on WHAT parameters are passed, not HOW MANY TIMES or WHEN.
+    // ────────────────────────────────────────────────────────
+    // Positive path: Verify collaborators ARE called with correct arguments
+    // ────────────────────────────────────────────────────────
 
-  describe('Integration - Critical Side Effects', () => {
     test('test_registerController_validData_callsFindOneWithCorrectEmail', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
