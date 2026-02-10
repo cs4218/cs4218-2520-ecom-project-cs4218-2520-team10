@@ -84,7 +84,7 @@ describe('authHelper', () => {
     // ═══════════════════════════════════════════════════════════
 
     describe('Happy Path', () => {
-      test('test_hashPassword_validPassword_returnsHashedString', async () => {
+      it('should return hashed string when password is valid', async () => {
         // ── ARRANGE ──────────────────────────────────
         // EP: valid partition (non-empty string)
         const password = 'password123';
@@ -99,7 +99,7 @@ describe('authHelper', () => {
         expect(result).toBe(expectedHash);
       });
 
-      test('test_hashPassword_passwordWithSpecialChars_returnsHashedString', async () => {
+      it('should return hashed string when password contains special characters', async () => {
         // ── ARRANGE ──────────────────────────────────
         // EP: valid partition with special characters
         // WHY: Test that special chars don't break hashing
@@ -119,8 +119,8 @@ describe('authHelper', () => {
     // BOUNDARY VALUE ANALYSIS (BVA)
     // ═══════════════════════════════════════════════════════════
 
-    describe('Boundary Values (BVA)', () => {
-      test('test_hashPassword_emptyString_returnsHashedString', async () => {
+    describe('Boundary Values', () => {
+      it('should return hashed string when password is empty string', async () => {
         // ── ARRANGE ──────────────────────────────────
         // BVA: empty string (minimum boundary - 0 characters)
         // WHY: Test lower boundary of string length
@@ -136,7 +136,7 @@ describe('authHelper', () => {
         expect(result).toBe(expectedHash);
       });
 
-      test('test_hashPassword_veryLongPassword_returnsHashedString', async () => {
+      it('should return hashed string when password is very long', async () => {
         // ── ARRANGE ──────────────────────────────────
         // BVA: very long string (upper boundary test - 1000 chars)
         // WHY: Test that long passwords don't break hashing
@@ -157,7 +157,7 @@ describe('authHelper', () => {
     // ═══════════════════════════════════════════════════════════
 
     describe('Negative / Invalid Input', () => {
-      test('test_hashPassword_nullPassword_returnsUndefined', async () => {
+      it('should return undefined when password is null', async () => {
         // ── ARRANGE ──────────────────────────────────
         // EP: invalid partition (null)
         // WHY: bcrypt.hash will throw when given null
@@ -180,7 +180,7 @@ describe('authHelper', () => {
     // ═══════════════════════════════════════════════════════════
 
     describe('Error Handling', () => {
-      test('test_hashPassword_bcryptThrowsError_returnsUndefined', async () => {
+      it('should return undefined when bcrypt throws error', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         const bcryptError = new Error('bcrypt internal error');
@@ -194,7 +194,7 @@ describe('authHelper', () => {
         expect(result).toBeUndefined();
       });
 
-      test('test_hashPassword_bcryptThrowsError_logsErrorToConsole', async () => {
+      it('should log error to console when bcrypt throws error', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         const bcryptError = new Error('bcrypt failure');
@@ -214,8 +214,8 @@ describe('authHelper', () => {
     // SIDE EFFECTS — INTEGRATION TESTS
     // ═══════════════════════════════════════════════════════════
 
-    describe('Side Effects — Integration', () => {
-      test('test_hashPassword_validPassword_callsBcryptHashWithPassword', async () => {
+    describe('Side Effects', () => {
+      it('should call bcrypt.hash with password and salt rounds', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         const expectedHash = '$2b$10$hashedPassword';
@@ -230,7 +230,7 @@ describe('authHelper', () => {
         expect(bcrypt.hash).toHaveBeenCalledWith(password, 10);
       });
 
-      test('test_hashPassword_validPassword_callsBcryptHashOnce', async () => {
+      it('should call bcrypt.hash exactly once', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         bcrypt.hash.mockResolvedValue('$2b$10$hash');
@@ -243,7 +243,7 @@ describe('authHelper', () => {
         expect(bcrypt.hash).toHaveBeenCalledTimes(1);
       });
 
-      test('test_hashPassword_errorOccurs_doesNotCallBcryptHashMultipleTimes', async () => {
+      it('should not call bcrypt.hash multiple times when error occurs', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         bcrypt.hash.mockRejectedValue(new Error('bcrypt error'));
@@ -262,7 +262,7 @@ describe('authHelper', () => {
     // ═══════════════════════════════════════════════════════════
 
     describe('Security Invariants', () => {
-      test('test_hashPassword_samePasswordHashedTwice_producesDifferentHashes', async () => {
+      it('should produce different hashes when same password is hashed twice', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         // Stub bcrypt to return different hashes (simulating random salt behavior)
@@ -303,7 +303,7 @@ describe('authHelper', () => {
     // ═══════════════════════════════════════════════════════════
 
     describe('Happy Path', () => {
-      test('test_comparePassword_correctPassword_returnsTrue', async () => {
+      it('should return true when password is correct', async () => {
         // ── ARRANGE ──────────────────────────────────
         // EP: valid partition (password matches hash)
         const password = 'password123';
@@ -318,7 +318,7 @@ describe('authHelper', () => {
         expect(result).toBe(true);
       });
 
-      test('test_comparePassword_wrongPassword_returnsFalse', async () => {
+      it('should return false when password is wrong', async () => {
         // ── ARRANGE ──────────────────────────────────
         // EP: valid partition (password does not match hash)
         const password = 'wrongPassword';
@@ -333,7 +333,7 @@ describe('authHelper', () => {
         expect(result).toBe(false);
       });
 
-      test('test_comparePassword_similarPasswordOneDiff_returnsFalse', async () => {
+      it('should return false when password differs by one character', async () => {
         // ── ARRANGE ──────────────────────────────────
         // EP: invalid partition (similar but not identical)
         // WHY: Test that even 1 character difference is detected
@@ -353,8 +353,8 @@ describe('authHelper', () => {
     // BOUNDARY VALUE ANALYSIS (BVA)
     // ═══════════════════════════════════════════════════════════
 
-    describe('Boundary Values (BVA)', () => {
-      test('test_comparePassword_emptyStringVsEmptyHash_returnsTrue', async () => {
+    describe('Boundary Values', () => {
+      it('should return true when comparing empty string to its hash', async () => {
         // ── ARRANGE ──────────────────────────────────
         // BVA: empty string (minimum boundary)
         // WHY: Test lower boundary - empty password vs its hash
@@ -376,7 +376,7 @@ describe('authHelper', () => {
     // ═══════════════════════════════════════════════════════════
 
     describe('Negative / Invalid Input', () => {
-      test('test_comparePassword_invalidHashFormat_throwsError', async () => {
+      it('should throw error when hash format is invalid', async () => {
         // ── ARRANGE ──────────────────────────────────
         // EP: invalid partition (malformed hash)
         // WHY: bcrypt.compare should reject invalid hash format
@@ -396,7 +396,7 @@ describe('authHelper', () => {
     // ═══════════════════════════════════════════════════════════
 
     describe('Error Handling', () => {
-      test('test_comparePassword_bcryptThrowsError_propagatesError', async () => {
+      it('should propagate error when bcrypt throws error', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         const hashedPassword = '$2b$10$hash';
@@ -414,8 +414,8 @@ describe('authHelper', () => {
     // SIDE EFFECTS — INTEGRATION TESTS
     // ═══════════════════════════════════════════════════════════
 
-    describe('Side Effects — Integration', () => {
-      test('test_comparePassword_validInputs_callsBcryptCompareWithCorrectArgs', async () => {
+    describe('Side Effects', () => {
+      it('should call bcrypt.compare with correct arguments', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         const hashedPassword = '$2b$10$hashedPassword123';
@@ -430,7 +430,7 @@ describe('authHelper', () => {
         expect(bcrypt.compare).toHaveBeenCalledWith(password, hashedPassword);
       });
 
-      test('test_comparePassword_validInputs_callsBcryptCompareOnce', async () => {
+      it('should call bcrypt.compare exactly once', async () => {
         // ── ARRANGE ──────────────────────────────────
         const password = 'password123';
         const hashedPassword = '$2b$10$hash';
