@@ -54,41 +54,42 @@ import { hashPassword } from '../helpers/authHelper.js';
 jest.mock('../models/userModel.js');
 jest.mock('../helpers/authHelper.js');
 
-describe('registerController', () => {
-  let req, res;
+describe('AuthController', () => {
+  describe('registerController', () => {
+    let req, res;
 
-  // Helper function to create mock request
-  const createMockReq = (body = {}) => ({ body });
+    // Helper function to create mock request
+    const createMockReq = (body = {}) => ({ body });
 
-  // Helper function to create mock response
-  const createMockRes = () => {
-    const res = {};
-    res.status = jest.fn().mockReturnValue(res);
-    res.send = jest.fn().mockReturnValue(res);
-    return res;
-  };
+    // Helper function to create mock response
+    const createMockRes = () => {
+      const res = {};
+      res.status = jest.fn().mockReturnValue(res);
+      res.send = jest.fn().mockReturnValue(res);
+      return res;
+    };
 
-  beforeEach(() => {
-    // Reset all mocks before each test
-    jest.clearAllMocks();
+    beforeEach(() => {
+      // Reset all mocks before each test
+      jest.clearAllMocks();
 
-    // Setup default mock implementations
-    userModel.findOne = jest.fn();
-    userModel.mockImplementation((data) => ({
-      ...data,
-      save: jest.fn().mockResolvedValue({
-        _id: 'user123',
+      // Setup default mock implementations
+      userModel.findOne = jest.fn();
+      userModel.mockImplementation((data) => ({
         ...data,
-      }),
-    }));
-  });
+        save: jest.fn().mockResolvedValue({
+          _id: 'user123',
+          ...data,
+        }),
+      }));
+    });
 
-  // ═══════════════════════════════════════════════════════════
-  // HAPPY PATH TESTS
-  // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
+    // HAPPY PATH TESTS
+    // ═══════════════════════════════════════════════════════════
 
-  describe('Happy Path', () => {
-    test('test_registerController_validData_returns201AndUser', async () => {
+    describe('Happy Path', () => {
+      it('should return 201 with user data when all fields are valid', async () => {
       // ── ARRANGE ──────────────────────────────────
       // Positive test: All fields present in valid partition
       req = createMockReq({
@@ -125,7 +126,7 @@ describe('registerController', () => {
       });
     });
 
-    test('test_registerController_allFieldsPresent_userSavedWithAllFields', async () => {
+      it('should save user with all fields when all fields are present', async () => {
       // ── ARRANGE ──────────────────────────────────
       const userData = {
         name: 'Jane Smith',
@@ -158,18 +159,18 @@ describe('registerController', () => {
           }),
         })
       );
+      });
     });
-  });
 
-  // ═══════════════════════════════════════════════════════════
-  // VALIDATION TESTS — REQUIRED FIELDS (EP + BVA)
-  // ═══════════════════════════════════════════════════════════
-  // Representative testing: name field fully tested (missing/empty/null)
-  // Other fields: one test each (missing) — same code path, same behavior
+    // ═══════════════════════════════════════════════════════════
+    // VALIDATION TESTS — REQUIRED FIELDS (EP + BVA)
+    // ═══════════════════════════════════════════════════════════
+    // Representative testing: name field fully tested (missing/empty/null)
+    // Other fields: one test each (missing) — same code path, same behavior
 
-  describe('Validation — Required Fields (EP + BVA)', () => {
-    // "name" field: FULLY TESTED representative (all falsy variants)
-    test('test_registerController_missingName_returnsNameRequiredError', async () => {
+    describe('Equivalence Partitions', () => {
+      // "name" field: FULLY TESTED representative (all falsy variants)
+      it('should return name required error when name is missing', async () => {
       // ── ARRANGE ──────────────────────────────────
       // EP: invalid partition (undefined/missing field)
       req = createMockReq({
@@ -189,9 +190,9 @@ describe('registerController', () => {
         message: 'Name is Required',
       });
       expect(res.status).not.toHaveBeenCalled();
-    });
+      });
 
-    test('test_registerController_emptyName_returnsNameRequiredError', async () => {
+      it('should return name required error when name is empty', async () => {
       // ── ARRANGE ──────────────────────────────────
       // BVA: empty string (exact boundary between valid/invalid, evaluates to falsy)
       req = createMockReq({
@@ -211,9 +212,9 @@ describe('registerController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Name is Required',
       });
-    });
+      });
 
-    test('test_registerController_nullName_returnsNameRequiredError', async () => {
+      it('should return name required error when name is null', async () => {
       // ── ARRANGE ──────────────────────────────────
       // EP: invalid partition (null is falsy, fails validation)
       // WHY: Test explicit null vs undefined to ensure both handled
@@ -234,11 +235,11 @@ describe('registerController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Name is Required',
       });
-    });
+      });
 
-    // Remaining fields: ONE representative test each (missing/undefined)
-    // WHY: Same code path (if (!field)), same behavior, redundant to test all variants
-    test('test_registerController_missingEmail_returnsEmailRequiredError', async () => {
+      // Remaining fields: ONE representative test each (missing/undefined)
+      // WHY: Same code path (if (!field)), same behavior, redundant to test all variants
+      it('should return email required error when email is missing', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -257,9 +258,9 @@ describe('registerController', () => {
         message: 'Email is Required',
       });
       expect(res.status).not.toHaveBeenCalled();
-    });
+      });
 
-    test('test_registerController_missingPassword_returnsPasswordRequiredError', async () => {
+      it('should return password required error when password is missing', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -278,9 +279,9 @@ describe('registerController', () => {
         message: 'Password is Required',
       });
       expect(res.status).not.toHaveBeenCalled();
-    });
+      });
 
-    test('test_registerController_missingPhone_returnsPhoneRequiredError', async () => {
+      it('should return phone required error when phone is missing', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -299,9 +300,9 @@ describe('registerController', () => {
         message: 'Phone no is Required',
       });
       expect(res.status).not.toHaveBeenCalled();
-    });
+      });
 
-    test('test_registerController_missingAddress_returnsAddressRequiredError', async () => {
+      it('should return address required error when address is missing', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -320,9 +321,9 @@ describe('registerController', () => {
         message: 'Address is Required',
       });
       expect(res.status).not.toHaveBeenCalled();
-    });
+      });
 
-    test('test_registerController_missingAnswer_returnsAnswerRequiredError', async () => {
+      it('should return answer required error when answer is missing', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -341,10 +342,16 @@ describe('registerController', () => {
         message: 'Answer is Required',
       });
       expect(res.status).not.toHaveBeenCalled();
+      });
     });
 
-    // BVA: Empty object for address (distinct behavior - {} is truthy, passes validation)
-    test('test_registerController_emptyObjectAddress_passesValidation', async () => {
+    // ═══════════════════════════════════════════════════════════
+    // BOUNDARY VALUE TESTS
+    // ═══════════════════════════════════════════════════════════
+
+    describe('Boundary Values', () => {
+      // BVA: Empty object for address (distinct behavior - {} is truthy, passes validation)
+      it('should pass validation when address is an empty object', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -372,15 +379,16 @@ describe('registerController', () => {
           message: 'User Register Successfully',
         })
       );
+      });
     });
-  });
 
-  // ═══════════════════════════════════════════════════════════
-  // DUPLICATE EMAIL TEST
-  // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
+    // ERROR HANDLING TESTS
+    // ═══════════════════════════════════════════════════════════
 
-  describe('Duplicate Email Check', () => {
-    test('test_registerController_existingEmail_returns200WithFailure', async () => {
+    describe('Error Handling', () => {
+      // Duplicate email check
+      it('should return 200 with failure message when email already exists', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -408,15 +416,9 @@ describe('registerController', () => {
         success: false,
         message: 'Already Register please login',
       });
-    });
-  });
+      });
 
-  // ═══════════════════════════════════════════════════════════
-  // ERROR HANDLING TESTS
-  // ═══════════════════════════════════════════════════════════
-
-  describe('Error Handling', () => {
-    test('test_registerController_findOneThrowsError_returns500', async () => {
+      it('should return 500 when database query throws error', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -441,9 +443,9 @@ describe('registerController', () => {
         message: 'Error in Registration',
         error: dbError,
       });
-    });
+      });
 
-    test('test_registerController_hashPasswordThrowsError_returns500', async () => {
+      it('should return 500 when password hashing throws error', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -469,9 +471,9 @@ describe('registerController', () => {
         message: 'Error in Registration',
         error: hashError,
       });
-    });
+      });
 
-    test('test_registerController_saveThrowsError_returns500', async () => {
+      it('should return 500 when user save operation throws error', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -501,16 +503,16 @@ describe('registerController', () => {
         message: 'Error in Registration',
         error: saveError,
       });
+      });
     });
-  });
 
-  // ═══════════════════════════════════════════════════════════
-  // SECURITY INVARIANTS
-  // ═══════════════════════════════════════════════════════════
-  // Verify security-critical contracts: passwords hashed, sensitive data excluded
+    // ═══════════════════════════════════════════════════════════
+    // SECURITY INVARIANTS
+    // ═══════════════════════════════════════════════════════════
+    // Verify security-critical contracts: passwords hashed, sensitive data excluded
 
-  describe('Security Invariants', () => {
-    test('test_registerController_validData_storesHashedPasswordNotRaw', async () => {
+    describe('Security Invariants', () => {
+      it('should store hashed password not raw password', async () => {
       // ── ARRANGE ──────────────────────────────────
       const rawPassword = 'password123';
       req = createMockReq({
@@ -547,19 +549,19 @@ describe('registerController', () => {
           }),
         })
       );
+      });
     });
-  });
 
-  // ═══════════════════════════════════════════════════════════
-  // SIDE EFFECTS
-  // ═══════════════════════════════════════════════════════════
-  // Verify side effects (calls to collaborators) — both positive and negative paths:
-  //   1. Early exit chain: downstream operations NOT called when early exits occur
-  //   2. Success path: operations ARE called with correct parameters
-  // Flow: validate fields → check duplicate email → hash password → save user
+    // ═══════════════════════════════════════════════════════════
+    // SIDE EFFECTS
+    // ═══════════════════════════════════════════════════════════
+    // Verify side effects (calls to collaborators) — both positive and negative paths:
+    //   1. Early exit chain: downstream operations NOT called when early exits occur
+    //   2. Success path: operations ARE called with correct parameters
+    // Flow: validate fields → check duplicate email → hash password → save user
 
-  describe('Side Effects', () => {
-    test('test_registerController_missingName_doesNotCallFindOne', async () => {
+    describe('Side Effects', () => {
+      it('should not call findOne when validation fails', async () => {
       // ── ARRANGE ──────────────────────────────────
       // Validation failure scenario (name missing)
       req = createMockReq({
@@ -579,9 +581,9 @@ describe('registerController', () => {
       // WHY: Optimization + correctness - no point checking DB if validation failed
       expect(userModel.findOne).not.toHaveBeenCalled();
       expect(hashPassword).not.toHaveBeenCalled();
-    });
+      });
 
-    test('test_registerController_duplicateEmail_doesNotCallHashPassword', async () => {
+      it('should not call hashPassword when duplicate email found', async () => {
       // ── ARRANGE ──────────────────────────────────
       // Duplicate email scenario
       req = createMockReq({
@@ -607,9 +609,9 @@ describe('registerController', () => {
       // Early exit: duplicate found → hashPassword should NOT be called
       // WHY: User won't be created, so no point hashing password
       expect(hashPassword).not.toHaveBeenCalled();
-    });
+      });
 
-    test('test_registerController_hashFails_doesNotCallSave', async () => {
+      it('should not call save when hashing fails', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -637,13 +639,13 @@ describe('registerController', () => {
       // Early exit: hash fails → save should NOT be called
       // WHY: Error caught before user object creation
       expect(saveMock).not.toHaveBeenCalled();
-    });
+      });
 
-    // ────────────────────────────────────────────────────────
-    // Positive path: Verify collaborators ARE called with correct arguments
-    // ────────────────────────────────────────────────────────
+      // ────────────────────────────────────────────────────────
+      // Positive path: Verify collaborators ARE called with correct arguments
+      // ────────────────────────────────────────────────────────
 
-    test('test_registerController_validData_callsFindOneWithCorrectEmail', async () => {
+      it('should call findOne with correct email', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -667,9 +669,9 @@ describe('registerController', () => {
       expect(userModel.findOne).toHaveBeenCalledWith({
         email: 'test@example.com',
       });
-    });
+      });
 
-    test('test_registerController_validData_callsHashPasswordWithRawPassword', async () => {
+      it('should call hashPassword with raw password', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -691,9 +693,9 @@ describe('registerController', () => {
       // Observable side effect: Password hashing called with raw password
       // WHY: Critical security requirement - raw password must be hashed
       expect(hashPassword).toHaveBeenCalledWith('password123');
-    });
+      });
 
-    test('test_registerController_validData_savesUserToDatabase', async () => {
+      it('should save user to database', async () => {
       // ── ARRANGE ──────────────────────────────────
       req = createMockReq({
         name: 'John Doe',
@@ -724,6 +726,7 @@ describe('registerController', () => {
       // Observable side effect: User persisted to database
       // WHY: Core requirement - successful registration must save user
       expect(saveMock).toHaveBeenCalled();
+      });
     });
   });
 });
