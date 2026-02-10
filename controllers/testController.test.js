@@ -37,44 +37,45 @@
 
 import { testController } from './authController.js';
 
-describe('testController', () => {
-  let req, res;
-  let consoleLogSpy;
+describe('AuthController', () => {
+  describe('testController', () => {
+    let req, res;
+    let consoleLogSpy;
 
-  // Helper function to create mock request (not used by controller, but required by signature)
-  const createMockReq = () => ({});
+    // Helper function to create mock request (not used by controller, but required by signature)
+    const createMockReq = () => ({});
 
-  // Helper function to create mock response with method chaining
-  const createMockRes = () => {
-    const res = {};
-    res.status = jest.fn().mockReturnValue(res);  // Returns res for chaining
-    res.send = jest.fn().mockReturnValue(res);
-    return res;
-  };
+    // Helper function to create mock response with method chaining
+    const createMockRes = () => {
+      const res = {};
+      res.status = jest.fn().mockReturnValue(res);  // Returns res for chaining
+      res.send = jest.fn().mockReturnValue(res);
+      return res;
+    };
 
-  beforeEach(() => {
-    // Reset all mocks before each test
-    jest.clearAllMocks();
+    beforeEach(() => {
+      // Reset all mocks before each test
+      jest.clearAllMocks();
 
-    // Spy on console.log to verify error logging
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      // Spy on console.log to verify error logging
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    // Setup default request and response
-    req = createMockReq();
-    res = createMockRes();
-  });
+      // Setup default request and response
+      req = createMockReq();
+      res = createMockRes();
+    });
 
-  afterEach(() => {
-    // Restore console.log after each test
-    consoleLogSpy.mockRestore();
-  });
+    afterEach(() => {
+      // Restore console.log after each test
+      consoleLogSpy.mockRestore();
+    });
 
-  // ═══════════════════════════════════════════════════════════
-  // HAPPY PATH TESTS
-  // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
+    // HAPPY PATH TESTS
+    // ═══════════════════════════════════════════════════════════
 
-  describe('Happy Path', () => {
-    it('should return 200 with a success message', () => {
+      describe('Happy Path', () => {
+        it('should return 200 with a success message', () => {
       // ── ARRANGE ──────────────────────────────────
       // Positive test: Normal execution with valid Express objects
       // EP: valid partition (res.status and res.send work normally)
@@ -93,7 +94,7 @@ describe('testController', () => {
       });
     });
 
-    it('should support method chaining', () => {
+        it('should support method chaining', () => {
       // ── ARRANGE ──────────────────────────────────
       // Verify Express method chaining pattern: res.status(200).send(...)
       // WHY: res.status must return res to enable chaining
@@ -111,7 +112,7 @@ describe('testController', () => {
       expect(res.send).toHaveBeenCalledTimes(1);
     });
 
-    it('should work correctly with any req object', () => {
+        it('should work correctly with any req object', () => {
       // ── ARRANGE ──────────────────────────────────
       // Integration test: req is not used by the controller
       // WHY: Verify controller doesn't depend on req properties
@@ -130,15 +131,15 @@ describe('testController', () => {
         message: 'Protected Routes',
       });
     });
-  });
+    });
 
-  // ═══════════════════════════════════════════════════════════
-  // CONTRACT TESTS — RESPONSE STRUCTURE
-  // ═══════════════════════════════════════════════════════════
-  // Verify the exact shape of response objects (API contract)
+        // ═══════════════════════════════════════════════════════════
+        // CONTRACT TESTS — RESPONSE STRUCTURE
+        // ═══════════════════════════════════════════════════════════
+        // Verify the exact shape of response objects (API contract)
 
-  describe('Response Contract', () => {
-    it('should have exact structure in success response', () => {
+      describe('Response Contract', () => {
+        it('should have exact structure in success response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Contract test: Verify exact response shape for success
       // WHY: Clients depend on this structure — breaking changes must be detected
@@ -159,7 +160,7 @@ describe('testController', () => {
       expect(Object.keys(sentResponse)).toEqual(['success', 'message']);
     });
 
-    it('should have correct types in success response', () => {
+        it('should have correct types in success response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Type contract: Verify field types match API spec
       req = createMockReq();
@@ -174,14 +175,14 @@ describe('testController', () => {
       expect(typeof sentResponse.message).toBe('string');
       expect(sentResponse.success).toBe(true);  // Must be true for success
     });
-  });
+    });
 
-  // ═══════════════════════════════════════════════════════════
-  // ERROR HANDLING TESTS
-  // ═══════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
+        // ERROR HANDLING TESTS
+        // ═══════════════════════════════════════════════════════════
 
-  describe('Error Handling', () => {
-    it('should return 500 with error when res.status throws', () => {
+      describe('Error Handling', () => {
+        it('should return 500 with error when res.status throws', () => {
       // ── ARRANGE ──────────────────────────────────
       // Error scenario: res.status() throws (e.g., res object corrupted)
       // EP: invalid partition (res.status throws exception)
@@ -210,7 +211,7 @@ describe('testController', () => {
       });
     });
 
-    it('should return 500 with error when res.send throws', () => {
+        it('should return 500 with error when res.send throws', () => {
       // ── ARRANGE ──────────────────────────────────
       // Error scenario: res.send() throws in try block
       req = createMockReq();
@@ -239,7 +240,7 @@ describe('testController', () => {
       expect(res.send).toHaveBeenCalledTimes(2);  // Once in try (throws), once in catch
     });
 
-    it('should execute catch block when both status and send throw', () => {
+        it('should execute catch block when both status and send throw', () => {
       // ── ARRANGE ──────────────────────────────────
       // Extreme error scenario: Multiple failures
       // WHY: Ensure catch block can handle cascade failures
@@ -271,7 +272,7 @@ describe('testController', () => {
       );
     });
 
-    it('should have exact structure in error response', () => {
+        it('should have exact structure in error response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Contract test: Verify exact error response shape
       // WHY: Error responses must follow consistent structure
@@ -297,15 +298,15 @@ describe('testController', () => {
       expect(Object.keys(sentResponse)).toEqual(['success', 'message', 'error']);
       expect(sentResponse.success).toBe(false);  // Must be false for errors
     });
-  });
+    });
 
-  // ═══════════════════════════════════════════════════════════
-  // SIDE EFFECTS — CONSOLE LOGGING
-  // ═══════════════════════════════════════════════════════════
-  // Verify console.log behavior in success vs. error paths
+        // ═══════════════════════════════════════════════════════════
+        // SIDE EFFECTS — CONSOLE LOGGING
+        // ═══════════════════════════════════════════════════════════
+        // Verify console.log behavior in success vs. error paths
 
-  describe('Side Effects', () => {
-    it('should not log to console on success path', () => {
+      describe('Side Effects', () => {
+        it('should not log to console on success path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Side effect test: console.log should NOT be called on success
       // WHY: console.log only called in catch block (error path)
@@ -320,7 +321,7 @@ describe('testController', () => {
       expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    it('should log error to console on error path', () => {
+        it('should log error to console on error path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Side effect test: console.log MUST be called with error
       req = createMockReq();
@@ -339,15 +340,15 @@ describe('testController', () => {
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith(thrownError);
     });
-  });
+    });
 
-  // ═══════════════════════════════════════════════════════════
-  // INVARIANTS — CALL ORDER AND BEHAVIOR
-  // ═══════════════════════════════════════════════════════════
-  // Verify critical execution order and invariant properties
+        // ═══════════════════════════════════════════════════════════
+        // INVARIANTS — CALL ORDER AND BEHAVIOR
+        // ═══════════════════════════════════════════════════════════
+        // Verify critical execution order and invariant properties
 
-  describe('Invariants', () => {
-    it('should call status before send on success path', () => {
+      describe('Invariants', () => {
+        it('should call status before send on success path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Invariant: res.status() MUST be called before res.send()
       // WHY: HTTP status must be set before sending response body
@@ -372,7 +373,7 @@ describe('testController', () => {
       expect(callOrder).toEqual(['status(200)', 'send()']);
     });
 
-    it('should call status before send on error path', () => {
+        it('should call status before send on error path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Invariant: Even in error path, status must precede send
       req = createMockReq();
@@ -407,7 +408,7 @@ describe('testController', () => {
       expect(res.status).toHaveBeenCalledTimes(2);  // Once in try (fails), once in catch
     });
 
-    it('should call res methods exactly once', () => {
+        it('should call res methods exactly once', () => {
       // ── ARRANGE ──────────────────────────────────
       // Invariant: Each method called exactly once (no duplicate sends)
       // WHY: Sending response multiple times causes Express errors
@@ -421,15 +422,15 @@ describe('testController', () => {
       expect(res.status).toHaveBeenCalledTimes(1);
       expect(res.send).toHaveBeenCalledTimes(1);
     });
-  });
+    });
 
-  // ═══════════════════════════════════════════════════════════
-  // SECURITY INVARIANTS
-  // ═══════════════════════════════════════════════════════════
-  // Verify no sensitive data exposure
+        // ═══════════════════════════════════════════════════════════
+        // SECURITY INVARIANTS
+        // ═══════════════════════════════════════════════════════════
+        // Verify no sensitive data exposure
 
-  describe('Security Invariants', () => {
-    it('should contain no sensitive data in response', () => {
+      describe('Security Invariants', () => {
+        it('should contain no sensitive data in response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Security invariant: Response must not expose sensitive data
       // WHY: Even simple endpoints could leak info in error messages
@@ -451,7 +452,7 @@ describe('testController', () => {
       expect(responseString).not.toMatch(/mongodb/i);
     });
 
-    it('should sanitize error response', () => {
+        it('should sanitize error response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Security: Error messages should not expose internal details
       req = createMockReq();
@@ -472,6 +473,7 @@ describe('testController', () => {
       expect(sentResponse.message).not.toContain('mongodb://');
       // Note: The error object itself is included (sentResponse.error)
       // In production, this might need sanitization too
+    });
     });
   });
 });
