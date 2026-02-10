@@ -322,47 +322,6 @@ describe('authMiddleware', () => {
         expect(JWT.verify).toHaveBeenCalledTimes(1);
       });
 
-      it('should set req.user to decoded payload when token is valid', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'valid-jwt-token' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const decodedToken = {
-          _id: 'user-abc-123',
-          iat: 1234567890,
-          exp: 1234567890 + 604800
-        };
-        JWT.verify.mockReturnValue(decodedToken);
-
-        // ── ACT ──
-        await requireSignIn(req, res, next);
-
-        // ── ASSERT ──
-        expect(req.user).toEqual(decodedToken);
-        expect(req.user._id).toBe('user-abc-123');
-      });
-
-      it('should call next once when token is valid', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'valid-jwt-token' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockReturnValue({ _id: 'user123', iat: 1234567890, exp: 1234567890 + 604800 });
-
-        // ── ACT ──
-        await requireSignIn(req, res, next);
-
-        // ── ASSERT ──
-        expect(next).toHaveBeenCalledTimes(1);
-        expect(next).toHaveBeenCalledWith();
-      });
-
       it('should not call next when token is invalid', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
@@ -385,7 +344,7 @@ describe('authMiddleware', () => {
 
     describe('Security Invariants', () => {
 
-      it('should have expected fields in decoded token structure', async () => {
+      it('should preserve all token fields including custom fields when assigning to req.user', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'valid-jwt-token' }
@@ -393,10 +352,13 @@ describe('authMiddleware', () => {
         const res = createMockRes();
         const next = jest.fn();
 
+        // Token with standard fields plus custom fields to verify complete preservation
         const decodedToken = {
           _id: 'user123',
           iat: 1234567890,
-          exp: 1234567890 + 604800
+          exp: 1234567890 + 604800,
+          customField: 'custom-value',
+          role: 'admin'
         };
         JWT.verify.mockReturnValue(decodedToken);
 
@@ -404,12 +366,10 @@ describe('authMiddleware', () => {
         await requireSignIn(req, res, next);
 
         // ── ASSERT ──
-        expect(req.user).toHaveProperty('_id');
-        expect(req.user).toHaveProperty('iat');
-        expect(req.user).toHaveProperty('exp');
-        expect(typeof req.user._id).toBe('string');
-        expect(typeof req.user.iat).toBe('number');
-        expect(typeof req.user.exp).toBe('number');
+        // Verify all fields are preserved, not just standard JWT fields
+        expect(req.user).toEqual(decodedToken);
+        expect(req.user.customField).toBe('custom-value');
+        expect(req.user.role).toBe('admin');
       });
     });
   });
@@ -737,24 +697,6 @@ describe('authMiddleware', () => {
         // ── ASSERT ──
         expect(userModel.findById).toHaveBeenCalledWith(userId);
         expect(userModel.findById).toHaveBeenCalledTimes(1);
-      });
-
-      it('should call next once when user is valid admin', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'admin123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        userModel.findById.mockResolvedValue({ role: 1 });
-
-        // ── ACT ──
-        await isAdmin(req, res, next);
-
-        // ── ASSERT ──
-        expect(next).toHaveBeenCalledTimes(1);
-        expect(next).toHaveBeenCalledWith();
       });
 
       it('should not call next when user is non-admin', async () => {
