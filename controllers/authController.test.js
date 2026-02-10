@@ -36,464 +36,466 @@ import { hashPassword } from '../helpers/authHelper.js';
 jest.mock('../models/userModel.js');
 jest.mock('../helpers/authHelper.js');
 
-describe('forgotPasswordController', () => {
-  let req;
-  let res;
-  let mockUser;
+describe('AuthController', () => {
+  describe('forgotPasswordController', () => {
+    let req;
+    let res;
+    let mockUser;
 
-  beforeEach(() => {
-    // Setup mock user object
-    mockUser = {
-      _id: '507f1f77bcf86cd799439011',
-      name: 'Test User',
-      email: 'test@example.com',
-      phone: '1234567890',
-      address: { street: '123 Test St', city: 'Test City' },
-      role: 0,
-      password: '$2b$10$oldHashedPassword',
-      answer: 'test security answer',
-    };
-
-    // Setup request and response mocks
-    req = {
-      body: {}
-    };
-
-    res = {
-      status: jest.fn().mockReturnThis(),
-      send: jest.fn().mockReturnThis(),
-    };
-
-    // Reset all mocks
-    jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  // ============================================================================
-  // HAPPY PATH (EP: Valid Partition)
-  // ============================================================================
-
-  describe('Happy Path', () => {
-    test('test_forgotPasswordController_validCredentials_returns200Success', async () => {
-      // Arrange
-      req.body = {
+    beforeEach(() => {
+      // Setup mock user object
+      mockUser = {
+        _id: '507f1f77bcf86cd799439011',
+        name: 'Test User',
         email: 'test@example.com',
+        phone: '1234567890',
+        address: { street: '123 Test St', city: 'Test City' },
+        role: 0,
+        password: '$2b$10$oldHashedPassword',
         answer: 'test security answer',
-        newPassword: 'newPassword123'
       };
 
-      userModel.findOne.mockResolvedValue(mockUser);
-      hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-      userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        message: 'Password Reset Successfully'
-      });
-    });
-  });
-
-  // ============================================================================
-  // INPUT VALIDATION (EP: Invalid Partition + BVA)
-  // ============================================================================
-
-  describe('Input Validation', () => {
-    test('test_forgotPasswordController_missingEmail_returns400', async () => {
-      // Arrange
-      req.body = {
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
+      // Setup request and response mocks
+      req = {
+        body: {}
       };
 
-      // Act
-      await forgotPasswordController(req, res);
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn().mockReturnThis(),
+      };
 
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Email is required'
-      });
+      // Reset all mocks
+      jest.clearAllMocks();
     });
 
-    test('test_forgotPasswordController_missingAnswer_returns400', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        newPassword: 'newPassword123'
-      };
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
 
-      // Act
-      await forgotPasswordController(req, res);
+    // ============================================================================
+    // HAPPY PATH (EP: Valid Partition)
+    // ============================================================================
 
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Answer is required'
+    describe('Happy Path', () => {
+      it('should return 200 with success message', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(mockUser);
+        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
+        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.send).toHaveBeenCalledWith({
+          success: true,
+          message: 'Password Reset Successfully'
+        });
       });
     });
 
-    test('test_forgotPasswordController_missingNewPassword_returns400', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'test security answer'
-      };
+    // ============================================================================
+    // INPUT VALIDATION (EP: Invalid Partition + BVA)
+    // ============================================================================
 
-      // Act
-      await forgotPasswordController(req, res);
+    describe('Boundary Values', () => {
+      it('should return 400 when email is missing', async () => {
+        // Arrange
+        req.body = {
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
 
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'New Password is required'
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({
+          message: 'Email is required'
+        });
+      });
+
+      it('should return 400 when answer is missing', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          newPassword: 'newPassword123'
+        };
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({
+          message: 'Answer is required'
+        });
+      });
+
+      it('should return 400 when new password is missing', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer'
+        };
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({
+          message: 'New Password is required'
+        });
+      });
+
+      it('should return 400 when all fields are missing', async () => {
+        // Arrange
+        req.body = {};
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({
+          message: 'Email is required'
+        });
+      });
+
+      it('should return 400 when email is empty', async () => {
+        // Arrange - BVA: empty string
+        req.body = {
+          email: '',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({
+          message: 'Email is required'
+        });
+      });
+
+      it('should return 400 when email is null', async () => {
+        // Arrange - BVA: null value
+        req.body = {
+          email: null,
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({
+          message: 'Email is required'
+        });
+      });
+
+      it('should return 404 when user is not found', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'wrong answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(null);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Wrong Email Or Answer'
+        });
       });
     });
 
-    test('test_forgotPasswordController_allFieldsMissing_returns400', async () => {
-      // Arrange
-      req.body = {};
+    // ============================================================================
+    // ERROR HANDLING (Error Guessing: Dependency Failures)
+    // ============================================================================
 
-      // Act
-      await forgotPasswordController(req, res);
+    describe('Error Handling', () => {
+      it('should return 500 when database query fails', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
 
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Email is required'
+        const dbError = new Error('Database connection failed');
+        userModel.findOne.mockRejectedValue(dbError);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Something went wrong',
+          error: dbError
+        });
+      });
+
+      it('should return 500 when password hashing fails', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(mockUser);
+        const hashError = new Error('Hashing failed');
+        hashPassword.mockRejectedValue(hashError);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Something went wrong',
+          error: hashError
+        });
+      });
+
+      it('should return 500 when database update fails', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(mockUser);
+        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
+        const updateError = new Error('Update failed');
+        userModel.findByIdAndUpdate.mockRejectedValue(updateError);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Something went wrong',
+          error: updateError
+        });
       });
     });
 
-    test('test_forgotPasswordController_emptyEmail_returns400', async () => {
-      // Arrange - BVA: empty string
-      req.body = {
-        email: '',
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
+    // ============================================================================
+    // SIDE EFFECTS (Communication-Based Testing)
+    // ============================================================================
 
-      // Act
-      await forgotPasswordController(req, res);
+    describe('Side Effects', () => {
+      it('should call findOne with email and answer when input is valid', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
 
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Email is required'
+        userModel.findOne.mockResolvedValue(mockUser);
+        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
+        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(userModel.findOne).toHaveBeenCalledWith({
+          email: 'test@example.com',
+          answer: 'test security answer'
+        });
+      });
+
+      it('should call hashPassword with new password when input is valid', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(mockUser);
+        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
+        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(hashPassword).toHaveBeenCalledWith('newPassword123');
+      });
+
+      it('should call findByIdAndUpdate with hashed password on success', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(mockUser);
+        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
+        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
+          mockUser._id,
+          { password: '$2b$10$newHashedPassword' }
+        );
+      });
+
+      it('should not call findOne when email is missing', async () => {
+        // Arrange
+        req.body = {
+          answer: 'test security answer',
+          newPassword: 'newPassword123'
+        };
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(userModel.findOne).not.toHaveBeenCalled();
+      });
+
+      it('should not call hashPassword when user is not found', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'wrong answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(null);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(hashPassword).not.toHaveBeenCalled();
+      });
+
+      it('should not call findByIdAndUpdate when user is not found', async () => {
+        // Arrange
+        req.body = {
+          email: 'test@example.com',
+          answer: 'wrong answer',
+          newPassword: 'newPassword123'
+        };
+
+        userModel.findOne.mockResolvedValue(null);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
       });
     });
 
-    test('test_forgotPasswordController_nullEmail_returns400', async () => {
-      // Arrange - BVA: null value
-      req.body = {
-        email: null,
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
+    // ============================================================================
+    // SECURITY INVARIANTS
+    // ============================================================================
 
-      // Act
-      await forgotPasswordController(req, res);
+    describe('Security Invariants', () => {
+      /**
+       * SECURITY VULNERABILITY DOCUMENTATION:
+       *
+       * The following tests document a user enumeration vulnerability in the current implementation.
+       *
+       * Issue: The error message "Wrong Email Or Answer" is returned when findOne({email, answer})
+       * returns null. This could mean either:
+       * 1. Email doesn't exist in the system
+       * 2. Email exists but answer is wrong
+       *
+       * Current behavior: The compound query (email AND answer) returns the same error message
+       * for both scenarios, which might seem secure. However, timing attacks or database-level
+       * behavior could still leak information about which emails exist in the system.
+       *
+       * Recommended improvement:
+       * - Check if email exists first (separate query)
+       * - If email doesn't exist, return generic error
+       * - If email exists but answer is wrong, return the SAME generic error
+       * - Use constant-time comparison where possible
+       * - Add rate limiting to prevent brute force attacks
+       *
+       * Example improved flow:
+       * 1. const user = await userModel.findOne({ email });
+       * 2. if (!user || user.answer !== answer) {
+       *      return res.status(404).send({ message: "Invalid credentials" });
+       *    }
+       */
 
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.send).toHaveBeenCalledWith({
-        message: 'Email is required'
+      it('should return 404 with generic message when email does not exist', async () => {
+        // Arrange
+        req.body = {
+          email: 'nonexistent@example.com',
+          answer: 'any answer',
+          newPassword: 'newPassword123'
+        };
+        userModel.findOne.mockResolvedValue(null);
+
+        // Act
+        await forgotPasswordController(req, res);
+
+        // Assert
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Wrong Email Or Answer'
+        });
       });
-    });
 
-    test('test_forgotPasswordController_userNotFound_returns404', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'wrong answer',
-        newPassword: 'newPassword123'
-      };
+      it('should return same message for wrong answer as wrong email', async () => {
+        // Arrange - Note: Current implementation doesn't distinguish wrong answer
+        req.body = {
+          email: 'test@example.com',
+          answer: 'wrong answer',
+          newPassword: 'newPassword123'
+        };
+        userModel.findOne.mockResolvedValue(null);
 
-      userModel.findOne.mockResolvedValue(null);
+        // Act
+        await forgotPasswordController(req, res);
 
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Wrong Email Or Answer'
-      });
-    });
-  });
-
-  // ============================================================================
-  // ERROR HANDLING (Error Guessing: Dependency Failures)
-  // ============================================================================
-
-  describe('Error Handling', () => {
-    test('test_forgotPasswordController_findOneThrowsError_returns500', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
-
-      const dbError = new Error('Database connection failed');
-      userModel.findOne.mockRejectedValue(dbError);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Something went wrong',
-        error: dbError
-      });
-    });
-
-    test('test_forgotPasswordController_hashPasswordThrowsError_returns500', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
-
-      userModel.findOne.mockResolvedValue(mockUser);
-      const hashError = new Error('Hashing failed');
-      hashPassword.mockRejectedValue(hashError);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Something went wrong',
-        error: hashError
-      });
-    });
-
-    test('test_forgotPasswordController_findByIdAndUpdateThrowsError_returns500', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
-
-      userModel.findOne.mockResolvedValue(mockUser);
-      hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-      const updateError = new Error('Update failed');
-      userModel.findByIdAndUpdate.mockRejectedValue(updateError);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Something went wrong',
-        error: updateError
-      });
-    });
-  });
-
-  // ============================================================================
-  // SIDE EFFECTS (Communication-Based Testing)
-  // ============================================================================
-
-  describe('Side Effects', () => {
-    test('test_forgotPasswordController_validInput_callsFindOneWithEmailAndAnswer', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
-
-      userModel.findOne.mockResolvedValue(mockUser);
-      hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-      userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(userModel.findOne).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        answer: 'test security answer'
-      });
-    });
-
-    test('test_forgotPasswordController_validInput_callsHashPasswordWithNewPassword', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
-
-      userModel.findOne.mockResolvedValue(mockUser);
-      hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-      userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(hashPassword).toHaveBeenCalledWith('newPassword123');
-    });
-
-    test('test_forgotPasswordController_success_callsFindByIdAndUpdateWithHashedPassword', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
-
-      userModel.findOne.mockResolvedValue(mockUser);
-      hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-      userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        mockUser._id,
-        { password: '$2b$10$newHashedPassword' }
-      );
-    });
-
-    test('test_forgotPasswordController_missingEmail_doesNotCallFindOne', async () => {
-      // Arrange
-      req.body = {
-        answer: 'test security answer',
-        newPassword: 'newPassword123'
-      };
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(userModel.findOne).not.toHaveBeenCalled();
-    });
-
-    test('test_forgotPasswordController_userNotFound_doesNotCallHashPassword', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'wrong answer',
-        newPassword: 'newPassword123'
-      };
-
-      userModel.findOne.mockResolvedValue(null);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(hashPassword).not.toHaveBeenCalled();
-    });
-
-    test('test_forgotPasswordController_userNotFound_doesNotCallFindByIdAndUpdate', async () => {
-      // Arrange
-      req.body = {
-        email: 'test@example.com',
-        answer: 'wrong answer',
-        newPassword: 'newPassword123'
-      };
-
-      userModel.findOne.mockResolvedValue(null);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
-    });
-  });
-
-  // ============================================================================
-  // SECURITY INVARIANTS
-  // ============================================================================
-
-  describe('Security Invariants', () => {
-    /**
-     * SECURITY VULNERABILITY DOCUMENTATION:
-     *
-     * The following tests document a user enumeration vulnerability in the current implementation.
-     *
-     * Issue: The error message "Wrong Email Or Answer" is returned when findOne({email, answer})
-     * returns null. This could mean either:
-     * 1. Email doesn't exist in the system
-     * 2. Email exists but answer is wrong
-     *
-     * Current behavior: The compound query (email AND answer) returns the same error message
-     * for both scenarios, which might seem secure. However, timing attacks or database-level
-     * behavior could still leak information about which emails exist in the system.
-     *
-     * Recommended improvement:
-     * - Check if email exists first (separate query)
-     * - If email doesn't exist, return generic error
-     * - If email exists but answer is wrong, return the SAME generic error
-     * - Use constant-time comparison where possible
-     * - Add rate limiting to prevent brute force attacks
-     *
-     * Example improved flow:
-     * 1. const user = await userModel.findOne({ email });
-     * 2. if (!user || user.answer !== answer) {
-     *      return res.status(404).send({ message: "Invalid credentials" });
-     *    }
-     */
-
-    test('test_forgotPasswordController_nonexistentEmail_returns404WithGenericMessage', async () => {
-      // Arrange
-      req.body = {
-        email: 'nonexistent@example.com',
-        answer: 'any answer',
-        newPassword: 'newPassword123'
-      };
-      userModel.findOne.mockResolvedValue(null);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Wrong Email Or Answer'
-      });
-    });
-
-    test('test_forgotPasswordController_wrongAnswer_returnsSameMessageAsWrongEmail', async () => {
-      // Arrange - Note: Current implementation doesn't distinguish wrong answer
-      req.body = {
-        email: 'test@example.com',
-        answer: 'wrong answer',
-        newPassword: 'newPassword123'
-      };
-      userModel.findOne.mockResolvedValue(null);
-
-      // Act
-      await forgotPasswordController(req, res);
-
-      // Assert - Same generic message prevents user enumeration
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Wrong Email Or Answer'
+        // Assert - Same generic message prevents user enumeration
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: 'Wrong Email Or Answer'
+        });
       });
     });
   });
