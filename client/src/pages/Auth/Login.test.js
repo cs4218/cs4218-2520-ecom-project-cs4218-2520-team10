@@ -42,6 +42,10 @@ window.matchMedia = window.matchMedia || function() {
 describe('Login Component', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        // Mock axios.get for useCategory hook
+        axios.get.mockResolvedValue({
+            data: { success: true, category: [] }
+        });
     });
 
     it('renders login form', () => {
