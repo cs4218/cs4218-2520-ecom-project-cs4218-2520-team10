@@ -74,7 +74,7 @@ describe('testController', () => {
   // ═══════════════════════════════════════════════════════════
 
   describe('Happy Path', () => {
-    test('test_testController_validReqRes_returns200WithSuccessMessage', () => {
+    it('should return 200 with a success message', () => {
       // ── ARRANGE ──────────────────────────────────
       // Positive test: Normal execution with valid Express objects
       // EP: valid partition (res.status and res.send work normally)
@@ -93,7 +93,7 @@ describe('testController', () => {
       });
     });
 
-    test('test_testController_validReqRes_supportsMethodChaining', () => {
+    it('should support method chaining', () => {
       // ── ARRANGE ──────────────────────────────────
       // Verify Express method chaining pattern: res.status(200).send(...)
       // WHY: res.status must return res to enable chaining
@@ -111,7 +111,7 @@ describe('testController', () => {
       expect(res.send).toHaveBeenCalledTimes(1);
     });
 
-    test('test_testController_anyReqObject_worksCorrectly', () => {
+    it('should work correctly with any req object', () => {
       // ── ARRANGE ──────────────────────────────────
       // Integration test: req is not used by the controller
       // WHY: Verify controller doesn't depend on req properties
@@ -138,7 +138,7 @@ describe('testController', () => {
   // Verify the exact shape of response objects (API contract)
 
   describe('Response Contract', () => {
-    test('test_testController_successResponse_hasExactStructure', () => {
+    it('should have exact structure in success response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Contract test: Verify exact response shape for success
       // WHY: Clients depend on this structure — breaking changes must be detected
@@ -159,7 +159,7 @@ describe('testController', () => {
       expect(Object.keys(sentResponse)).toEqual(['success', 'message']);
     });
 
-    test('test_testController_successResponse_hasCorrectTypes', () => {
+    it('should have correct types in success response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Type contract: Verify field types match API spec
       req = createMockReq();
@@ -181,7 +181,7 @@ describe('testController', () => {
   // ═══════════════════════════════════════════════════════════
 
   describe('Error Handling', () => {
-    test('test_testController_resStatusThrows_returns500WithError', () => {
+    it('should return 500 with error when res.status throws', () => {
       // ── ARRANGE ──────────────────────────────────
       // Error scenario: res.status() throws (e.g., res object corrupted)
       // EP: invalid partition (res.status throws exception)
@@ -210,7 +210,7 @@ describe('testController', () => {
       });
     });
 
-    test('test_testController_resSendThrows_returns500WithError', () => {
+    it('should return 500 with error when res.send throws', () => {
       // ── ARRANGE ──────────────────────────────────
       // Error scenario: res.send() throws in try block
       req = createMockReq();
@@ -239,7 +239,7 @@ describe('testController', () => {
       expect(res.send).toHaveBeenCalledTimes(2);  // Once in try (throws), once in catch
     });
 
-    test('test_testController_bothStatusAndSendThrow_catchBlockExecutes', () => {
+    it('should execute catch block when both status and send throw', () => {
       // ── ARRANGE ──────────────────────────────────
       // Extreme error scenario: Multiple failures
       // WHY: Ensure catch block can handle cascade failures
@@ -271,7 +271,7 @@ describe('testController', () => {
       );
     });
 
-    test('test_testController_errorResponse_hasExactStructure', () => {
+    it('should have exact structure in error response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Contract test: Verify exact error response shape
       // WHY: Error responses must follow consistent structure
@@ -304,8 +304,8 @@ describe('testController', () => {
   // ═══════════════════════════════════════════════════════════
   // Verify console.log behavior in success vs. error paths
 
-  describe('Side Effects — Console Logging', () => {
-    test('test_testController_successPath_doesNotLogToConsole', () => {
+  describe('Side Effects', () => {
+    it('should not log to console on success path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Side effect test: console.log should NOT be called on success
       // WHY: console.log only called in catch block (error path)
@@ -320,7 +320,7 @@ describe('testController', () => {
       expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
-    test('test_testController_errorPath_logsErrorToConsole', () => {
+    it('should log error to console on error path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Side effect test: console.log MUST be called with error
       req = createMockReq();
@@ -347,7 +347,7 @@ describe('testController', () => {
   // Verify critical execution order and invariant properties
 
   describe('Invariants', () => {
-    test('test_testController_successPath_callsStatusBeforeSend', () => {
+    it('should call status before send on success path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Invariant: res.status() MUST be called before res.send()
       // WHY: HTTP status must be set before sending response body
@@ -372,7 +372,7 @@ describe('testController', () => {
       expect(callOrder).toEqual(['status(200)', 'send()']);
     });
 
-    test('test_testController_errorPath_callsStatusBeforeSend', () => {
+    it('should call status before send on error path', () => {
       // ── ARRANGE ──────────────────────────────────
       // Invariant: Even in error path, status must precede send
       req = createMockReq();
@@ -407,7 +407,7 @@ describe('testController', () => {
       expect(res.status).toHaveBeenCalledTimes(2);  // Once in try (fails), once in catch
     });
 
-    test('test_testController_alwaysCallsResMethodsExactlyOnce', () => {
+    it('should call res methods exactly once', () => {
       // ── ARRANGE ──────────────────────────────────
       // Invariant: Each method called exactly once (no duplicate sends)
       // WHY: Sending response multiple times causes Express errors
@@ -429,7 +429,7 @@ describe('testController', () => {
   // Verify no sensitive data exposure
 
   describe('Security Invariants', () => {
-    test('test_testController_responseContainsNoSensitiveData', () => {
+    it('should contain no sensitive data in response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Security invariant: Response must not expose sensitive data
       // WHY: Even simple endpoints could leak info in error messages
@@ -451,7 +451,7 @@ describe('testController', () => {
       expect(responseString).not.toMatch(/mongodb/i);
     });
 
-    test('test_testController_errorResponseSanitized', () => {
+    it('should sanitize error response', () => {
       // ── ARRANGE ──────────────────────────────────
       // Security: Error messages should not expose internal details
       req = createMockReq();
