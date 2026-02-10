@@ -9,7 +9,7 @@ export const registerController = async (req, res) => {
     const { name, email, password, phone, address, answer } = req.body;
     //validations
     if (!name) {
-      return res.send({ error: "Name is Required" });
+      return res.send({ message: "Name is Required" });
     }
     if (!email) {
       return res.send({ message: "Email is Required" });
@@ -56,7 +56,7 @@ export const registerController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Errro in Registeration",
+      message: "Error in Registration",
       error,
     });
   }
