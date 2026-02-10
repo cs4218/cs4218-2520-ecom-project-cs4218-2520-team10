@@ -43,6 +43,10 @@ window.matchMedia = window.matchMedia || function() {
 describe('Register Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock axios.get for useCategory hook
+    axios.get.mockResolvedValue({
+      data: { success: true, category: [] }
+    });
   });
 
   it('should register the user successfully', async () => {
