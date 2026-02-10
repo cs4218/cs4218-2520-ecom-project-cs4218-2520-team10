@@ -49,7 +49,7 @@ describe('authMiddleware', () => {
 
     describe('Happy Path', () => {
 
-      test('test_requireSignIn_validToken_setsReqUserAndCallsNext', async () => {
+      it('should set req.user and call next when token is valid', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'valid-jwt-token' }
@@ -76,7 +76,7 @@ describe('authMiddleware', () => {
 
     describe('Validation — Missing/Invalid Token (EP)', () => {
 
-      test('test_requireSignIn_missingAuthorizationHeader_returns401Error', async () => {
+      it('should return 401 error when authorization header is missing', async () => {
         // ── ARRANGE ──
         const req = createMockReq(); // No authorization header
         const res = createMockRes();
@@ -98,7 +98,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_requireSignIn_undefinedAuthorizationHeader_returns401Error', async () => {
+      it('should return 401 error when authorization header is undefined', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: undefined }
@@ -122,7 +122,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_requireSignIn_nullAuthorizationHeader_returns401Error', async () => {
+      it('should return 401 error when authorization header is null', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: null }
@@ -146,7 +146,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_requireSignIn_emptyStringAuthorization_returns401Error', async () => {
+      it('should return 401 error when authorization is empty string', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: '' }
@@ -173,7 +173,7 @@ describe('authMiddleware', () => {
 
     describe('Error Handling — JWT Failures', () => {
 
-      test('test_requireSignIn_malformedToken_returns401Error', async () => {
+      it('should return 401 error when token is malformed', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'malformed.token.here' }
@@ -197,7 +197,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_requireSignIn_expiredToken_returns401Error', async () => {
+      it('should return 401 error when token is expired', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'expired.jwt.token' }
@@ -223,7 +223,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_requireSignIn_invalidSignature_returns401Error', async () => {
+      it('should return 401 error when signature is invalid', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'token.with.invalid.signature' }
@@ -249,7 +249,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_requireSignIn_wrongAlgorithm_returns401Error', async () => {
+      it('should return 401 error when algorithm is wrong', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'token.with.wrong.algorithm' }
@@ -275,7 +275,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_requireSignIn_genericJWTError_returns401Error', async () => {
+      it('should return 401 error when generic JWT error occurs', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'some.jwt.token' }
@@ -302,7 +302,7 @@ describe('authMiddleware', () => {
 
     describe('Side Effects', () => {
 
-      test('test_requireSignIn_validToken_callsJWTVerifyWithCorrectArgs', async () => {
+      it('should call JWT.verify with correct arguments when token is valid', async () => {
         // ── ARRANGE ──
         const token = 'valid-jwt-token';
         const req = createMockReq({
@@ -322,7 +322,7 @@ describe('authMiddleware', () => {
         expect(JWT.verify).toHaveBeenCalledTimes(1);
       });
 
-      test('test_requireSignIn_validToken_setsReqUserToDecodedPayload', async () => {
+      it('should set req.user to decoded payload when token is valid', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'valid-jwt-token' }
@@ -345,7 +345,7 @@ describe('authMiddleware', () => {
         expect(req.user._id).toBe('user-abc-123');
       });
 
-      test('test_requireSignIn_validToken_callsNextOnce', async () => {
+      it('should call next once when token is valid', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'valid-jwt-token' }
@@ -363,7 +363,7 @@ describe('authMiddleware', () => {
         expect(next).toHaveBeenCalledWith();
       });
 
-      test('test_requireSignIn_invalidToken_doesNotCallNext', async () => {
+      it('should not call next when token is invalid', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'invalid-token' }
@@ -385,7 +385,7 @@ describe('authMiddleware', () => {
 
     describe('Security Invariants', () => {
 
-      test('test_requireSignIn_decodedTokenStructure_hasExpectedFields', async () => {
+      it('should have expected fields in decoded token structure', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           headers: { authorization: 'valid-jwt-token' }
@@ -422,7 +422,7 @@ describe('authMiddleware', () => {
 
     describe('Happy Path', () => {
 
-      test('test_isAdmin_userIsAdmin_callsNext', async () => {
+      it('should call next when user is admin', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'admin123' }
@@ -449,7 +449,7 @@ describe('authMiddleware', () => {
 
     describe('Authorization — Role Boundaries (EP + BVA)', () => {
 
-      test('test_isAdmin_userRoleIsZero_returns401UnauthorizedAccess', async () => {
+      it('should return 401 unauthorized access when user role is zero', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -477,7 +477,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_userRoleIsTwo_returns401UnauthorizedAccess', async () => {
+      it('should return 401 unauthorized access when user role is two', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -505,7 +505,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_userRoleIsNegativeOne_returns401UnauthorizedAccess', async () => {
+      it('should return 401 unauthorized access when user role is negative one', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -533,7 +533,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_userRoleIsUndefined_returns401UnauthorizedAccess', async () => {
+      it('should return 401 unauthorized access when user role is undefined', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -561,7 +561,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_userRoleIsNull_returns401UnauthorizedAccess', async () => {
+      it('should return 401 unauthorized access when user role is null', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -592,7 +592,7 @@ describe('authMiddleware', () => {
 
     describe('Validation — Missing req.user._id', () => {
 
-      test('test_isAdmin_reqUserIdIsUndefined_returns401Error', async () => {
+      it('should return 401 error when req.user._id is undefined', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: undefined }
@@ -616,7 +616,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_reqUserIdIsNull_returns401Error', async () => {
+      it('should return 401 error when req.user._id is null', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: null }
@@ -640,7 +640,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_reqUserMissing_returns401Error', async () => {
+      it('should return 401 error when req.user is missing', async () => {
         // ── ARRANGE ──
         const req = createMockReq(); // No user property at all
         const res = createMockRes();
@@ -663,7 +663,7 @@ describe('authMiddleware', () => {
 
     describe('Error Handling — Database Failures', () => {
 
-      test('test_isAdmin_findByIdReturnsNull_returns401Error', async () => {
+      it('should return 401 error when findById returns null', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'deleted-user-123' }
@@ -687,7 +687,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_databaseError_returns401Error', async () => {
+      it('should return 401 error when database error occurs', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -714,7 +714,7 @@ describe('authMiddleware', () => {
 
     describe('Side Effects', () => {
 
-      test('test_isAdmin_validAdmin_callsFindByIdWithCorrectId', async () => {
+      it('should call findById with correct id when user is valid admin', async () => {
         // ── ARRANGE ──
         const userId = 'admin-xyz-789';
         const req = createMockReq({
@@ -739,7 +739,7 @@ describe('authMiddleware', () => {
         expect(userModel.findById).toHaveBeenCalledTimes(1);
       });
 
-      test('test_isAdmin_validAdmin_callsNextOnce', async () => {
+      it('should call next once when user is valid admin', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'admin123' }
@@ -757,7 +757,7 @@ describe('authMiddleware', () => {
         expect(next).toHaveBeenCalledWith();
       });
 
-      test('test_isAdmin_nonAdmin_doesNotCallNext', async () => {
+      it('should not call next when user is non-admin', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -774,7 +774,7 @@ describe('authMiddleware', () => {
         expect(next).not.toHaveBeenCalled();
       });
 
-      test('test_isAdmin_databaseError_doesNotCallNext', async () => {
+      it('should not call next when database error occurs', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -794,7 +794,7 @@ describe('authMiddleware', () => {
 
     describe('Security Invariants', () => {
 
-      test('test_isAdmin_nonAdminResponse_hasCorrectStructure', async () => {
+      it('should have correct structure in non-admin response', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
@@ -817,7 +817,7 @@ describe('authMiddleware', () => {
         expect(responseData).toHaveProperty('message', "UnAuthorized Access");
       });
 
-      test('test_isAdmin_errorResponse_hasCorrectStructure', async () => {
+      it('should have correct structure in error response', async () => {
         // ── ARRANGE ──
         const req = createMockReq({
           user: { _id: 'user123' }
