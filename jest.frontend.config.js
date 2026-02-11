@@ -16,8 +16,8 @@ export default {
     "\\.(css|scss)$": "identity-obj-proxy",
   },
 
-  // ignore all node_modules except styleMock (needed for css imports)
-  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
+  // ignore all node_modules except styleMock and axios (needed for ES modules)
+  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js|axios)$)"],
 
   // only run these tests
   testMatch: ["<rootDir>/client/src/pages/Auth/*.test.js"],
