@@ -77,12 +77,6 @@
  *   ✅ Component handles API rejection correctly (lines 425-492)
  *   ✅ Boundary values are sent correctly (lines 720-801)
  *
- * Why This Is Correct:
- *   Per planner.md Step 1.2: "Never test trivial code. A test that can't reveal
- *   a regression is waste." Since there is no validation logic in the component,
- *   there is no validation regression to catch. Unit tests verify the code that
- *   EXISTS, not theoretical code.
- *
  * If Validation Logic Is Added Later:
  *   If client-side validation is added to Register.js (e.g., regex checks,
  *   custom error messages), those tests should be added here following the
@@ -91,7 +85,6 @@
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * @see Register.js
- * @see docs/planner.md
  */
 
 import React from 'react';
