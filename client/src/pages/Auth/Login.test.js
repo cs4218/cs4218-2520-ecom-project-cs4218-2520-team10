@@ -76,7 +76,6 @@
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * @see Login.js
- * @see docs/planner.md
  */
 
 import React from 'react';
