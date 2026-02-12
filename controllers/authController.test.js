@@ -1,6 +1,7 @@
 import {
   updateProfileController,
   getOrdersController,
+  getAllOrdersController,
 } from "./authController.js";
 import userModel from "../models/userModel.js";
 import orderModel from "../models/orderModel.js";
@@ -783,6 +784,132 @@ describe("getOrdersController", () => {
 
       // ── ASSERT ───────────────────────────────────
       expect(orderModel.find).toHaveBeenCalledWith({ buyer: mockUserId });
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: "Error While Getting Orders",
+        error: dbError,
+      });
+      expect(consoleSpy).toHaveBeenCalledWith(dbError); // Verify error is logged
+    });
+  });
+});
+
+/**
+ * Unit Tests for getAllOrdersController
+ *
+ * Tests the retrieval logic for all orders including:
+ * - Successful retrieval of multiple orders.
+ * - Successful retrieval when no orders are present.
+ * - Comprehensive error handling for database operations.
+ *
+ * Coverage Target: 100% (lines + functions)
+ * Test Strategy: Output-based + Communication-based testing
+ *
+ * Test Doubles Used:
+ * - orderModel:                MOCK (controls find, populate, sort, exec behavior)
+ * - req/res:                   FAKE (test doubles for Express request/response objects)
+ *
+ * Testing Techniques Applied:
+ * - Happy Path: User with orders, user with no orders
+ * - Negative Testing: Database errors
+ * - Interaction Testing: Verifying `orderModel` methods are called with correct arguments
+ *
+ * Scenario Plan:
+ * #  | Category       | Technique    | Scenario                                          | Expected Result
+ * ---|----------------|--------------|---------------------------------------------------|-----------------------------------------------------
+ * 1  | Happy Path     | —            | Successfully retrieves multiple orders            | 200 Success, returns array of populated orders, sorted by `createdAt` descending
+ * 2  | Happy Path     | —            | Successfully retrieves no orders                  | 200 Success, returns empty array
+ * 3  | Error Handling | Negative     | orderModel.find rejects                           | 500 Internal Server Error, message: "Error While Getting Orders", error logged
+ */
+describe("getAllOrdersController", () => {
+  let req, res, consoleSpy;
+
+  beforeEach(() => {
+    req = {}; // No req.user needed for getAllOrdersController
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      send: jest.fn(),
+    };
+    // Spy on console.log to check if errors are logged
+    consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+
+    jest.clearAllMocks();
+    // Reset orderModel mocks for each test
+    orderModel.find.mockReturnThis();
+    orderModel.populate.mockReturnThis();
+    orderModel.sort.mockReturnThis();
+    // Make the chain resolve to an empty array by default
+    orderModel.then.mockImplementation((resolve) => resolve([]));
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore(); // Restore console.log after each test
+  });
+
+  describe("Happy Path", () => {
+    it("should return 200 with populated orders when multiple orders exist", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const mockOrders = [
+        {
+          _id: "orderA",
+          products: [{ name: "Product X" }],
+          buyer: { name: "Buyer 1" },
+          createdAt: new Date("2024-01-15T10:00:00Z"),
+        },
+        {
+          _id: "orderB",
+          products: [{ name: "Product Y" }],
+          buyer: { name: "Buyer 2" },
+          createdAt: new Date("2024-01-14T10:00:00Z"),
+        },
+      ];
+      orderModel.then.mockImplementation((resolve) => resolve(mockOrders));
+
+      // ── ACT ──────────────────────────────────────
+      await getAllOrdersController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(orderModel.find).toHaveBeenCalledWith({});
+      expect(orderModel.populate).toHaveBeenCalledWith("products", "-photo");
+      expect(orderModel.populate).toHaveBeenCalledWith("buyer", "name");
+      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: "-1" });
+      expect(res.json).toHaveBeenCalledWith(mockOrders);
+      expect(res.status).not.toHaveBeenCalledWith(500); // Ensure no error status
+    });
+
+    it("should return 200 with an empty array when no orders exist", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      orderModel.then.mockImplementation((resolve) => resolve([]));
+
+      // ── ACT ──────────────────────────────────────
+      await getAllOrdersController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(orderModel.find).toHaveBeenCalledWith({});
+      expect(orderModel.populate).toHaveBeenCalledWith("products", "-photo");
+      expect(orderModel.populate).toHaveBeenCalledWith("buyer", "name");
+      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: "-1" });
+      expect(res.json).toHaveBeenCalledWith([]);
+      expect(res.status).not.toHaveBeenCalledWith(500); // Ensure no error status
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should return 500 and an error message if orderModel.find rejects", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const dbError = new Error("Database query failed during getAllOrders");
+      orderModel.then.mockImplementation((resolve, reject) => reject(dbError));
+
+      // ── ACT ──────────────────────────────────────
+      await getAllOrdersController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(orderModel.find).toHaveBeenCalledWith({});
+      expect(orderModel.populate).toHaveBeenCalledWith("products", "-photo");
+      expect(orderModel.populate).toHaveBeenCalledWith("buyer", "name");
+      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: "-1" });
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
