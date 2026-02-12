@@ -1,3 +1,4 @@
+// Fix: Added React import - KIM SHI TONG A0265858J
 import React, { useState, useContext, createContext, useEffect } from "react";
 import axios from "axios";
 
@@ -13,6 +14,7 @@ const AuthProvider = ({ children }) => {
     axios.defaults.headers.common["Authorization"] = auth?.token;
 
     useEffect(() => {
+       // Fix: Added try-catch error handling for localStorage parsing - KIM SHI TONG A0265858J
        try {
            const data = localStorage.getItem("auth");
            if (data) {
@@ -37,6 +39,7 @@ const AuthProvider = ({ children }) => {
 };
 
 // custom hook
+// Fix: Added validation to ensure useAuth is used within AuthProvider - KIM SHI TONG A0265858J
 const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {

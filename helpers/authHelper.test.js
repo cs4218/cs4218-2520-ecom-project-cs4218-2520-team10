@@ -1,3 +1,5 @@
+// Test cases written by: KIM SHI TONG A0265858J
+
 /**
  * Unit Tests: authHelper
  *

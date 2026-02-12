@@ -8,6 +8,7 @@ export const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, address, answer } = req.body;
     //validations
+    // Fix: Changed from "error" to "message" for consistency - KIM SHI TONG A0265858J
     if (!name) {
       return res.send({ message: "Name is Required" });
     }
@@ -56,7 +57,7 @@ export const registerController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error in Registration",
+      message: "Error in Registration", // Fix: Corrected typo from "Errro in Registeration" - KIM SHI TONG A0265858J
       error,
     });
   }
@@ -120,6 +121,7 @@ export const loginController = async (req, res) => {
 export const forgotPasswordController = async (req, res) => {
   try {
     const { email, answer, newPassword } = req.body;
+    // Fix: Added return statements to validation checks - KIM SHI TONG A0265858J
     if (!email) {
       return res.status(400).send({ message: "Email is required" });
     }
@@ -155,6 +157,7 @@ export const forgotPasswordController = async (req, res) => {
 };
 
 //test controller
+// Fix: Updated response format to include status codes and consistent structure - KIM SHI TONG A0265858J
 export const testController = (req, res) => {
   try {
     res.status(200).send({
