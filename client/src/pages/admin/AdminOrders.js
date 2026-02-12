@@ -6,16 +6,11 @@ import Layout from "../../components/Layout";
 import { useAuth } from "../../context/auth";
 import moment from "moment";
 import { Select } from "antd";
+import { ORDER_STATUS_LIST } from "../../constants/orderStatus";
 const { Option } = Select;
 
 const AdminOrders = () => {
-  const [status, setStatus] = useState([
-    "Not Process",
-    "Processing",
-    "Shipped",
-    "deliverd",
-    "cancel",
-  ]);
+  const [status, setStatus] = useState(ORDER_STATUS_LIST);
   const [changeStatus, setCHangeStatus] = useState("");
   const [orders, setOrders] = useState([]);
   const [auth, setAuth] = useAuth();

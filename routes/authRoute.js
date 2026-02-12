@@ -373,7 +373,7 @@ router.get("/all-orders", requireSignIn, isAdmin, getAllOrdersController);
  *             properties:
  *               status:
  *                 type: string
- *                 description: New status of the order (e.g., Not Process, Processing, Shipped, Deliverd, Cancel)
+ *                 description: New status of the order (e.g., Not Processed, Processing, Shipped, Delivered, Cancelled)
  *     responses:
  *       200:
  *         description: Order status updated successfully
