@@ -361,7 +361,8 @@ router.get("/all-orders", requireSignIn, isAdmin, getAllOrdersController);
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the order to update
+ *           pattern: "^[0-9a-fA-F]{24}$" # MongoDB ObjectId format
+ *         description: ID of the order to update (24-character hexadecimal string)
  *     requestBody:
  *       required: true
  *       content:
@@ -373,7 +374,13 @@ router.get("/all-orders", requireSignIn, isAdmin, getAllOrdersController);
  *             properties:
  *               status:
  *                 type: string
- *                 description: New status of the order (e.g., Not Processed, Processing, Shipped, Delivered, Cancelled)
+ *                 description: New status of the order. Must be one of the allowed values.
+ *                 enum:
+ *                   - Not Processed
+ *                   - Processing
+ *                   - Shipped
+ *                   - Delivered
+ *                   - Cancelled
  *     responses:
  *       200:
  *         description: Order status updated successfully
@@ -384,14 +391,49 @@ router.get("/all-orders", requireSignIn, isAdmin, getAllOrdersController);
  *               properties:
  *                 success:
  *                   type: boolean
+ *                 message:
+ *                   type: string
  *                 order:
  *                   type: object
+ *       400:
+ *         description: Invalid Order ID format or Invalid status value
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  *       403:
  *         description: Forbidden (Admin role required)
  *       404:
- *         description: Order not found
+ *         description: Order not found with the provided ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: An error occurred while updating the order status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
  */
 // order status update
 router.put(
