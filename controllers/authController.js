@@ -116,7 +116,6 @@ export const loginController = async (req, res) => {
 };
 
 //forgotPasswordController
-
 export const forgotPasswordController = async (req, res) => {
   try {
     const { email, answer, newPassword } = req.body;
@@ -154,7 +153,7 @@ export const forgotPasswordController = async (req, res) => {
   }
 };
 
-//test controller
+// Test Controller
 export const testController = (req, res) => {
   try {
     res.send("Protected Routes");
@@ -164,7 +163,7 @@ export const testController = (req, res) => {
   }
 };
 
-// update profile
+// Update profile
 // note: email not used?
 export const updateProfileController = async (req, res) => {
   try {
@@ -217,7 +216,7 @@ export const updateProfileController = async (req, res) => {
   }
 };
 
-//orders
+// Get Orders by User
 export const getOrdersController = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
@@ -242,9 +241,10 @@ export const getOrdersController = async (req, res) => {
   }
 };
 
-//orders
+// Get All Orders (Admin Only)
 export const getAllOrdersController = async (req, res) => {
   try {
+
     const orders = await orderModel
       .find({})
       .populate("products", "-photo")
@@ -261,7 +261,7 @@ export const getAllOrdersController = async (req, res) => {
   }
 };
 
-//order status
+// Order Status (Admin Only)
 export const orderStatusController = async (req, res) => {
   try {
     const { orderId } = req.params;
