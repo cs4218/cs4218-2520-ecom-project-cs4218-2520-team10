@@ -23,14 +23,16 @@
  * 1  | Happy       | —         | valid req/res                   | 200 + {success: true, message}
  * 2  | Happy       | —         | verify method chaining          | .status returns res
  * 3  | Contract    | —         | success response structure      | exact {success, message} shape
- * 4  | Error       | Error     | res.status throws               | 500 + error response
- * 5  | Error       | Error     | res.send throws (in try)        | 500 + error response
- * 6  | Error       | Error     | both status and send throw      | catch block executes
- * 7  | Contract    | —         | error response structure        | exact {success, message, error}
- * 8  | Side Effect | —         | success → no console.log        | console.log NOT called
- * 9  | Side Effect | —         | error → console.log called      | console.log(error)
- * 10 | Integration | —         | req not used                    | works with any req (even null)
+ * 4  | Contract    | —         | req not used                    | works with any req (even null)
+ * 5  | Error       | Error     | res.status throws               | 500 + error response
+ * 6  | Error       | Error     | res.send throws (in try)        | 500 + error response
+ * 7  | Error       | Error     | both status and send throw      | catch block executes
+ * 8  | Contract    | —         | error response structure        | exact {success, message, error}
+ * 9  | Side Effect | —         | success → no console.log        | console.log NOT called
+ * 10 | Side Effect | —         | error → console.log called      | console.log(error)
  * 11 | Invariant   | —         | call order                      | .status before .send
+ * 12 | Security    | —         | no sensitive data in response   | no password/token/secret/apikey
+ * 13 | Security    | —         | sanitize error response         | generic message, no internal details
  *
  * @see ../controllers/authController.js
  */
@@ -112,25 +114,6 @@ describe('AuthController', () => {
       expect(res.send).toHaveBeenCalledTimes(1);
     });
 
-        it('should work correctly with any req object', () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Integration test: req is not used by the controller
-      // WHY: Verify controller doesn't depend on req properties
-      // EP: req can be any object (null, undefined, empty, populated)
-      req = null;  // Even null works since req is never accessed
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      testController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Should still work correctly despite null req
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith({
-        success: true,
-        message: 'Protected Routes',
-      });
-    });
     });
 
         // ═══════════════════════════════════════════════════════════
@@ -174,6 +157,26 @@ describe('AuthController', () => {
       expect(typeof sentResponse.success).toBe('boolean');
       expect(typeof sentResponse.message).toBe('string');
       expect(sentResponse.success).toBe(true);  // Must be true for success
+    });
+
+        it('should work correctly with any req object', () => {
+      // ── ARRANGE ──────────────────────────────────
+      // Contract test: req is not used by the controller
+      // WHY: Verify controller doesn't depend on req properties
+      // EP: req can be any object (null, undefined, empty, populated)
+      req = null;  // Even null works since req is never accessed
+      res = createMockRes();
+
+      // ── ACT ──────────────────────────────────────
+      testController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      // Should still work correctly despite null req
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith({
+        success: true,
+        message: 'Protected Routes',
+      });
     });
     });
 
