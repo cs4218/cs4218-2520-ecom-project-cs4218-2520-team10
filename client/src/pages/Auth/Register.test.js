@@ -590,12 +590,10 @@ describe('Register Component', () => {
       });
     });
   });
-  }); // end handleSubmit
 
   // ───────────────────────────────────────────────────────────────────────
   // 4. REQUEST PAYLOAD VERIFICATION (handleSubmit data preparation)
   // ───────────────────────────────────────────────────────────────────────
-  describe('handleSubmit', () => {
     describe('Request Payload Verification', () => {
     it('should call axios.post with correct endpoint', async () => {
       // ── ARRANGE ──────────────────────────────────────
@@ -668,12 +666,10 @@ describe('Register Component', () => {
       );
     });
   });
-  }); // end handleSubmit (request payload)
 
   // ───────────────────────────────────────────────────────────────────────
   // 5. SIDE EFFECTS CHAIN TESTS (handleSubmit side effects)
   // ───────────────────────────────────────────────────────────────────────
-  describe('handleSubmit', () => {
     describe('Side Effects', () => {
     it('should follow correct side effect chain on API error', async () => {
       // ── ARRANGE ──────────────────────────────────────
@@ -723,12 +719,10 @@ describe('Register Component', () => {
       expect(toast.success).not.toHaveBeenCalled();
     });
   });
-  }); // end handleSubmit (side effects)
 
   // ───────────────────────────────────────────────────────────────────────
   // 6. SECURITY INVARIANTS (handleSubmit security)
   // ───────────────────────────────────────────────────────────────────────
-  describe('handleSubmit', () => {
     describe('Security Invariants', () => {
     it('should send password as plaintext to API', async () => {
       // ── ARRANGE ──────────────────────────────────────
@@ -755,12 +749,10 @@ describe('Register Component', () => {
       expect(callPayload.password).not.toMatch(/^\$2[aby]\$\d{2}\$/); // bcrypt pattern
     });
   });
-  }); // end handleSubmit (security)
 
   // ───────────────────────────────────────────────────────────────────────
   // 7. BOUNDARY VALUE ANALYSIS (handleSubmit with edge values)
   // ───────────────────────────────────────────────────────────────────────
-  describe('handleSubmit', () => {
     describe('Boundary Values', () => {
     it('should accept minimum valid input (1 character strings)', async () => {
       // ── ARRANGE ──────────────────────────────────────
@@ -844,5 +836,5 @@ describe('Register Component', () => {
       expect(callPayload.answer).toBe('Rock & Roll');
     });
   });
-  }); // end handleSubmit (boundary values)
+  }); // end handleSubmit
 });
