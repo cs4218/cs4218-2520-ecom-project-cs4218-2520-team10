@@ -1,8 +1,9 @@
+import JWT from "jsonwebtoken";
+import mongoose from "mongoose";
+import { comparePassword, hashPassword } from "./../helpers/authHelper.js";
 import userModel from "../models/userModel.js";
 import orderModel from "../models/orderModel.js";
-
-import { comparePassword, hashPassword } from "./../helpers/authHelper.js";
-import JWT from "jsonwebtoken";
+import { ORDER_STATUS_LIST } from "../constants/orderStatus.js";
 
 export const registerController = async (req, res) => {
   try {
@@ -261,23 +262,54 @@ export const getAllOrdersController = async (req, res) => {
   }
 };
 
-// Order Status (Admin Only)
+// Update status of the given order 
 export const orderStatusController = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
-    const orders = await orderModel.findByIdAndUpdate(
+
+    // --- Input Validation ---
+    // Validate orderId format
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid Order ID format. Please provide a valid ObjectId.",
+      });
+    }
+
+    // Validate status value
+    if (!status || !ORDER_STATUS_LIST.includes(status)) {
+      return res.status(400).send({
+        success: false,
+        message: `Invalid or missing order status. Allowed values are: ${ORDER_STATUS_LIST.join(", ")}.`,
+      });
+    }
+
+    const updatedOrder = await orderModel.findByIdAndUpdate(
       orderId,
       { status },
-      { new: true }
+      { new: true } // Returns the modified document rather than the original
     );
-    res.json(orders);
+
+    // Handle "Order Not Found"
+    if (!updatedOrder) {
+      return res.status(404).send({
+        success: false,
+        message: "Order not found with the provided ID.",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Order status updated successfully.",
+      order: updatedOrder,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error While Updating Order",
-      error,
+      message: "An error occurred while updating the order status.",
+      error: error.message,
     });
   }
 };
