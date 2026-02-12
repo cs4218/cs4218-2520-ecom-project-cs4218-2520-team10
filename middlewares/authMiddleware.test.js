@@ -74,7 +74,7 @@ describe('authMiddleware', () => {
       });
     });
 
-    describe('Validation — Missing/Invalid Token (EP)', () => {
+    describe('Equivalence Partitions — Missing/Invalid Token', () => {
 
       it('should return 401 error when authorization header is missing', async () => {
         // ── ARRANGE ──
@@ -407,7 +407,7 @@ describe('authMiddleware', () => {
       });
     });
 
-    describe('Authorization — Role Boundaries (EP + BVA)', () => {
+    describe('Boundary Values — Role Authorization', () => {
 
       it('should return 401 unauthorized access when user role is zero', async () => {
         // ── ARRANGE ──
@@ -550,7 +550,7 @@ describe('authMiddleware', () => {
       });
     });
 
-    describe('Validation — Missing req.user._id', () => {
+    describe('Equivalence Partitions — Missing req.user._id', () => {
 
       it('should return 401 error when req.user._id is undefined', async () => {
         // ── ARRANGE ──
