@@ -196,7 +196,7 @@ const renderRegisterComponent = () => {
 describe('Register Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock axios.get for useCategory hook
+    // Fix: Mock axios.get for useCategory hook - KIM SHI TONG A0265858J
     axios.get.mockResolvedValue({
       data: { success: true, category: [] }
     });
