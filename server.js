@@ -24,6 +24,21 @@ const swaggerOptions = {
         url: `http://localhost:${process.env.PORT || 6060}`, // Base URL for your API
       },
     ],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter JWT Bearer token **_only_**',
+        },
+      },
+    },
+    security: [
+      {
+        BearerAuth: [],
+      },
+    ],
   },
   apis: ['./routes/*.js'], // Path to the API docs
 };
