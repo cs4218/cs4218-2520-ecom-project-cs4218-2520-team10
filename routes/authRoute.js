@@ -165,8 +165,6 @@ router.post("/forgot-password", forgotPasswordController);
  *     summary: Test protected route (Admin only)
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Access granted
@@ -192,8 +190,6 @@ router.get("/test", requireSignIn, isAdmin, testController);
  *     summary: Protected User route authentication
  *     tags:
  *       - User
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User authenticated successfully
@@ -218,8 +214,6 @@ router.get("/user-auth", requireSignIn, (req, res) => {
  *     summary: Protected Admin route authentication
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Admin authenticated successfully
@@ -247,8 +241,6 @@ router.get("/admin-auth", requireSignIn, isAdmin, (req, res) => {
  *     summary: Update user profile
  *     tags:
  *       - User
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -293,8 +285,6 @@ router.put("/profile", requireSignIn, updateProfileController);
  *     summary: Get user orders
  *     tags:
  *       - User
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User orders retrieved successfully
@@ -322,8 +312,6 @@ router.get("/orders", requireSignIn, getOrdersController);
  *     summary: Get all orders (Admin only)
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: All orders retrieved successfully
@@ -353,8 +341,6 @@ router.get("/all-orders", requireSignIn, isAdmin, getAllOrdersController);
  *     summary: Update order status (Admin only)
  *     tags:
  *       - Admin
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: orderId

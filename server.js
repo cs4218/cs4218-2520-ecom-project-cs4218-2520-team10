@@ -26,17 +26,17 @@ const swaggerOptions = {
     ],
     components: {
       securitySchemes: {
-        BearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
+        Authorization: {
+          type: "apiKey",
+          in: "header",
+          name: "authorization",
           description: 'Enter JWT Bearer token **_only_**',
         },
       },
     },
     security: [
       {
-        BearerAuth: [],
+        Authorization: [],
       },
     ],
   },
