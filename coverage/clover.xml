@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1770605434276" clover="3.2.0">
-  <project timestamp="1770605434277" name="All files">
+<coverage generated="1770877995721" clover="3.2.0">
+  <project timestamp="1770877995721" name="All files">
     <metrics statements="264" coveredstatements="22" conditionals="86" coveredconditionals="20" methods="30" coveredmethods="1" elements="380" coveredelements="43" complexity="0" loc="264" ncloc="264" packages="1" files="3" classes="3"/>
     <file name="authController.js" path="/Users/evanyan13/2026/cs4218/cs4218-2520-ecom-project-cs4218-2520-team10/controllers/authController.js">
       <metrics statements="95" coveredstatements="22" conditionals="50" coveredconditionals="20" methods="8" coveredmethods="1"/>
@@ -65,18 +65,18 @@
       <line num="162" count="0" type="stmt"/>
       <line num="163" count="0" type="stmt"/>
       <line num="169" count="1" type="stmt"/>
-      <line num="170" count="26" type="stmt"/>
-      <line num="171" count="26" type="cond" truecount="4" falsecount="0"/>
+      <line num="170" count="21" type="stmt"/>
+      <line num="171" count="21" type="cond" truecount="4" falsecount="0"/>
       <line num="172" count="2" type="stmt"/>
-      <line num="178" count="24" type="stmt"/>
-      <line num="179" count="24" type="stmt"/>
-      <line num="182" count="23" type="cond" truecount="2" falsecount="0"/>
+      <line num="178" count="19" type="stmt"/>
+      <line num="179" count="19" type="stmt"/>
+      <line num="182" count="18" type="cond" truecount="2" falsecount="0"/>
       <line num="183" count="1" type="stmt"/>
-      <line num="190" count="22" type="cond" truecount="4" falsecount="0"/>
-      <line num="191" count="4" type="stmt"/>
-      <line num="194" count="18" type="cond" truecount="2" falsecount="0"/>
-      <line num="195" count="17" type="stmt"/>
-      <line num="205" count="16" type="stmt"/>
+      <line num="190" count="17" type="cond" truecount="4" falsecount="0"/>
+      <line num="191" count="3" type="stmt"/>
+      <line num="194" count="14" type="cond" truecount="2" falsecount="0"/>
+      <line num="195" count="13" type="stmt"/>
+      <line num="205" count="12" type="stmt"/>
       <line num="211" count="3" type="stmt"/>
       <line num="212" count="3" type="stmt"/>
       <line num="221" count="1" type="stmt"/>
