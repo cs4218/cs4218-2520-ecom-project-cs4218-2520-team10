@@ -8,8 +8,9 @@ export const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, address, answer } = req.body;
     //validations
+    // Fix: Changed from "error" to "message" for consistency - KIM SHI TONG A0265858J
     if (!name) {
-      return res.send({ error: "Name is Required" });
+      return res.send({ message: "Name is Required" });
     }
     if (!email) {
       return res.send({ message: "Email is Required" });
@@ -56,7 +57,7 @@ export const registerController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Errro in Registeration",
+      message: "Error in Registration", // Fix: Corrected typo from "Errro in Registeration" - KIM SHI TONG A0265858J
       error,
     });
   }
@@ -120,14 +121,15 @@ export const loginController = async (req, res) => {
 export const forgotPasswordController = async (req, res) => {
   try {
     const { email, answer, newPassword } = req.body;
+    // Fix: Added return statements to validation checks - KIM SHI TONG A0265858J
     if (!email) {
-      res.status(400).send({ message: "Emai is required" });
+      return res.status(400).send({ message: "Email is required" });
     }
     if (!answer) {
-      res.status(400).send({ message: "answer is required" });
+      return res.status(400).send({ message: "Answer is required" });
     }
     if (!newPassword) {
-      res.status(400).send({ message: "New Password is required" });
+      return res.status(400).send({ message: "New Password is required" });
     }
     //check
     const user = await userModel.findOne({ email, answer });
@@ -155,12 +157,20 @@ export const forgotPasswordController = async (req, res) => {
 };
 
 //test controller
+// Fix: Updated response format to include status codes and consistent structure - KIM SHI TONG A0265858J
 export const testController = (req, res) => {
   try {
-    res.send("Protected Routes");
+    res.status(200).send({
+      success: true,
+      message: "Protected Routes",
+    });
   } catch (error) {
     console.log(error);
-    res.send({ error });
+    res.status(500).send({
+      success: false,
+      message: "Error in test controller",
+      error,
+    });
   }
 };
 

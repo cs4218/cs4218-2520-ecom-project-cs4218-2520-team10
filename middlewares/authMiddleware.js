@@ -12,6 +12,11 @@ export const requireSignIn = async (req, res, next) => {
         next();
     } catch (error) {
         console.log(error);
+        // Fix: Added proper error response for invalid/expired tokens - KIM SHI TONG A0265858J
+        res.status(401).send({
+            success: false,
+            message: "Invalid or expired token",
+        });
     }
 };
 
