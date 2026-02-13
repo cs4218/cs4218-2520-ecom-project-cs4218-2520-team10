@@ -1,3 +1,8 @@
+/*
+	Test cases written by: Ong Chang Heng Bertrand A0253013X
+	Chosen product controller functions to test: getProductController, getSingleProductController, createProductController, updateProductController, deleteProductController
+*/
+
 import { getProductController, getSingleProductController, createProductController, updateProductController, deleteProductController } from './productController.js';
 import productModel from '../models/productModel.js';
 import fs from 'fs';

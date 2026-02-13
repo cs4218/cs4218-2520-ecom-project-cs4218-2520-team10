@@ -28,11 +28,11 @@ export const createProductController = async (req, res) => {
         return res.status(500).send({ error: "Name is Required" });
       case !description:
         return res.status(500).send({ error: "Description is Required" });
-      case price === undefined || price === null || price === "" || price < 0:
+      case price === undefined || price === null || price === "" || price < 0: // Bug fix from "!price" - Ong Chang Heng Bertrand A0253013X
         return res.status(500).send({ error: "Price is Required and should be greater than or equal to 0" });
       case !category:
         return res.status(500).send({ error: "Category is Required" });
-      case quantity === undefined || quantity === null || quantity === ""|| quantity < 0:
+      case quantity === undefined || quantity === null || quantity === ""|| quantity < 0: // Bug fix from "!quantity" - Ong Chang Heng Bertrand A0253013X
         return res.status(500).send({ error: "Quantity is Required and should be greater than or equal to 0" });
       case photo && photo.size > 1000000:
         return res
@@ -155,11 +155,11 @@ export const updateProductController = async (req, res) => {
         return res.status(500).send({ error: "Name is Required" });
       case !description:
         return res.status(500).send({ error: "Description is Required" });
-      case price === undefined || price === null || price === "" || price < 0:
+      case price === undefined || price === null || price === "" || price < 0: // Bug fix from "!price" - Ong Chang Heng Bertrand A0253013X
         return res.status(500).send({ error: "Price is Required and should be greater than or equal to 0" });
       case !category:
         return res.status(500).send({ error: "Category is Required" });
-      case quantity === undefined || quantity === null || quantity === ""|| quantity < 0:
+      case quantity === undefined || quantity === null || quantity === ""|| quantity < 0: // Bug fix from "!quantity" - Ong Chang Heng Bertrand A0253013X
         return res.status(500).send({ error: "Quantity is Required and should be greater than or equal to 0" });
       case photo && photo.size > 1000000:
         return res
