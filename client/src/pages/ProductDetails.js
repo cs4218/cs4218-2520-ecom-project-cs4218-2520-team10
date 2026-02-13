@@ -50,24 +50,23 @@ const ProductDetails = () => {
           />
         </div>
         <div className="col-md-6 product-details-info">
-          <h1 className="text-center">Product Details</h1>
+        {/* Added data-testid attributes to the relevant elements for testing purposes - Ong Chang Heng Bertrand A0253013X */}
+          <h1 className="text-center" data-testid="product-name">
+            Product Details
+          </h1>
           <hr />
-          <h6>Name : {product.name}</h6>
-          <h6>Description : {product.description}</h6>
-          <h6>
-            Price :
-            {product?.price?.toLocaleString("en-US", {
-              style: "currency",
-              currency: "USD",
-            })}
+          <h6 data-testid="product-title">{product?.name}</h6>
+          <h6 data-testid="product-description">Description: {product?.description}</h6>
+          <h6 data-testid="product-price">
+            Price: {product?.price?.toLocaleString("en-US", { style: "currency", currency: "USD" })}
           </h6>
-          <h6>Category : {product?.category?.name}</h6>
-          <button class="btn btn-secondary ms-1">ADD TO CART</button>
+          <h6 data-testid="product-category">Category: {product?.category?.name}</h6>
+          <button className="btn btn-secondary ms-1">ADD TO CART</button> {/* Bug fix: Changed "class" to "className" - Ong Chang Heng Bertrand A0253013X */}
         </div>
       </div>
       <hr />
       <div className="row container similar-products">
-        <h4>Similar Products ➡️</h4>
+        <h4 data-testid="similar-products-title">Similar Products ➡️</h4>
         {relatedProducts.length < 1 && (
           <p className="text-center">No Similar Products found</p>
         )}
