@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { useParams, useNavigate } from "react-router-dom";
+import { useCart } from "../context/cart";
+import toast from "react-hot-toast";
 import "../styles/CategoryProductStyles.css";
 import axios from "axios";
+
 const CategoryProduct = () => {
   const params = useParams();
   const navigate = useNavigate();
+  const [cart, setCart] = useCart();
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState([]);
 
   useEffect(() => {
     if (params?.slug) getPrductsByCat();
   }, [params?.slug]);
+  
   const getPrductsByCat = async () => {
     try {
       const { data } = await axios.get(
@@ -27,8 +32,9 @@ const CategoryProduct = () => {
   return (
     <Layout>
       <div className="container mt-3 category">
-        <h4 className="text-center">Category - {category?.name}</h4>
-        <h6 className="text-center">{products?.length} result found </h6>
+        {/* Add data-testid attributes for testing - Ong Chang Heng Bertrand A0253013X */}
+        <h4 className="text-center" data-testid="category-name">Category - {category?.name}</h4>
+        <h6 className="text-center" data-testid="product-count">{products?.length} result found </h6>
         <div className="row">
           <div className="col-md-9 offset-1">
             <div className="d-flex flex-wrap">
@@ -41,15 +47,15 @@ const CategoryProduct = () => {
                   />
                   <div className="card-body">
                     <div className="card-name-price">
-                      <h5 className="card-title">{p.name}</h5>
-                      <h5 className="card-title card-price">
+                      <h5 className="card-title" data-testid={`product-name-${p._id}`}>{p.name}</h5>
+                      <h5 className="card-title card-price" data-testid={`product-price-${p._id}`}>
                         {p.price.toLocaleString("en-US", {
                           style: "currency",
                           currency: "USD",
                         })}
                       </h5>
                     </div>
-                    <p className="card-text ">
+                    <p className="card-text" data-testid={`product-description-${p._id}`}>
                       {p.description.substring(0, 60)}...
                     </p>
                     <div className="card-name-price">
@@ -59,37 +65,25 @@ const CategoryProduct = () => {
                       >
                         More Details
                       </button>
-                      {/* <button
-                    className="btn btn-dark ms-1"
-                    onClick={() => {
-                      setCart([...cart, p]);
-                      localStorage.setItem(
-                        "cart",
-                        JSON.stringify([...cart, p])
-                      );
-                      toast.success("Item Added to cart");
-                    }}
-                  >
-                    ADD TO CART
-                  </button> */}
+                      <button
+                        className="btn btn-dark ms-1"
+                        // Added add to cart functionality - Ong Chang Heng Bertrand A0253013X
+                        onClick={() => {
+                          setCart([...cart, p]);
+                          localStorage.setItem(
+                            "cart",
+                            JSON.stringify([...cart, p])
+                          );
+                          toast.success("Item Added to cart");
+                        }}
+                      >
+                        ADD TO CART
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            {/* <div className="m-2 p-3">
-            {products && products.length < total && (
-              <button
-                className="btn btn-warning"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setPage(page + 1);
-                }}
-              >
-                {loading ? "Loading ..." : "Loadmore"}
-              </button>
-            )}
-          </div> */}
           </div>
         </div>
       </div>
