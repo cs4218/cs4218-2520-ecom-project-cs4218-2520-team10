@@ -354,7 +354,7 @@ describe("ProductDetails Component", () => {
         });
       });
 
-      it("should display multiple related products (5 products)", async () => {
+      it("should display multiple related products (At least 1 product)", async () => {
         const mockProduct = {
           _id: "1",
           name: "Main Product",
