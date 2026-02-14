@@ -504,6 +504,49 @@ describe("ProductDetails Component", () => {
     });
 	});
 
+	// ============ SIDE EFFECTS / API CALLS ============
+	describe("Side Effects / API Calls", () => {
+		it("should fetch product details on component mount", async () => {
+			const mockProduct = {
+				_id: "1",
+				name: "Test Product",
+				description: "Test description",
+				price: 100,
+				category: { _id: "cat1", name: "Category 1" },
+			};
+
+			useParams.mockReturnValue({ slug: "test-product" });
+			axios.get.mockResolvedValueOnce({ data: { product: mockProduct } });
+
+			render(<ProductDetails />);
+
+			await waitFor(() => {
+				expect(axios.get).toHaveBeenCalledWith("/api/v1/product/get-product/test-product");
+			});
+		});
+
+		it("should fetch related products after fetching main product", async () => {
+			const mockProduct = {
+				_id: "1",
+				name: "Test Product",
+				description: "Test description",
+				price: 100,
+				category: { _id: "cat1", name: "Category 1" },
+			};
+
+			useParams.mockReturnValue({ slug: "test-product" });
+			axios.get
+				.mockResolvedValueOnce({ data: { product: mockProduct } })
+				.mockResolvedValueOnce({ data: { products: [] } });
+
+			render(<ProductDetails />);
+
+			await waitFor(() => {
+				expect(axios.get).toHaveBeenCalledWith("/api/v1/product/related-product/1/cat1");
+			});
+		});
+	});
+
   // ============ RENDERING / UI STRUCTURE ============
   describe("Rendering / UI Structure", () => {
     it("should render Layout component", async () => {
