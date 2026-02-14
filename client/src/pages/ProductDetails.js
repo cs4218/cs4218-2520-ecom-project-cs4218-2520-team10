@@ -2,18 +2,22 @@ import React, { useState, useEffect } from "react";
 import Layout from "./../components/Layout";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { useCart } from "../context/cart";
+import toast from "react-hot-toast";
 import "../styles/ProductDetailsStyles.css";
 
 const ProductDetails = () => {
   const params = useParams();
   const navigate = useNavigate();
+  const [cart, setCart] = useCart();
   const [product, setProduct] = useState({});
   const [relatedProducts, setRelatedProducts] = useState([]);
 
-  //initalp details
+  //initial details
   useEffect(() => {
     if (params?.slug) getProduct();
   }, [params?.slug]);
+
   //getProduct
   const getProduct = async () => {
     try {
@@ -26,6 +30,7 @@ const ProductDetails = () => {
       console.log(error);
     }
   };
+
   //get similar product
   const getSimilarProduct = async (pid, cid) => {
     try {
@@ -37,6 +42,7 @@ const ProductDetails = () => {
       console.log(error);
     }
   };
+
   return (
     <Layout>
       <div className="row container product-details">
@@ -50,7 +56,7 @@ const ProductDetails = () => {
           />
         </div>
         <div className="col-md-6 product-details-info">
-        {/* Added data-testid attributes to the relevant elements for testing purposes - Ong Chang Heng Bertrand A0253013X */}
+          {/* Added data-testid attributes to the relevant elements for testing purposes - Ong Chang Heng Bertrand A0253013X */}
           <h1 className="text-center" data-testid="product-name">
             Product Details
           </h1>
@@ -61,7 +67,21 @@ const ProductDetails = () => {
             Price: {product?.price?.toLocaleString("en-US", { style: "currency", currency: "USD" })}
           </h6>
           <h6 data-testid="product-category">Category: {product?.category?.name}</h6>
-          <button className="btn btn-secondary ms-1">ADD TO CART</button> {/* Bug fix: Changed "class" to "className" - Ong Chang Heng Bertrand A0253013X */}
+          <button 
+            className="btn btn-secondary ms-1"
+            // Added add to cart functionality - Ong Chang Heng Bertrand A0253013X
+            // Bug fix: Changed "class" to "className" - Ong Chang Heng Bertrand A0253013X
+            onClick={() => {
+              setCart([...cart, product]);
+              localStorage.setItem(
+                "cart",
+                JSON.stringify([...cart, product])
+              );
+              toast.success("Item Added to cart");
+            }}
+          >
+            ADD TO CART
+          </button>
         </div>
       </div>
       <hr />
@@ -98,19 +118,20 @@ const ProductDetails = () => {
                   >
                     More Details
                   </button>
-                  {/* <button
-                  className="btn btn-dark ms-1"
-                  onClick={() => {
-                    setCart([...cart, p]);
-                    localStorage.setItem(
-                      "cart",
-                      JSON.stringify([...cart, p])
-                    );
-                    toast.success("Item Added to cart");
-                  }}
-                >
-                  ADD TO CART
-                </button> */}
+                  <button
+                    className="btn btn-dark ms-1"
+                    // Added add to cart functionality - Ong Chang Heng Bertrand A0253013X
+                    onClick={() => {
+                      setCart([...cart, p]);
+                      localStorage.setItem(
+                        "cart",
+                        JSON.stringify([...cart, p])
+                      );
+                      toast.success("Item Added to cart");
+                    }}
+                  >
+                    ADD TO CART
+                  </button>
                 </div>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import '@testing-library/jest-dom';
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import toast from "react-hot-toast";
 import ProductDetails from "./ProductDetails";
 
 jest.mock("axios");
@@ -19,13 +20,34 @@ jest.mock("react-router-dom", () => ({
 // Mock Layout component
 jest.mock("./../components/Layout", () => ({ children }) => <div>{children}</div>);
 
+// Mock cart context
+jest.mock("../context/cart", () => ({
+  useCart: jest.fn(),
+}));
+
+// Mock toast
+jest.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+import { useCart } from "../context/cart";
+
 describe("ProductDetails Component", () => {
   let mockNavigate;
+  let mockCart;
+  let mockSetCart;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockNavigate = jest.fn();
     useNavigate.mockReturnValue(mockNavigate);
+    mockCart = [];
+    mockSetCart = jest.fn();
+    useCart.mockReturnValue([mockCart, mockSetCart]);
   });
 
   // ============ HAPPY PATH ============
@@ -163,6 +185,84 @@ describe("ProductDetails Component", () => {
         expect(relatedProductImage).toHaveAttribute('alt', 'Related Product');
       });
     });
+
+		it("should add main product to cart when ADD TO CART button is clicked", async () => {
+			const mockProduct = {
+				_id: "1",
+				name: "Test Product",
+				description: "Test description",
+				price: 100,
+				category: { _id: "cat1", name: "Category 1" },
+			};
+
+			const mockLocalStorage = {
+				getItem: jest.fn(),
+				setItem: jest.fn(),
+			};
+			Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
+
+			useParams.mockReturnValue({ slug: "test-product" });
+			axios.get
+				.mockResolvedValueOnce({ data: { product: mockProduct } })
+				.mockResolvedValueOnce({ data: { products: [] } });
+
+			render(<ProductDetails />);
+
+			await waitFor(() => {
+				const addToCartButtons = screen.getAllByRole('button', { name: /ADD TO CART/i });
+				fireEvent.click(addToCartButtons[0]);
+
+				expect(mockSetCart).toHaveBeenCalledWith([mockProduct]);
+				expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+					"cart",
+					JSON.stringify([mockProduct])
+				);
+				expect(toast.success).toHaveBeenCalledWith("Item Added to cart");
+			});
+		});
+
+		it("should add related product to cart when ADD TO CART button is clicked", async () => {
+			const mockProduct = {
+				_id: "1",
+				name: "Main Product",
+				description: "Main description",
+				price: 100,
+				category: { _id: "cat1", name: "Category 1" },
+			};
+
+			const mockRelatedProduct = {
+				_id: "2",
+				name: "Related Product",
+				description: "Related description",
+				price: 80,
+				slug: "related-product",
+			};
+
+			const mockLocalStorage = {
+				getItem: jest.fn(),
+				setItem: jest.fn(),
+			};
+			Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
+
+			useParams.mockReturnValue({ slug: "main-product" });
+			axios.get
+				.mockResolvedValueOnce({ data: { product: mockProduct } })
+				.mockResolvedValueOnce({ data: { products: [mockRelatedProduct] } });
+
+			render(<ProductDetails />);
+
+			await waitFor(() => {
+				const addToCartButtons = screen.getAllByRole('button', { name: /ADD TO CART/i });
+				fireEvent.click(addToCartButtons[1]); // Click related product's button
+
+				expect(mockSetCart).toHaveBeenCalledWith([mockRelatedProduct]);
+				expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+					"cart",
+					JSON.stringify([mockRelatedProduct])
+				);
+				expect(toast.success).toHaveBeenCalledWith("Item Added to cart");
+			});
+		});
   });
 
   // ============ Equivalence Partition ============
