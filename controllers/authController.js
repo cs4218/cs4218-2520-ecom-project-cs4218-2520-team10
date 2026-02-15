@@ -1,8 +1,9 @@
+import JWT from "jsonwebtoken";
+import mongoose from "mongoose";
+import { comparePassword, hashPassword } from "./../helpers/authHelper.js";
 import userModel from "../models/userModel.js";
 import orderModel from "../models/orderModel.js";
-
-import { comparePassword, hashPassword } from "./../helpers/authHelper.js";
-import JWT from "jsonwebtoken";
+import { ORDER_STATUS_LIST } from "../constants/orderStatus.js";
 
 export const registerController = async (req, res) => {
   try {
@@ -32,7 +33,7 @@ export const registerController = async (req, res) => {
     if (exisitingUser) {
       return res.status(200).send({
         success: false,
-        message: "Already Register please login",
+        message: "Already Registered. Please Login",
       });
     }
     //register user
@@ -56,7 +57,7 @@ export const registerController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Errro in Registeration",
+      message: "Error in Registeration",
       error,
     });
   }
@@ -94,7 +95,7 @@ export const loginController = async (req, res) => {
     });
     res.status(200).send({
       success: true,
-      message: "login successfully",
+      message: "Login Successfully",
       user: {
         _id: user._id,
         name: user.name,
@@ -109,14 +110,13 @@ export const loginController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error in login",
+      message: "Error in Login",
       error,
     });
   }
 };
 
 //forgotPasswordController
-
 export const forgotPasswordController = async (req, res) => {
   try {
     const { email, answer, newPassword } = req.body;
@@ -148,13 +148,13 @@ export const forgotPasswordController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Something went wrong",
+      message: "Something Went Wrong",
       error,
     });
   }
 };
 
-//test controller
+// Test Controller
 export const testController = (req, res) => {
   try {
     res.send("Protected Routes");
@@ -164,15 +164,33 @@ export const testController = (req, res) => {
   }
 };
 
-//update prfole
+// Update profile
+// note: email not used?
 export const updateProfileController = async (req, res) => {
   try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).send({
+        success: false,
+        message: "Unauthorized: User not authenticated",
+      });
+    }
+
     const { name, email, password, address, phone } = req.body;
     const user = await userModel.findById(req.user._id);
-    //password
-    if (password && password.length < 6) {
-      return res.json({ error: "Passsword is required and 6 character long" });
+    
+    // Check if user exists
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
     }
+    
+    // Password validation
+    if (password !== undefined && password.length < 6) {
+      return res.status(400).json({ error: "Password is required and 6 character long" });
+    }
+    
     const hashedPassword = password ? await hashPassword(password) : undefined;
     const updatedUser = await userModel.findByIdAndUpdate(
       req.user._id,
@@ -186,22 +204,29 @@ export const updateProfileController = async (req, res) => {
     );
     res.status(200).send({
       success: true,
-      message: "Profile Updated SUccessfully",
+      message: "Profile Updated Successfully",
       updatedUser,
     });
   } catch (error) {
     console.log(error);
     res.status(400).send({
       success: false,
-      message: "Error WHile Update profile",
+      message: "Error While Updating Profile",
       error,
     });
   }
 };
 
-//orders
+// Get Orders by User
 export const getOrdersController = async (req, res) => {
   try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).send({
+        success: false,
+        message: "Unauthorized: User not authenticated",
+      });
+    }
+
     const orders = await orderModel
       .find({ buyer: req.user._id })
       .populate("products", "-photo")
@@ -211,47 +236,80 @@ export const getOrdersController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error WHile Geting Orders",
-      error,
-    });
-  }
-};
-//orders
-export const getAllOrdersController = async (req, res) => {
-  try {
-    const orders = await orderModel
-      .find({})
-      .populate("products", "-photo")
-      .populate("buyer", "name")
-      .sort({ createdAt: "-1" });
-    res.json(orders);
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Error WHile Geting Orders",
+      message: "Error While Getting Orders",
       error,
     });
   }
 };
 
-//order status
-export const orderStatusController = async (req, res) => {
+// Get All Orders (Admin Only)
+export const getAllOrdersController = async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const { status } = req.body;
-    const orders = await orderModel.findByIdAndUpdate(
-      orderId,
-      { status },
-      { new: true }
-    );
+
+    const orders = await orderModel
+      .find({})
+      .populate("products", "-photo")
+      .populate("buyer", "name")
+      .sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "Error While Updateing Order",
+      message: "Error While Getting Orders",
       error,
+    });
+  }
+};
+
+// Update status of the given order 
+export const orderStatusController = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    // --- Input Validation ---
+    // Validate orderId format
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid Order ID format. Please provide a valid ObjectId.",
+      });
+    }
+
+    // Validate status value
+    if (!status || !ORDER_STATUS_LIST.includes(status)) {
+      return res.status(400).send({
+        success: false,
+        message: `Invalid or missing order status. Allowed values are: ${ORDER_STATUS_LIST.join(", ")}.`,
+      });
+    }
+
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true } // Returns the modified document rather than the original
+    );
+
+    // Handle "Order Not Found"
+    if (!updatedOrder) {
+      return res.status(404).send({
+        success: false,
+        message: "Order not found with the provided ID.",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Order status updated successfully.",
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "An error occurred while updating the order status.",
+      error: error.message,
     });
   }
 };
