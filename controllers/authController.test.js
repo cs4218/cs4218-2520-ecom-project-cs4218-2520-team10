@@ -876,7 +876,7 @@ describe("getAllOrdersController", () => {
       expect(orderModel.find).toHaveBeenCalledWith({});
       expect(orderModel.populate).toHaveBeenCalledWith("products", "-photo");
       expect(orderModel.populate).toHaveBeenCalledWith("buyer", "name");
-      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: "-1" });
+      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(res.json).toHaveBeenCalledWith(mockOrders);
       expect(res.status).not.toHaveBeenCalledWith(500); // Ensure no error status
     });
@@ -892,7 +892,7 @@ describe("getAllOrdersController", () => {
       expect(orderModel.find).toHaveBeenCalledWith({});
       expect(orderModel.populate).toHaveBeenCalledWith("products", "-photo");
       expect(orderModel.populate).toHaveBeenCalledWith("buyer", "name");
-      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: "-1" });
+      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(res.json).toHaveBeenCalledWith([]);
       expect(res.status).not.toHaveBeenCalledWith(500); // Ensure no error status
     });
@@ -911,7 +911,7 @@ describe("getAllOrdersController", () => {
       expect(orderModel.find).toHaveBeenCalledWith({});
       expect(orderModel.populate).toHaveBeenCalledWith("products", "-photo");
       expect(orderModel.populate).toHaveBeenCalledWith("buyer", "name");
-      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: "-1" });
+      expect(orderModel.sort).toHaveBeenCalledWith({ createdAt: -1 });
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
