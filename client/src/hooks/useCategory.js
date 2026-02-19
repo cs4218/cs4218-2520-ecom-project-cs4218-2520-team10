@@ -4,11 +4,11 @@ import axios from "axios";
 export default function useCategory() {
   const [categories, setCategories] = useState([]);
 
-  //get cat
+  // get cat
   const getCategories = async () => {
     try {
       const { data } = await axios.get("/api/v1/category/get-category");
-      setCategories(data?.category);
+      setCategories(data?.category || []); // Fix: use default value empty array if data or category is undefined or null - Shaun Lee Xuan Wei A0252626E
     } catch (error) {
       console.log(error);
     }
