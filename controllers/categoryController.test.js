@@ -32,7 +32,6 @@ describe("createCategoryController", () => {
   const validCategoryName = 'Shoes';
 
   beforeEach(() => {
-    jest.resetAllMocks();
     req = {
       body: {
         name: null
@@ -47,6 +46,7 @@ describe("createCategoryController", () => {
   });
 
   afterEach(() => {
+    jest.resetAllMocks();
     jest.restoreAllMocks();
   });
 
@@ -234,7 +234,6 @@ describe("updateCategoryController", () => {
   };
 
   beforeEach(() => {
-    jest.resetAllMocks();
     req = {
       params: {
         id: null
@@ -253,6 +252,7 @@ describe("updateCategoryController", () => {
   });
 
   afterEach(() => {
+    jest.resetAllMocks();
     jest.restoreAllMocks();
   });
 
@@ -463,7 +463,6 @@ describe("updateCategoryController", () => {
 describe("categoryController", () => {
   let res, req, consoleLogSpy;
   beforeEach(() => {
-    jest.resetAllMocks();
     req = {};
     res = {
       status: jest.fn().mockReturnThis(),
@@ -473,6 +472,7 @@ describe("categoryController", () => {
   });
 
   afterEach(() => {
+    jest.resetAllMocks();
     jest.restoreAllMocks();
   });
 
@@ -576,7 +576,6 @@ describe("singleCategoryController", () => {
   };
 
   beforeEach(() => {
-    jest.resetAllMocks();
     req = {
       params: {
         slug: null
@@ -590,6 +589,7 @@ describe("singleCategoryController", () => {
   });
 
   afterEach(() => {
+    jest.resetAllMocks();
     jest.restoreAllMocks();
   });
 
@@ -737,7 +737,6 @@ describe("deleteCategoryController", () => {
   };
 
   beforeEach(() => {
-    jest.resetAllMocks();
     req = {
       params: {
         id: null
@@ -752,6 +751,7 @@ describe("deleteCategoryController", () => {
   });
 
   afterEach(() => {
+    jest.resetAllMocks();
     jest.restoreAllMocks();
   });
 
