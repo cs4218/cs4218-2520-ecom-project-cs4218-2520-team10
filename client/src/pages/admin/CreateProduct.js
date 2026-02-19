@@ -27,7 +27,7 @@ const CreateProduct = () => {
       }
     } catch (error) {
       console.log(error);
-      toast.error("Something wwent wrong in getting catgeory");
+      toast.error("Something went wrong in getting category");
     }
   };
 
@@ -46,19 +46,24 @@ const CreateProduct = () => {
       productData.append("quantity", quantity);
       productData.append("photo", photo);
       productData.append("category", category);
-      const { data } = axios.post(
+      // Bug fix: Added 'shipping' to FormData to ensure it is included in the request - Ong Chang Heng Bertrand A0253013X
+      productData.append("shipping", shipping);
+      console.log(productData);
+      // Bug fix: Added 'await' to post request to ensure it resolves before proceeding - Ong Chang Heng Bertrand A0253013X
+      const { data } = await axios.post(
         "/api/v1/product/create-product",
         productData
       );
+      // Bug fix: Changed 'data?.success' to ensure proper handling of response - Ong Chang Heng Bertrand A0253013X
       if (data?.success) {
-        toast.error(data?.message);
-      } else {
-        toast.success("Product Created Successfully");
+        toast.success(data?.message);
         navigate("/dashboard/admin/products");
+      } else {
+        toast.error(data?.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error("something went wrong");
+      toast.error("Something went wrong");
     }
   };
 
@@ -83,7 +88,7 @@ const CreateProduct = () => {
                 }}
               >
                 {categories?.map((c) => (
-                  <Option key={c._id} value={c._id}>
+                  <Option key={c._id} value={c._id} data-testid={`category-option-${c._id}`}>
                     {c.name}
                   </Option>
                 ))}
@@ -116,7 +121,7 @@ const CreateProduct = () => {
                 <input
                   type="text"
                   value={name}
-                  placeholder="write a name"
+                  placeholder="Write a name"
                   className="form-control"
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -125,7 +130,7 @@ const CreateProduct = () => {
                 <textarea
                   type="text"
                   value={description}
-                  placeholder="write a description"
+                  placeholder="Write a description"
                   className="form-control"
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -135,7 +140,7 @@ const CreateProduct = () => {
                 <input
                   type="number"
                   value={price}
-                  placeholder="write a Price"
+                  placeholder="Write a price"
                   className="form-control"
                   onChange={(e) => setPrice(e.target.value)}
                 />
@@ -144,7 +149,7 @@ const CreateProduct = () => {
                 <input
                   type="number"
                   value={quantity}
-                  placeholder="write a quantity"
+                  placeholder="Write a quantity"
                   className="form-control"
                   onChange={(e) => setQuantity(e.target.value)}
                 />
@@ -152,7 +157,7 @@ const CreateProduct = () => {
               <div className="mb-3">
                 <Select
                   bordered={false}
-                  placeholder="Select Shipping "
+                  placeholder="Select shipping"
                   size="large"
                   showSearch
                   className="form-select mb-3"
@@ -160,8 +165,8 @@ const CreateProduct = () => {
                     setShipping(value);
                   }}
                 >
-                  <Option value="0">No</Option>
-                  <Option value="1">Yes</Option>
+                  <Option value="0" data-testid="select-shipping-no">No</Option>
+                  <Option value="1" data-testid="select-shipping-yes">Yes</Option>
                 </Select>
               </div>
               <div className="mb-3">
