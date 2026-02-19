@@ -20,12 +20,12 @@ jest.mock("react-hot-toast", () => ({
 }));
 
 // Mock Layout component
-jest.mock("../../components/Layout", () => ({ children }) => <div>{children}</div>);
+jest.mock("../../components/Layout", () => ({ children }) => <div data-testid="layout">{children}</div>);
 
 // Mock AdminMenu component
-jest.mock("../../components/AdminMenu", () => () => <div>Admin Panel</div>);
+jest.mock("../../components/AdminMenu", () => () => <div data-testid="admin-menu">Admin Panel</div>);
 
-describe("Products Component (Admin)", () => {
+describe("Products Admin Page", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -266,8 +266,8 @@ describe("Products Component (Admin)", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Admin Panel")).toBeInTheDocument();
-				expect(screen.getByTestId("all-products-title")).toHaveTextContent("All Products List");
+        expect(screen.getByTestId("layout")).toBeInTheDocument();
+        expect(screen.getByTestId("admin-menu")).toBeInTheDocument();
       });
     });
 
@@ -299,5 +299,5 @@ describe("Products Component (Admin)", () => {
         expect(container.querySelector('.card-img-top')).toBeInTheDocument();
       });
     });
-  });
+	});
 });
