@@ -3,14 +3,14 @@ import slugify from "slugify";
 export const createCategoryController = async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name) {
-      return res.status(401).send({ message: "Name is required" });
+    if (!name || !name.trim()) { // Fix: add validation for whitespace only names - Shaun Lee Xuan Wei A0252626E
+      return res.status(422).send({ message: "Name is required" }); // Fix: status 422 instead of 401 for invalid input - Shaun Lee Xuan Wei A0252626E
     }
     const existingCategory = await categoryModel.findOne({ name });
     if (existingCategory) {
       return res.status(200).send({
         success: true,
-        message: "Category Already Exisits",
+        message: "Category already exists", // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
       });
     }
     const category = await new categoryModel({
@@ -19,7 +19,7 @@ export const createCategoryController = async (req, res) => {
     }).save();
     res.status(201).send({
       success: true,
-      message: "new category created",
+      message: "New category created", // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
       category,
     });
   } catch (error) {
@@ -27,7 +27,7 @@ export const createCategoryController = async (req, res) => {
     res.status(500).send({
       success: false,
       error, // Fix: change typo "errro" to error - Shaun Lee Xuan Wei A0252626E
-      message: "Error in Category", // Fix: change typo "errro" to error - Shaun Lee Xuan Wei A0252626E
+      message: "Error in Category", // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
     });
   }
 };

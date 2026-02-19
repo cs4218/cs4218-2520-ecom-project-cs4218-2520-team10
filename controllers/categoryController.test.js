@@ -16,12 +16,13 @@ jest.mock('slugify');
   *   b. status 200 for existing category
   *   c. returned category structure for valid new category
   * 2. Input validation: 2 tests
-  *   a. status 401 for missing name (name === null)
-  *   b. status 401 for empty string name
+  *   a. status 422 for missing name (name === null)
+  *   b. status 422 for empty string name
+  *   c. status 422 for only white space string name
   * 3. Error handling: 2 tests
   *   a. status 500 if findOne exception
   *   b. status 500 if save exception
-  * 4. Side effects: x tests
+  * 4. Side effects: 1 tests
   *   a. Log error when error occurs
   */
 describe("createCategoryController", () => {
@@ -104,12 +105,12 @@ describe("createCategoryController", () => {
   });
 
   describe("Input Validation", () => {
-    it("should return 401 if missing name", async () => {
+    it("should return 422 if missing name", async () => {
       req.body.name = null;
 
       await createCategoryController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.any(String)
@@ -117,12 +118,25 @@ describe("createCategoryController", () => {
       )
     });
 
-    it("should return 401 if name is empty string", async () => {
+    it("should return 422 if name is empty string", async () => {
       req.body.name = "";
 
       await createCategoryController(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.any(String)
+        })
+      )
+    });
+
+    it("should return 422 if name is only whitespace string", async () => {
+      req.body.name = " ";
+
+      await createCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.any(String)
