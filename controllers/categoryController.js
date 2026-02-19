@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import categoryModel from "../models/categoryModel.js";
 import slugify from "slugify";
 export const createCategoryController = async (req, res) => {
@@ -40,14 +41,45 @@ export const updateCategoryController = async (req, res) => {
   try {
     const { name } = req.body;
     const { id } = req.params;
+     // Fix: add validation for null name - Shaun Lee Xuan Wei A0252626E
+     // Fix: add validation for empty string name - Shaun Lee Xuan Wei A0252626E
+     // Fix: add validation for whitespace only name - Shaun Lee Xuan Wei A0252626E
+    if (!name || !name.trim()) {
+      return res.status(422).send({
+        success: false,
+        message: "Name is required"
+      });
+    }
+    // Fix: add validation for duplicate name - Shaun Lee Xuan Wei A0252626E
+    const existingCategory = await categoryModel.findOne({ name });
+    if (existingCategory) {
+      return res.status(422).send({
+        success: false,
+        message: "Category name already exists",
+      });
+    }
+    // Fix: add validation for category id - Shaun Lee Xuan Wei A0252626E
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(422).send({
+        success: false,
+        message: "Invalid category id",
+      });
+    }
     const category = await categoryModel.findByIdAndUpdate(
       id,
       { name, slug: slugify(name) },
       { new: true }
     );
+    // Fix: add validation for category id not found - Shaun Lee Xuan Wei A0252626E
+    if (!category) {
+      return res.status(404).send({
+        success: false,
+        message: "Category id not found",
+      });
+    }
     res.status(200).send({
       success: true,
-      messsage: "Category Updated Successfully",
+      message: "Category Updated Successfully", // Fix: change field typo "messsage" to "message" - Shaun Lee Xuan Wei A0252626E
       category,
     });
   } catch (error) {
