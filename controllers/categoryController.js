@@ -93,7 +93,7 @@ export const updateCategoryController = async (req, res) => {
 };
 
 // get all cat
-export const categoryControlller = async (req, res) => {
+export const categoryController = async (req, res) => { // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
   try {
     const category = await categoryModel.find({});
     res.status(200).send({

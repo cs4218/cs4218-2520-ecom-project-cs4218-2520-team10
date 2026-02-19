@@ -3,7 +3,7 @@
 */
 import slugify from 'slugify';
 import categoryModel from '../models/categoryModel';
-import { createCategoryController, updateCategoryController } from './categoryController';
+import { categoryController, createCategoryController, updateCategoryController } from './categoryController';
 import mongoose from "mongoose";
 
 jest.mock('../models/categoryModel');
@@ -63,8 +63,8 @@ describe("createCategoryController", () => {
           success: true,
           message: expect.any(String)
         })
-      )
-    })
+      );
+    });
 
     it("should return 200 if category already exist", async () => {
       req.body.name = validCategoryName;
@@ -87,13 +87,13 @@ describe("createCategoryController", () => {
       const categoryObj = {
         name: validCategoryName,
         slug: mockSlug
-      }
+      };
       const mockSave = jest.fn().mockResolvedValue(categoryObj);
       categoryModel.mockImplementation(() => {
         return {
           save: mockSave
         }
-      })
+      });
 
       await createCategoryController(req, res);
 
@@ -117,7 +117,7 @@ describe("createCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 422 if name is empty string", async () => {
@@ -131,7 +131,7 @@ describe("createCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 422 if name is only whitespace string", async () => {
@@ -145,7 +145,7 @@ describe("createCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
   });
 
@@ -174,7 +174,7 @@ describe("createCategoryController", () => {
         return {
           save: jest.fn().mockRejectedValue(error)
         }
-      })
+      });
 
       await createCategoryController(req, res);
 
@@ -193,14 +193,14 @@ describe("createCategoryController", () => {
     it("should log error when an exception occurs", async () => {
       req.body.name = validCategoryName;
       const error = new Error("Database error");
-      categoryModel.findOne = jest.fn().mockRejectedValue(error);
+      categoryModel.findOne.mockRejectedValue(error);
 
       await createCategoryController(req, res);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });
   });
-})
+});
 
 /**
   * Unit tests for updateCategoryController
@@ -231,7 +231,7 @@ describe("updateCategoryController", () => {
     _id: validCategoryId,
     name: validCategoryName,
     slug: mockSlug
-  }
+  };
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -301,7 +301,7 @@ describe("updateCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 422 if name is empty string", async () => {
@@ -315,7 +315,7 @@ describe("updateCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 422 if name is whitespace only", async () => {
@@ -329,7 +329,7 @@ describe("updateCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 422 for duplicate name", async () => {
@@ -344,7 +344,7 @@ describe("updateCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 422 for null category id", async () => {
@@ -360,7 +360,7 @@ describe("updateCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 422 for invalid category id", async () => {
@@ -376,7 +376,7 @@ describe("updateCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
 
     it("should return 404 for category id not found", async () => {
@@ -392,7 +392,7 @@ describe("updateCategoryController", () => {
           success: false,
           message: expect.any(String)
         })
-      )
+      );
     });
   });
 
@@ -413,7 +413,7 @@ describe("updateCategoryController", () => {
           message: expect.any(String)
         })
       );
-    })
+    });
 
     it("should return 500 if findIdAndUpdate exception occurs", async () => {
       req.body.name = validCategoryName;
@@ -431,7 +431,7 @@ describe("updateCategoryController", () => {
           message: expect.any(String)
         })
       );
-    })
+    });
   });
 
   describe("Side effects", () => {
@@ -439,11 +439,113 @@ describe("updateCategoryController", () => {
       req.params.id = validCategoryId;
       req.body.name = validCategoryName;
       const error = new Error("Database error");
-      categoryModel.findByIdAndUpdate = jest.fn().mockRejectedValue(error);
+      categoryModel.findByIdAndUpdate.mockRejectedValue(error);
 
       await updateCategoryController(req, res);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });
   });
-})
+});
+
+/**
+  * Unit tests for categoryController
+  *
+  * 1. Happy path: 3 tests
+  *   a. status 200 if no exception
+  *   b. return category structure if no exception
+  *   c. return empty category list if find returns empty
+  * 2. Error handling: 1 tests
+  *   a. status 500 if find exception
+  * 3. Side effects: 1 tests
+  *   a. Log error when error occurs
+  */
+describe("categoryController", () => {
+  let res, req, consoleLogSpy;
+  beforeEach(() => {
+    jest.resetAllMocks();
+    req = {};
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn()
+    };
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe("Happy Path", () => {
+    it("should return 200 if no find exception", async () => {
+      await categoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return category list if no find exception", async () => {
+      const mockCategories = [
+        { _id: "1", name: "Shoes", slug: "shoes" },
+        { _id: "2", name: "Hats", slug: "hats" }
+      ];
+      categoryModel.find.mockResolvedValue(mockCategories);
+
+      await categoryController(req, res);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: expect.arrayContaining([
+            expect.objectContaining({ _id: expect.any(String), name: expect.any(String), slug: expect.any(String) })
+          ])
+        })
+      );
+    });
+
+    it("should return empty list if find returns empty", async () => {
+      categoryModel.find.mockResolvedValue([]);
+
+      await categoryController(req, res);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: []
+        })
+      );
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should return 500 if find exception occurs", async () => {
+      const error = new Error("find error");
+      categoryModel.find.mockRejectedValue(error);
+
+      await categoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error,
+          message: expect.any(String)
+        })
+      );
+    });
+  });
+
+  describe("Side effects", () => {
+    it("should log error when an exception occurs", async () => {
+      const error = new Error("Database error");
+      categoryModel.find.mockRejectedValue(error);
+
+      await categoryController(req, res);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(error);
+    });
+  });
+});
