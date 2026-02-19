@@ -3,7 +3,7 @@
 */
 import slugify from 'slugify';
 import categoryModel from '../models/categoryModel';
-import { categoryController, createCategoryController, updateCategoryController } from './categoryController';
+import { categoryController, createCategoryController, singleCategoryController, updateCategoryController } from './categoryController';
 import mongoose from "mongoose";
 
 jest.mock('../models/categoryModel');
@@ -544,6 +544,170 @@ describe("categoryController", () => {
       categoryModel.find.mockRejectedValue(error);
 
       await categoryController(req, res);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(error);
+    });
+  });
+});
+
+
+/**
+  * Unit tests for singleCategoryController
+  *
+  * 1. Happy path: 2 tests
+  *   a. status 200 for valid slug
+  *   b. return category for valid slug
+  * 2. Input validation: 4 tests
+  *   a. status 422 for missing slug (slug === null)
+  *   b. status 422 for empty string slug
+  *   c. status 422 for only whitespace string slug
+  *   d. status 404 for slug not found
+  * 3. Error handling: 1 tests
+  *   a. status 500 if findOne exception
+  * 4. Side effects: 1 tests
+  *   a. Log error when error occurs
+  */
+describe("singleCategoryController", () => {
+  let res, req, consoleLogSpy;
+  const mockSlug = 'mock-slug';
+  const categoryObj = {
+    _id: 'valid-id',
+    name: 'Shoes',
+    slug: mockSlug
+  };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    req = {
+      params: {
+        slug: null
+      }
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn()
+    };
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe("Happy Path", () => {
+    it("should return 200 if valid slug", async () => {
+      req.params.slug = mockSlug;
+      categoryModel.findOne.mockResolvedValue(categoryObj);
+
+      await singleCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return category if valid slug", async () => {
+      req.params.slug = mockSlug;
+      categoryModel.findOne.mockResolvedValue(categoryObj);
+
+      await singleCategoryController(req, res);
+
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: categoryObj
+        })
+      );
+    });
+  });
+
+  describe("Input Validation", () => {
+    it("should return 422 if missing slug", async () => {
+      req.params.slug = null;
+
+      await singleCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return 422 if slug is empty string", async () => {
+      req.params.slug = "";
+
+      await singleCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return 422 if slug is whitespace only", async () => {
+      req.params.slug = " ";
+
+      await singleCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return 404 if slug not found", async () => {
+      req.params.slug = "non-existent-slug";
+
+      await singleCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should return 500 if findOne exception occurs", async () => {
+      req.params.slug = mockSlug;
+      const error = new Error("findOne error");
+      categoryModel.findOne.mockRejectedValue(error);
+
+      await singleCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error,
+          message: expect.any(String)
+        })
+      );
+    });
+  });
+
+  describe("Side effects", () => {
+    it("should log error when an exception occurs", async () => {
+      req.params.slug = mockSlug;
+      const error = new Error("Database error");
+      categoryModel.findOne.mockRejectedValue(error);
+
+      await singleCategoryController(req, res);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });
