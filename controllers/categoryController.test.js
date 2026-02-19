@@ -113,6 +113,7 @@ describe("createCategoryController", () => {
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
+          success: false,
           message: expect.any(String)
         })
       )
@@ -126,6 +127,7 @@ describe("createCategoryController", () => {
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
+          success: false,
           message: expect.any(String)
         })
       )
@@ -139,6 +141,7 @@ describe("createCategoryController", () => {
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
+          success: false,
           message: expect.any(String)
         })
       )

@@ -4,7 +4,10 @@ export const createCategoryController = async (req, res) => {
   try {
     const { name } = req.body;
     if (!name || !name.trim()) { // Fix: add validation for whitespace only names - Shaun Lee Xuan Wei A0252626E
-      return res.status(422).send({ message: "Name is required" }); // Fix: status 422 instead of 401 for invalid input - Shaun Lee Xuan Wei A0252626E
+      return res.status(422).send({ // Fix: status 422 instead of 401 for invalid input - Shaun Lee Xuan Wei A0252626E
+        success: false, // Fix: add success field for invalid input 422 status - Shaun Lee Xuan Wei A0252626E
+        message: "Name is required"
+      });
     }
     const existingCategory = await categoryModel.findOne({ name });
     if (existingCategory) {
