@@ -26,8 +26,8 @@ export const createCategoryController = async (req, res) => {
     console.log(error);
     res.status(500).send({
       success: false,
-      error,
-      message: "Error in Category",
+      error, // Fix: change typo "errro" to error - Shaun Lee Xuan Wei A0252626E
+      message: "Error in Category", // Fix: change typo "errro" to error - Shaun Lee Xuan Wei A0252626E
     });
   }
 };
