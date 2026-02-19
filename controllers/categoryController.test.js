@@ -3,7 +3,7 @@
 */
 import slugify from 'slugify';
 import categoryModel from '../models/categoryModel';
-import { categoryController, createCategoryController, singleCategoryController, updateCategoryController } from './categoryController';
+import { categoryController, createCategoryController, deleteCategoryController, singleCategoryController, updateCategoryController } from './categoryController';
 import mongoose from "mongoose";
 
 jest.mock('../models/categoryModel');
@@ -226,7 +226,7 @@ describe("updateCategoryController", () => {
   let res, req, consoleLogSpy;
   const mockSlug = 'mock-slug';
   const validCategoryName = 'Shoes';
-  const validCategoryId = 'valid-id';
+  const validCategoryId = 'validId';
   const categoryObj = {
     _id: validCategoryId,
     name: validCategoryName,
@@ -570,8 +570,8 @@ describe("categoryController", () => {
 describe("singleCategoryController", () => {
   let res, req, consoleLogSpy;
   const mockSlug = 'mock-slug';
-  const categoryObj = {
-    _id: 'valid-id',
+  const mockCategory = {
+    _id: 'validId',
     name: 'Shoes',
     slug: mockSlug
   };
@@ -597,7 +597,7 @@ describe("singleCategoryController", () => {
   describe("Happy Path", () => {
     it("should return 200 if valid slug", async () => {
       req.params.slug = mockSlug;
-      categoryModel.findOne.mockResolvedValue(categoryObj);
+      categoryModel.findOne.mockResolvedValue(mockCategory);
 
       await singleCategoryController(req, res);
 
@@ -612,13 +612,13 @@ describe("singleCategoryController", () => {
 
     it("should return category if valid slug", async () => {
       req.params.slug = mockSlug;
-      categoryModel.findOne.mockResolvedValue(categoryObj);
+      categoryModel.findOne.mockResolvedValue(mockCategory);
 
       await singleCategoryController(req, res);
 
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
-          category: categoryObj
+          category: mockCategory
         })
       );
     });
@@ -708,6 +708,143 @@ describe("singleCategoryController", () => {
       categoryModel.findOne.mockRejectedValue(error);
 
       await singleCategoryController(req, res);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(error);
+    });
+  });
+});
+
+/**
+  * Unit tests for deleteCategoryController
+  *
+  * 1. Happy path: 1 tests
+  *   a. status 200 for valid id
+  * 2. Input validation: 3 tests
+  *   a. status 422 for missing category id (id === null)
+  *   b. status 422 for invalid category id
+  *   c. status 404 for category id not found
+  * 3. Error handling: 1 tests
+  *   a. status 500 if findByIdAndDelete exception
+  * 4. Side effects: 1 tests
+  *   a. Log error when error occurs
+  */
+describe("deleteCategoryController", () => {
+  let res, req, consoleLogSpy;
+  const validCategoryId = 'validId';
+  const mockCategory = {
+    _id: validCategoryId,
+    name: 'Shoes',
+    slug: 'mock-slug'
+  };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    req = {
+      params: {
+        id: null
+      }
+    };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn()
+    };
+    jest.spyOn(mongoose.Types.ObjectId, "isValid").mockReturnValue(true);
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe("Happy Path", () => {
+    it("should return 200 if valid id", async () => {
+      req.params.id = validCategoryId;
+      categoryModel.findByIdAndDelete.mockResolvedValue(mockCategory);
+
+      await deleteCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: expect.any(String)
+        })
+      );
+    });
+  });
+
+  describe("Input Validation", () => {
+    it("should return 422 if null category id", async () => {
+      req.params.id = null;
+      jest.spyOn(mongoose.Types.ObjectId, "isValid").mockReturnValue(false);
+
+      await deleteCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return 422 if invalid category id", async () => {
+      req.params.id = "invalid-id";
+      jest.spyOn(mongoose.Types.ObjectId, "isValid").mockReturnValue(false);
+
+      await deleteCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return 404 if category id not found", async () => {
+      req.params.id = "non-existent-id";
+
+      await deleteCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should return 500 if findByIdAndDelete exception occurs", async () => {
+      req.params.id = validCategoryId;
+      const error = new Error("findByIdAndDelete error");
+      categoryModel.findByIdAndDelete.mockRejectedValue(error);
+
+      await deleteCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error,
+          message: expect.any(String)
+        })
+      );
+    });
+  });
+
+  describe("Side effects", () => {
+    it("should log error when an exception occurs", async () => {
+      req.params.id = validCategoryId;
+      const error = new Error("Database error");
+      categoryModel.findByIdAndDelete.mockRejectedValue(error);
+
+      await deleteCategoryController(req, res);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });

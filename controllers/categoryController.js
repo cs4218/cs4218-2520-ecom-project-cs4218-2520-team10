@@ -147,20 +147,34 @@ export const singleCategoryController = async (req, res) => {
   }
 };
 
-//delete category
-export const deleteCategoryCOntroller = async (req, res) => {
+// delete category
+export const deleteCategoryController = async (req, res) => { // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
   try {
     const { id } = req.params;
-    await categoryModel.findByIdAndDelete(id);
+    const category = await categoryModel.findByIdAndDelete(id);
+    // Fix: add validation for category id - Shaun Lee Xuan Wei A0252626E
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(422).send({
+        success: false,
+        message: "Invalid category id"
+      });
+    }
+    // Fix: add validation for category id not found
+    if (!category) {
+      return res.status(404).send({
+        success: false,
+        message: "Category id not found"
+      });
+    }
     res.status(200).send({
       success: true,
-      message: "Categry Deleted Successfully",
+      message: "Category deleted successfully", // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
     });
   } catch (error) {
     console.log(error);
     res.status(500).send({
       success: false,
-      message: "error while deleting category",
+      message: "Error while deleting category", // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
       error,
     });
   }
