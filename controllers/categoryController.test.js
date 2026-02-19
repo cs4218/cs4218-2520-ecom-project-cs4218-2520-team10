@@ -550,7 +550,6 @@ describe("categoryController", () => {
   });
 });
 
-
 /**
   * Unit tests for singleCategoryController
   *
