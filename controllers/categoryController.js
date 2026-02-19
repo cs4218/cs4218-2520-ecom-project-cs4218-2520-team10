@@ -77,9 +77,10 @@ export const updateCategoryController = async (req, res) => {
         message: "Category id not found",
       });
     }
+    // Minor fix: typo, message casing - Shaun Lee Xuan Wei A0252626E
     res.status(200).send({
       success: true,
-      message: "Category Updated Successfully", // Fix: change field typo "messsage" to "message" - Shaun Lee Xuan Wei A0252626E
+      message: "Category updated successfully", // Fix: change field typo "messsage" to "message" - Shaun Lee Xuan Wei A0252626E
       category,
     });
   } catch (error) {
