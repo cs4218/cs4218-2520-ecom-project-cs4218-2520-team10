@@ -81,10 +81,10 @@ const UpdateProduct = () => {
       );
       // Bug fix: data?.success logic was inverted, changed to accurately reflect success and failure cases - Ong Chang Heng Bertrand A0253013X
       if (data?.success) {
-        toast.success(data?.message || "Product Updated Successfully");
+        toast.success(data?.message);
         navigate("/dashboard/admin/products");
       } else {
-        toast.error(data?.message || "Failed to update product");
+        toast.error(data?.message);
       }
     } catch (error) {
       console.log(error);

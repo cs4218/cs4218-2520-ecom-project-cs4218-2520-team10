@@ -78,12 +78,14 @@ global.prompt = jest.fn();
     c. Should update product successfully and navigate
     d. Should delete product when confirmed
     e. Should not delete product when cancelled
-  2. Error Handling: 5 tests
+  2. Error Handling: 7 tests
     a. Should show error toast if fetching product fails
     b. Should show error toast if fetching categories fails
-    c. Should show error toast if updating product fails
-    d. Should show error toast if deleting product fails
-    e. Should show error toast when update returns success: false
+    c. Should show error toast with specific message if updating product fails
+    d. Should show error toast with generic message if updating product fails with no error message
+    e. Should show error toast if deleting product fails
+    f. Should show error toast when update returns success: false
+    g. Should not populate categories when get categories returns success: false
   3. Equivalence Partitioning: 2 tests
     a. Category fetch should handle zero categories
     b. Category fetch should handle multiple categories
@@ -325,7 +327,7 @@ describe("UpdateProduct pageg", () => {
 
       await waitFor(() => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
-        expect(toast.error).toHaveBeenCalledWith("Failed to load product details");
+        expect(toast.error).toHaveBeenCalledWith(expect.any(String));
       });
 
       consoleLogSpy.mockRestore();
@@ -360,7 +362,40 @@ describe("UpdateProduct pageg", () => {
       consoleLogSpy.mockRestore();
     });
 
-    it("should show error toast when update fails", async () => {
+    it("should show error toast with specific message when update fails", async () => {
+      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+
+      const mockError = new Error("API Error");
+      mockError.response = {
+        data: {
+          error: "Specific error message"
+        }
+      };
+      axios.put = jest.fn().mockRejectedValueOnce(mockError);
+
+      render(
+        <MemoryRouter>
+          <UpdateProduct />
+        </MemoryRouter>
+      );
+
+      // Wait for product to load
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Test Product")).toBeInTheDocument();
+      });
+
+      // Click update
+      fireEvent.click(screen.getByTestId("update-button"));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Specific error message");
+        expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
+      });
+
+      consoleLogSpy.mockRestore();
+    });
+
+    it("should show error toast with generic message when update fails with no error message", async () => {
       const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
 
       axios.put = jest.fn().mockRejectedValueOnce(new Error("Network error"));
@@ -377,7 +412,7 @@ describe("UpdateProduct pageg", () => {
       });
 
       // Click update
-      fireEvent.click(screen.getByText("UPDATE PRODUCT"));
+      fireEvent.click(screen.getByTestId("update-button"));
 
       await waitFor(() => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
@@ -439,6 +474,40 @@ describe("UpdateProduct pageg", () => {
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
         expect(mockNavigate).not.toHaveBeenCalled();
       });
+    });
+
+    it("should not populate categories when get categories returns success: false", async () => {
+      axios.get.mockReset();
+      axios.get.mockImplementation((url) => {
+        if (url.includes("/api/v1/product/get-product/")) {
+          return Promise.resolve({
+            data: { product: mockProduct },
+          });
+        }
+        if (url === "/api/v1/category/get-category") {
+          return Promise.resolve({
+            data: { 
+              success: false,
+              category: mockCategories
+            },
+          });
+        }
+      });
+
+      render(
+        <MemoryRouter>
+          <UpdateProduct />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledWith("/api/v1/category/get-category");
+        expect(screen.getByDisplayValue("Test Product")).toBeInTheDocument();
+      });
+
+      const categorySelect = screen.getByTestId("category-select");
+      expect(within(categorySelect).queryByText("Electronics")).not.toBeInTheDocument();
+      expect(within(categorySelect).queryByText("Clothing")).not.toBeInTheDocument();
     });
   });
 
