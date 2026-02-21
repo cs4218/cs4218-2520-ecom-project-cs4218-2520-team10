@@ -101,7 +101,6 @@ describe('Categories Page', () => {
         </Routes>
       </MemoryRouter>
     );
-
     const links = screen.queryAllByRole('link');
 
     expect(links).toHaveLength(mockCategories.length);
