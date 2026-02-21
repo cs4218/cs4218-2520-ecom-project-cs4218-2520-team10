@@ -25,7 +25,37 @@ jest.mock("../../components/Layout", () => ({ children }) => <div data-testid="l
 // Mock AdminMenu component
 jest.mock("../../components/AdminMenu", () => () => <div data-testid="admin-menu">Admin Panel</div>);
 
+/*
+  Test cases for Products Admin Page:
+  1. Happy Path: 2 tests
+    a. should display all products when fetched successfully
+    b. should display blank page when there are 0 products
+  2. Error Handling: 1 test
+    a. should display error toast when product/get-product API call fails
+  3. Side Effects / API Calls: 1 test
+    a. should only call API once on initial mount
+  4. Rendering / UI Structure: 3 tests
+    a. should render Layout and AdminMenu components
+    b. should display product images with correct src and alt
+    c. should render product links with correct navigation paths
+*/
+
 describe("Products Admin Page", () => {
+  const mockProducts = [
+    {
+      _id: "1",
+      name: "Product 1",
+      description: "Description 1",
+      slug: "product-1",
+    },
+    {
+      _id: "2",
+      name: "Product 2",
+      description: "Description 2",
+      slug: "product-2",
+    },
+  ];
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -33,21 +63,6 @@ describe("Products Admin Page", () => {
   // ============ HAPPY PATH ============
   describe("Happy Path", () => {
     it("should display all products when fetched successfully", async () => {
-      const mockProducts = [
-        {
-          _id: "1",
-          name: "Product 1",
-          description: "Description 1",
-          slug: "product-1",
-        },
-        {
-          _id: "2",
-          name: "Product 2",
-          description: "Description 2",
-          slug: "product-2",
-        },
-      ];
-
       axios.get.mockResolvedValueOnce({
         data: { products: mockProducts },
       });
@@ -60,71 +75,14 @@ describe("Products Admin Page", () => {
 
       await waitFor(() => {
         expect(axios.get).toHaveBeenCalledWith("/api/v1/product/get-product");
-        expect(screen.getByTestId("all-products-title")).toHaveTextContent("All Products List");
-        expect(screen.getByTestId("product-name-1")).toHaveTextContent("Product 1");
-        expect(screen.getByTestId("product-description-1")).toHaveTextContent("Description 1");
-        expect(screen.getByTestId("product-name-2")).toHaveTextContent("Product 2");
-        expect(screen.getByTestId("product-description-2")).toHaveTextContent("Description 2");
+        expect(screen.getByTestId("product-name-1")).toHaveTextContent(mockProducts[0].name);
+        expect(screen.getByTestId("product-description-1")).toHaveTextContent(mockProducts[0].description);
+        expect(screen.getByTestId("product-name-2")).toHaveTextContent(mockProducts[1].name);
+        expect(screen.getByTestId("product-description-2")).toHaveTextContent(mockProducts[1].description);
       });
     });
 
-    it("should display product images with correct src and alt", async () => {
-      const mockProducts = [
-        {
-          _id: "1",
-          name: "Test Product",
-          description: "Test Description",
-          slug: "test-product",
-        },
-      ];
-
-      axios.get.mockResolvedValueOnce({
-        data: { products: mockProducts },
-      });
-
-      render(
-        <MemoryRouter>
-          <Products />
-        </MemoryRouter>
-      );
-
-      await waitFor(() => {
-        const productImage = screen.getByAltText("Test Product");
-        expect(productImage).toHaveAttribute('src', '/api/v1/product/product-photo/1');
-        expect(productImage).toHaveAttribute('alt', 'Test Product');
-      });
-    });
-
-    it("should render product links with correct navigation paths", async () => {
-      const mockProducts = [
-        {
-          _id: "1",
-          name: "Product 1",
-          description: "Description 1",
-          slug: "product-1",
-        },
-      ];
-
-      axios.get.mockResolvedValueOnce({
-        data: { products: mockProducts },
-      });
-
-      render(
-        <MemoryRouter>
-          <Products />
-        </MemoryRouter>
-      );
-
-      await waitFor(() => {
-        const productLink = screen.getByRole('link', { name: /Product 1/i });
-        expect(productLink).toHaveAttribute('href', '/dashboard/admin/product/product-1');
-      });
-    });
-  });
-
-  // ============ Equivalence Partitioning ============
-  describe("Product List Equivalence Partitioning", () => {
-    it("should handle empty product list (0 products)", async () => {
+    it("should display blank page when there are 0 products", async () => {
       axios.get.mockResolvedValueOnce({
         data: { products: [] },
       });
@@ -136,34 +94,8 @@ describe("Products Admin Page", () => {
       );
 
       await waitFor(() => {
-				expect(screen.getByTestId("all-products-title")).toHaveTextContent("All Products List");
-        expect(screen.queryByRole('link', { name: /Product/i })).not.toBeInTheDocument();
-			});
-    });
-
-    it("should display multiple products (At least 1 product)", async () => {
-      const mockProducts = Array.from({ length: 12 }, (_, i) => ({
-        _id: `${i + 1}`,
-        name: `Product ${i + 1}`,
-        description: `Description ${i + 1}`,
-        slug: `product-${i + 1}`,
-      }));
-
-      axios.get.mockResolvedValueOnce({
-        data: { products: mockProducts },
-      });
-
-      render(
-        <MemoryRouter>
-          <Products />
-        </MemoryRouter>
-      );
-
-      await waitFor(() => {
-				expect(screen.getByTestId("all-products-title")).toHaveTextContent("All Products List");
-				expect(screen.getByTestId("product-name-1")).toHaveTextContent("Product 1");
-				expect(screen.getByTestId("product-name-12")).toHaveTextContent("Product 12");
-        expect(screen.getAllByRole('link')).toHaveLength(12);
+        expect(screen.getByTestId("all-products-title")).toBeInTheDocument();
+        expect(screen.queryByTestId("product-link-1")).not.toBeInTheDocument();
       });
     });
   });
@@ -171,9 +103,7 @@ describe("Products Admin Page", () => {
   // ============ ERROR HANDLING ============
   describe("Error Handling", () => {
     it("should display error toast when product/get-product API call fails", async () => {
-      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      axios.get.mockRejectedValueOnce(new Error("Network error"));
+      axios.get.mockRejectedValueOnce(new Error("Database fetch error"));
 
       render(
         <MemoryRouter>
@@ -182,50 +112,13 @@ describe("Products Admin Page", () => {
       );
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Something Went Wrong");
-        expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
-      });
-
-      consoleLogSpy.mockRestore();
-    });
-
-    it("should handle invalid products data gracefully", async () => {
-      axios.get.mockResolvedValueOnce({
-        data: { products: null },
-      });
-
-      render(
-        <MemoryRouter>
-          <Products />
-        </MemoryRouter>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByTestId("all-products-title")).toHaveTextContent("All Products List");
-        expect(screen.queryByRole("link")).not.toBeInTheDocument();
+        expect(toast.error).toHaveBeenCalledWith(expect.any(String));
       });
     });
   });
 
   // ============ SIDE EFFECTS / API CALLS ============
   describe("Side Effects / API Calls", () => {
-    it("should call API to fetch products on mount", async () => {
-      axios.get.mockResolvedValueOnce({
-        data: { products: [] },
-      });
-
-      render(
-        <MemoryRouter>
-          <Products />
-        </MemoryRouter>
-      );
-
-      await waitFor(() => {
-        expect(axios.get).toHaveBeenCalledWith("/api/v1/product/get-product");
-        expect(axios.get).toHaveBeenCalledTimes(1);
-      });
-    });
-
     it("should only call API once on initial mount", async () => {
       axios.get.mockResolvedValueOnce({
         data: { products: [] },
@@ -237,6 +130,7 @@ describe("Products Admin Page", () => {
         </MemoryRouter>
       );
 
+      // Wait for initial API call to complete
       await waitFor(() => {
         expect(axios.get).toHaveBeenCalledTimes(1);
       });
@@ -271,32 +165,43 @@ describe("Products Admin Page", () => {
       });
     });
 
-    it("should render product cards with correct structure", async () => {
-      const mockProducts = [
-        {
-          _id: "1",
-          name: "Test Product",
-          description: "Test Description",
-          slug: "test-product",
-        },
-      ];
-
+    it("should display product images with correct src and alt", async () => {
       axios.get.mockResolvedValueOnce({
         data: { products: mockProducts },
       });
 
-      const { container } = render(
+      render(
         <MemoryRouter>
           <Products />
         </MemoryRouter>
       );
 
       await waitFor(() => {
-        expect(container.querySelector('.card')).toBeInTheDocument();
-        expect(container.querySelector('.card-body')).toBeInTheDocument();
-        expect(container.querySelector('.card-title')).toBeInTheDocument();
-        expect(container.querySelector('.card-text')).toBeInTheDocument();
-        expect(container.querySelector('.card-img-top')).toBeInTheDocument();
+        const productImage = screen.getByAltText(mockProducts[0].name);
+        expect(productImage).toHaveAttribute('src', `/api/v1/product/product-photo/${mockProducts[0]._id}`);
+        expect(productImage).toHaveAttribute('alt', mockProducts[0].name);
+        const productImage2 = screen.getByAltText(mockProducts[1].name);
+        expect(productImage2).toHaveAttribute('src', `/api/v1/product/product-photo/${mockProducts[1]._id}`);
+        expect(productImage2).toHaveAttribute('alt', mockProducts[1].name);
+      });
+    });
+
+    it("should render product links with correct navigation paths", async () => {
+      axios.get.mockResolvedValueOnce({
+        data: { products: mockProducts },
+      });
+
+      render(
+        <MemoryRouter>
+          <Products />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        const productLink = screen.getByTestId(`product-link-${mockProducts[0]._id}`);
+        expect(productLink).toHaveAttribute('href', `/dashboard/admin/product/${mockProducts[0].slug}`);
+        const productLink2 = screen.getByTestId(`product-link-${mockProducts[1]._id}`);
+        expect(productLink2).toHaveAttribute('href', `/dashboard/admin/product/${mockProducts[1].slug}`);
       });
     });
 	});

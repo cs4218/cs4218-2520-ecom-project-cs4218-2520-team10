@@ -24,10 +24,19 @@ const ProductDetails = () => {
       const { data } = await axios.get(
         `/api/v1/product/get-product/${params.slug}`
       );
+      // Bug fix: Added check for missing product data and show error message - Ong Chang Heng Bertrand A0253013X
+      if (!data?.product) {
+        toast.error("Product not found");
+        setProduct({});
+        return;
+      }
       setProduct(data?.product);
       getSimilarProduct(data?.product._id, data?.product.category._id);
     } catch (error) {
       console.log(error);
+      // Bug fix: Added error handling for failed API call - Ong Chang Heng Bertrand A0253013X
+      toast.error("Something went wrong while fetching product details");
+      setProduct({});
     }
   };
 
@@ -40,6 +49,9 @@ const ProductDetails = () => {
       setRelatedProducts(data?.products);
     } catch (error) {
       console.log(error);
+      // Bug fix: Added error handling for failed API call - Ong Chang Heng Bertrand A0253013X
+      toast.error("Something went wrong while fetching related products");
+      setRelatedProducts([]);
     }
   };
 
@@ -48,6 +60,7 @@ const ProductDetails = () => {
       <div className="row container product-details">
         <div className="col-md-6">
           <img
+            data-testid="main-product-image"
             src={`/api/v1/product/product-photo/${product._id}`}
             className="card-img-top"
             alt={product.name}
@@ -67,7 +80,8 @@ const ProductDetails = () => {
             Price: {product?.price?.toLocaleString("en-US", { style: "currency", currency: "USD" })}
           </h6>
           <h6 data-testid="product-category">Category: {product?.category?.name}</h6>
-          <button 
+          <button
+            data-testid={`main-add-to-cart-button-${product._id}`}
             className="btn btn-secondary ms-1"
             // Added add to cart functionality - Ong Chang Heng Bertrand A0253013X
             // Bug fix: Changed "class" to "className" - Ong Chang Heng Bertrand A0253013X
@@ -88,7 +102,7 @@ const ProductDetails = () => {
       <div className="row container similar-products">
         <h4 data-testid="similar-products-title">Similar Products ➡️</h4>
         {relatedProducts.length < 1 && (
-          <p className="text-center">No Similar Products found</p>
+          <p className="text-center" data-testid="no-similar-products">No Similar Products found</p>
         )}
         <div className="d-flex flex-wrap">
           {relatedProducts?.map((p) => (
@@ -97,10 +111,11 @@ const ProductDetails = () => {
                 src={`/api/v1/product/product-photo/${p._id}`}
                 className="card-img-top"
                 alt={p.name}
+                data-testid={`similar-product-image-${p._id}`}
               />
               <div className="card-body">
                 <div className="card-name-price">
-                  <h5 className="card-title">{p.name}</h5>
+                  <h5 className="card-title" data-testid={`similar-product-name-${p._id}`}>{p.name}</h5>
                   <h5 className="card-title card-price">
                     {p.price.toLocaleString("en-US", {
                       style: "currency",
@@ -113,12 +128,14 @@ const ProductDetails = () => {
                 </p>
                 <div className="card-name-price">
                   <button
+                    data-testid={`similar-more-details-button-${p._id}`}
                     className="btn btn-info ms-1"
                     onClick={() => navigate(`/product/${p.slug}`)}
                   >
                     More Details
                   </button>
                   <button
+                    data-testid={`similar-add-to-cart-button-${p._id}`}
                     className="btn btn-dark ms-1"
                     // Added add to cart functionality - Ong Chang Heng Bertrand A0253013X
                     onClick={() => {

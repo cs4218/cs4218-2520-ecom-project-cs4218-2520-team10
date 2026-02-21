@@ -14,10 +14,10 @@ const CategoryProduct = () => {
   const [category, setCategory] = useState([]);
 
   useEffect(() => {
-    if (params?.slug) getPrductsByCat();
+    if (params?.slug) getProductsByCat();
   }, [params?.slug]);
   
-  const getPrductsByCat = async () => {
+  const getProductsByCat = async () => {
     try {
       const { data } = await axios.get(
         `/api/v1/product/product-category/${params.slug}`
@@ -26,6 +26,8 @@ const CategoryProduct = () => {
       setCategory(data?.category);
     } catch (error) {
       console.log(error);
+      // Bug fix: Added error handling for failed API call - Ong Chang Heng Bertrand A0253013X
+      toast.error("Something went wrong while fetching products by category");
     }
   };
 
@@ -34,7 +36,7 @@ const CategoryProduct = () => {
       <div className="container mt-3 category">
         {/* Add data-testid attributes for testing - Ong Chang Heng Bertrand A0253013X */}
         <h4 className="text-center" data-testid="category-name">Category - {category?.name}</h4>
-        <h6 className="text-center" data-testid="product-count">{products?.length} result found </h6>
+        <h6 className="text-center" data-testid="product-count">{products?.length} results found </h6>
         <div className="row">
           <div className="col-md-9 offset-1">
             <div className="d-flex flex-wrap">
@@ -60,14 +62,16 @@ const CategoryProduct = () => {
                     </p>
                     <div className="card-name-price">
                       <button
+                        data-testid={`more-details-button-${p._id}`}
                         className="btn btn-info ms-1"
                         onClick={() => navigate(`/product/${p.slug}`)}
                       >
                         More Details
                       </button>
                       <button
+                        data-testid={`add-to-cart-button-${p._id}`}
                         className="btn btn-dark ms-1"
-                        // Added add to cart functionality - Ong Chang Heng Bertrand A0253013X
+                        // Bug fix: Added add to cart functionality - Ong Chang Heng Bertrand A0253013X
                         onClick={() => {
                           setCart([...cart, p]);
                           localStorage.setItem(

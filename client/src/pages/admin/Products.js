@@ -37,6 +37,7 @@ const Products = () => {
                 key={p._id}
                 to={`/dashboard/admin/product/${p.slug}`}
                 className="product-link"
+                data-testid={`product-link-${p._id}`}
               >
                 <div className="card m-2" style={{ width: "18rem" }}>
                   <img
