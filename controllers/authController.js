@@ -168,16 +168,10 @@ export const testController = (req, res) => {
 // note: email not used?
 export const updateProfileController = async (req, res) => {
   try {
-    if (!req.user || !req.user._id) {
-      return res.status(401).send({
-        success: false,
-        message: "Unauthorized: User not authenticated",
-      });
-    }
-
     const { name, email, password, address, phone } = req.body;
     const user = await userModel.findById(req.user._id);
     
+    // Enhancement: Check if user exists - YAN WEIDONG A0258151H
     // Check if user exists
     if (!user) {
       return res.status(404).send({
@@ -187,6 +181,7 @@ export const updateProfileController = async (req, res) => {
     }
     
     // Password validation
+    // Fix: Complete Password Length Validation with Status Code - YAN WEIDONG A0258151H
     if (password !== undefined && password.length < 6) {
       return res.status(400).json({ error: "Password is required and 6 character long" });
     }
@@ -208,8 +203,9 @@ export const updateProfileController = async (req, res) => {
       updatedUser,
     });
   } catch (error) {
+    // Fix: Updated Status Code + Error Message - YAN WEIDONG A0258151H
     console.log(error);
-    res.status(400).send({
+    res.status(500).send({
       success: false,
       message: "Error While Updating Profile",
       error,
@@ -245,7 +241,6 @@ export const getOrdersController = async (req, res) => {
 // Get All Orders (Admin Only)
 export const getAllOrdersController = async (req, res) => {
   try {
-
     const orders = await orderModel
       .find({})
       .populate("products", "-photo")
@@ -268,7 +263,7 @@ export const orderStatusController = async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
 
-    // --- Input Validation ---
+    // Fix: Added Input Validation for orderId and status - YAN WEIDONG A0258151H
     // Validate orderId format
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
       return res.status(400).send({
