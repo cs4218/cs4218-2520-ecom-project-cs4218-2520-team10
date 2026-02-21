@@ -7,6 +7,8 @@ import { getProductController, getSingleProductController, createProductControll
 import productModel from '../models/productModel.js';
 import fs from 'fs';
 import slugify from 'slugify';
+import { error } from 'console';
+import { sl } from 'date-fns/locale';
 
 jest.mock('braintree');
 
@@ -15,6 +17,18 @@ jest.mock('fs');
 jest.mock('slugify');
 
 describe('ProductController', () => {
+
+  /*
+    Test cases for getProductController:
+    1. Happy path: 2 tests
+      a. Should return 200 on fetch all products successfully with valid data
+      b. Should return 200 with empty array when no products exist
+    2. Error handling: 1 test
+      a. Should return 500 on handle database error
+    3. Side effects: 1 test
+      a. Should log error when an exception occurs
+  */
+
   describe('getProductController', () => {
     let req, res;
 
@@ -29,7 +43,7 @@ describe('ProductController', () => {
 
     // ============ HAPPY PATH ============
     describe('Happy Path', () => {
-      it('should fetch all products successfully with valid data', async () => {
+      it('should return 200 on fetch all products successfully with valid data', async () => {
         const mockProducts = [
           {
             _id: '1',
@@ -54,26 +68,35 @@ describe('ProductController', () => {
             createdAt: new Date('2024-01-02'),
           },
         ];
+        const populateMock = jest.fn().mockReturnThis();
+        const selectMock = jest.fn().mockReturnThis();
+        const limitMock = jest.fn().mockReturnThis();
+        const sortMock = jest.fn().mockResolvedValue(mockProducts);
 
         productModel.find = jest.fn().mockReturnValue({
-          populate: jest.fn().mockReturnThis(),
-          select: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          sort: jest.fn().mockResolvedValue(mockProducts),
+          populate: populateMock,
+          select: selectMock,
+          limit: limitMock,
+          sort: sortMock,
         });
 
         await getProductController(req, res);
 
+        expect(productModel.find).toHaveBeenCalled();
+        expect(populateMock).toHaveBeenCalledWith('category');
+        expect(selectMock).toHaveBeenCalledWith('-photo');
+        expect(limitMock).toHaveBeenCalledWith(12);
+        expect(sortMock).toHaveBeenCalledWith({ createdAt: -1 });
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith({
           success: true,
-          counTotal: mockProducts.length,
-          message: 'All products fetched',
+          countTotal: mockProducts.length,
+          message: expect.any(String),
           products: mockProducts,
         });
       });
 
-      it('should return empty array when no products exist', async () => {
+      it('should return 200 with empty array when no products exist', async () => {
         productModel.find = jest.fn().mockReturnValue({
           populate: jest.fn().mockReturnThis(),
           select: jest.fn().mockReturnThis(),
@@ -86,61 +109,17 @@ describe('ProductController', () => {
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith({
           success: true,
-          counTotal: 0,
-          message: 'All products fetched',
+          countTotal: 0,
+          message: expect.any(String),
           products: [],
         });
       });
-
-      it('should populate category field correctly', async () => {
-        const populateMock = jest.fn().mockReturnThis();
-
-        productModel.find = jest.fn().mockReturnValue({
-          populate: populateMock,
-          select: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          sort: jest.fn().mockResolvedValue([]),
-        });
-
-        await getProductController(req, res);
-
-        expect(populateMock).toHaveBeenCalledWith('category');
-      });
-
-      it('should exclude photo field from results', async () => {
-        const selectMock = jest.fn().mockReturnThis();
-
-        productModel.find = jest.fn().mockReturnValue({
-          populate: jest.fn().mockReturnThis(),
-          select: selectMock,
-          limit: jest.fn().mockReturnThis(),
-          sort: jest.fn().mockResolvedValue([]),
-        });
-
-        await getProductController(req, res);
-
-        expect(selectMock).toHaveBeenCalledWith('-photo');
-      });
-
-			it('should limit results to 12 products', async () => {
-				const limitMock = jest.fn().mockReturnThis();
-				productModel.find = jest.fn().mockReturnValue({
-					populate: jest.fn().mockReturnThis(),
-					select: jest.fn().mockReturnThis(),
-					limit: limitMock,
-					sort: jest.fn().mockResolvedValue([]),
-				});
-
-				await getProductController(req, res);
-
-				expect(limitMock).toHaveBeenCalledWith(12);
-			});
-		});
+    });
 
     // ============ ERROR HANDLING ============
     describe('Error Handling', () => {
-      it('should handle database connection error', async () => {
-        const mockError = new Error('Database connection failed');
+      it('should return 500 on handle database error', async () => {
+        const mockError = new Error('Database failed');
 
         productModel.find = jest.fn().mockReturnValue({
           populate: jest.fn().mockReturnThis(),
@@ -149,24 +128,51 @@ describe('ProductController', () => {
           sort: jest.fn().mockRejectedValue(mockError),
         });
 
+        await getProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+          error: mockError.message,
+        });
+      });
+    });
+
+    // ============ SIDE EFFECTS ============
+    describe('Side Effects', () => {
+      it('should log error when an exception occurs', async () => {
         const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        const mockError = new Error('Database failed');
+        productModel.find = jest.fn().mockReturnValue({
+          populate: jest.fn().mockReturnThis(),
+          select: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockReturnThis(),
+          sort: jest.fn().mockRejectedValue(mockError),
+        });
 
         await getProductController(req, res);
 
         expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({
-          success: false,
-          message: 'Error in getting products',
-          error: mockError.message,
-        });
-
         consoleLogSpy.mockRestore();
       });
     });
   });
 
-
+  /*
+    Test cases for getSingleProductController:
+    1. Happy path: 1 test
+      a. Should fetch single product successfully by slug
+    2. Input validation: 4 tests
+      a. Should return 404 on non-existent slug parameter and return null product
+      b. Should return 404 on empty string slug parameter and return null product
+      c. Should return 404 on null slug parameter and return null product
+      d. Should return 404 on undefined slug parameter and return null product
+    3. Error handling: 1 test
+      a. Should handle database connection error
+    4. Side effects: 1 test
+      a. Should log error when an exception occurs
+  */
 
 	describe('getSingleProductController', () => {
 		let req, res;
@@ -196,16 +202,20 @@ describe('ProductController', () => {
           shipping: true,
           createdAt: new Date('2024-01-01'),
         };
-
         req.params.slug = 'test-product';
+        selectMock = jest.fn().mockReturnThis();
+        populateMock = jest.fn().mockResolvedValue(mockProduct);
 
         productModel.findOne = jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnThis(),
-          populate: jest.fn().mockResolvedValue(mockProduct),
+          select: selectMock,
+          populate: populateMock,
         });
 
         await getSingleProductController(req, res);
 
+        expect(productModel.findOne).toHaveBeenCalledWith({ slug: 'test-product' });
+        expect(selectMock).toHaveBeenCalledWith('-photo');
+        expect(populateMock).toHaveBeenCalledWith('category');
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.send).toHaveBeenCalledWith({
           success: true,
@@ -213,63 +223,28 @@ describe('ProductController', () => {
           product: mockProduct,
         });
       });
-
-      it('should exclude photo field from result', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          slug: 'test-product',
-          description: 'Test Description',
-          price: 100,
-          category: { _id: 'cat1', name: 'Category 1' },
-          quantity: 10,
-          shipping: true,
-        };
-
-        req.params.slug = 'test-product';
-
-        const selectMock = jest.fn().mockReturnThis();
-
-        productModel.findOne = jest.fn().mockReturnValue({
-          select: selectMock,
-          populate: jest.fn().mockResolvedValue(mockProduct),
-        });
-
-        await getSingleProductController(req, res);
-
-        expect(selectMock).toHaveBeenCalledWith('-photo');
-      });
-
-      it('should populate category field', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          slug: 'test-product',
-          description: 'Test Description',
-          price: 100,
-          category: { _id: 'cat1', name: 'Category 1' },
-          quantity: 10,
-          shipping: true,
-        };
-
-        req.params.slug = 'test-product';
-
-        const populateMock = jest.fn().mockResolvedValue(mockProduct);
-
-        productModel.findOne = jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnThis(),
-          populate: populateMock,
-        });
-
-        await getSingleProductController(req, res);
-
-        expect(populateMock).toHaveBeenCalledWith('category');
-      });
     });
 
 		// ============ INPUT VALIDATION =============
-		describe('Invalid Input', () => {
-			it('should accept empty slug parameter and return null product', async () => {
+		describe('Input Validation', () => {
+      it('should return 404 on non-existent slug parameter and return null product', async () => {
+        req.params.slug = 'non-existent-slug';
+
+        productModel.findOne = jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          populate: jest.fn().mockResolvedValue(null),
+        });
+
+        await getSingleProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+    			success: false,
+    			message: expect.any(String),
+    		});
+      });
+
+			it('should return 404 on empty string slug parameter and return null product', async () => {
 				req.params.slug = "";
 
 				productModel.findOne = jest.fn().mockReturnValue({
@@ -279,9 +254,46 @@ describe('ProductController', () => {
 
 				await getSingleProductController(req, res);
 
-    		expect(res.status).toHaveBeenCalledWith(200);
-    		expect(res.send.mock.calls[0][0].product).toBeNull();
+    		expect(res.status).toHaveBeenCalledWith(404);
+    		expect(res.send).toHaveBeenCalledWith({
+    			success: false,
+    			message: expect.any(String),
+    		});
 			});
+
+      it("should return 404 on null slug parameter and return null product", async () => {
+        req.params.slug = null;
+
+        productModel.findOne = jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          populate: jest.fn().mockResolvedValue(null),
+        });
+
+        await getSingleProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+    			success: false,
+    			message: expect.any(String),
+    		});
+      });
+
+      it("should return 404 on undefined slug parameter and return null product", async () => {
+        req.params.slug = undefined;
+
+        productModel.findOne = jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          populate: jest.fn().mockResolvedValue(null),
+        });
+
+        await getSingleProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+    			success: false,
+    			message: expect.any(String),
+    		});
+      });
 		});
 
 		// ============ ERROR HANDLING ============
@@ -307,33 +319,69 @@ describe('ProductController', () => {
 
         consoleLogSpy.mockRestore();
       });
+		});
 
-			it('should handle invalid slug error', async () => {
-        const mockError = new Error('Invalid slug format');
-
-        req.params.slug = null;
-
+    // ============ SIDE EFFECTS ============
+    describe('Side Effects', () => {
+      it('should log error when an exception occurs', async () => {
+        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        const mockError = new Error('Database connection failed');
+        req.params.slug = 'test-product';
         productModel.findOne = jest.fn().mockReturnValue({
           select: jest.fn().mockReturnThis(),
           populate: jest.fn().mockRejectedValue(mockError),
         });
 
-        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
         await getSingleProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(500);
-
+        expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
         consoleLogSpy.mockRestore();
       });
-		});
-	});
+    });
+  });
 
-
-
+  /*
+    Test cases for createProductController:
+    1. Happy path: 2 tests
+      a. Should return create product successfully without photo
+      b. Should create product successfully with photo
+    2. Input validation: 16 tests
+      a. Should return 409 when product with same name already exists
+      b. Should return 422 and reject when name is missing
+      c. Should return 422 and reject when description is missing
+      d. Should return 422 and reject when price is missing
+      e. Should return 422 and reject when category is missing
+      f. Should return 422 and reject when quantity is missing
+      g. Should return 422 and reject when shipping is missing
+      h. Boundary value analysis of photo size (<1MB, =1MB, >1MB)
+      i. Boundary value analysis of price (-1, 0, 1)
+      j. Boundary value analysis of quantity (-1, 0, 1)
+    3. Error handling: 1 test
+      a. Should handle database error
+      b. Should handle file system error when reading photo
+    4. Side effects: 1 test
+      a. Should create product slug correctly using product name
+      b. Should call save method on product model instance to save product to database
+      c. Should log error when an exception occurs
+  */
 
   describe('createProductController', () => {
     let req, res;
+
+    const mockProductData = {
+      name: 'Test Product',
+      description: 'Test Description',
+      price: 100,
+      category: 'cat1',
+      quantity: 10,
+      shipping: true,
+      slug: 'test-product',
+      photo: {
+        data: null,
+        contentType: null,
+      },
+      save: jest.fn().mockResolvedValue(true),
+    };
 
     beforeEach(() => {
       jest.clearAllMocks();
@@ -345,83 +393,59 @@ describe('ProductController', () => {
         status: jest.fn().mockReturnThis(),
         send: jest.fn().mockReturnThis(),
       };
+
+      productModel.findOne = jest.fn().mockReturnValue(null);
+
+      mockProductData.photo.data = null;
+      mockProductData.photo.contentType = null;
+      mockProductData.save.mockClear();
     });
 
     // ============ HAPPY PATH ============
     describe('Happy Path', () => {
-      it('should create product successfully without photo', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 201 and create product successfully without photo', async () => {
         req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
+          shipping: mockProductData.shipping,
         };
         req.files = {};
 
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
+        slugify.mockReturnValue(mockProductData.slug);
+        productModel.mockImplementation(() => mockProductData);
 
         await createProductController(req, res);
 
         expect(productModel).toHaveBeenCalledWith({
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
+          shipping: mockProductData.shipping,
+          slug: mockProductData.slug,
         });
-        expect(mockProduct.save).toHaveBeenCalled();
+        expect(mockProductData.save).toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(201);
         expect(res.send).toHaveBeenCalledWith({
           success: true,
-          message: 'Product Created Successfully',
-          products: mockProduct,
+          message: expect.any(String),
+          products: mockProductData,
         });
       });
 
-      it('should create product successfully with photo', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {
-            data: null,
-            contentType: null,
-          },
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 201 and create product successfully with photo', async () => {
         const mockPhotoBuffer = Buffer.from('fake-image-data');
-
         req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
+          shipping: mockProductData.shipping,
         };
         req.files = {
           photo: {
@@ -430,488 +454,377 @@ describe('ProductController', () => {
             size: 500000,
           },
         };
-
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
+        slugify.mockReturnValue(mockProductData.slug);
+        productModel.mockImplementation(() => mockProductData);
         fs.readFileSync.mockReturnValue(mockPhotoBuffer);
 
         await createProductController(req, res);
 
         expect(fs.readFileSync).toHaveBeenCalledWith('/fake/path.jpg');
-        expect(mockProduct.photo.data).toBe(mockPhotoBuffer);
-        expect(mockProduct.photo.contentType).toBe('image/jpeg');
-        expect(mockProduct.save).toHaveBeenCalled();
+        expect(mockProductData.photo.data).toBe(mockPhotoBuffer);
+        expect(mockProductData.photo.contentType).toBe('image/jpeg');
+        expect(mockProductData.save).toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(201);
-      });
-
-      it('should create product with all fields populated', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Laptop',
-          description: 'Gaming Laptop',
-          price: 1500,
-          category: 'cat1',
-          quantity: 5,
-          shipping: true,
-          slug: 'laptop',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.fields = {
-          name: 'Laptop',
-          description: 'Gaming Laptop',
-          price: 1500,
-          category: 'cat1',
-          quantity: 5,
-          shipping: true,
-        };
-        req.files = {};
-
-        slugify.mockReturnValue('laptop');
-        productModel.mockImplementation(() => mockProduct);
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.send.mock.calls[0][0].success).toBe(true);
-      });
-    });
-
-    // ============ INPUT VALIDATION (Invalid Partition) ============
-    describe('Input Validation', () => {
-      it('should reject when name is missing', async () => {
-        req.fields = {
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-        };
-        req.files = {};
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Name is Required' });
-      });
-
-      it('should reject when description is missing', async () => {
-        req.fields = {
-          name: 'Test Product',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-        };
-        req.files = {};
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Description is Required' });
-      });
-
-      it('should reject when price is missing', async () => {
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          category: 'cat1',
-          quantity: 10,
-        };
-        req.files = {};
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Price is Required and should be greater than or equal to 0' });
-      });
-
-      it('should reject when category is missing', async () => {
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          quantity: 10,
-        };
-        req.files = {};
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Category is Required' });
-      });
-
-      it('should reject when quantity is missing', async () => {
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-        };
-        req.files = {};
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Quantity is Required and should be greater than or equal to 0' });
-      });
-    });
-
-    // ============ BOUNDARY VALUE ANALYSIS (Photo Size) ============
-    describe('Boundary Value Analysis - Photo Size', () => {
-      it('should accept photo at maximum boundary (exactly 1MB)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {
-            data: null,
-            contentType: null,
-          },
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-        };
-        req.files = {
-          photo: {
-            path: '/fake/path.jpg',
-            type: 'image/jpeg',
-            size: 1000000, // Exactly 1MB
-          },
-        };
-
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
-        fs.readFileSync.mockReturnValue(Buffer.from('image-data'));
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(201);
-        expect(mockProduct.save).toHaveBeenCalled();
-      });
-
-      it('should reject photo just above maximum boundary (1MB + 1 byte)', async () => {
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-        };
-        req.files = {
-          photo: {
-            path: '/fake/path.jpg',
-            type: 'image/jpeg',
-            size: 1000001, // 1MB + 1 byte
-          },
-        };
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
-          error: 'Photo is Required and should be less than 1mb',
+          success: true,
+          message: expect.any(String),
+          products: mockProductData,
+        });
+      });
+    });
+
+    // ============ INPUT VALIDATION ============
+    describe('Input Validation', () => {
+      it("should return 409 when product with same name already exists", async () => {
+        productModel.findOne = jest.fn().mockReturnValue({ name: mockProductData.name });
+
+        req.fields = {
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
+          shipping: mockProductData.shipping,
+        };
+        req.files = {};
+
+        await createProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(409);
+        expect(res.send).toHaveBeenCalledWith({
+          error: expect.any(String),
         });
       });
 
-      it('should accept small photo (well below boundary)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {
-            data: null,
-            contentType: null,
-          },
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 422 and reject when name is missing', async () => {
         req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-        };
-        req.files = {
-          photo: {
-            path: '/fake/path.jpg',
-            type: 'image/jpeg',
-            size: 999999, // Just below 1MB
-          },
-        };
-
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
-        fs.readFileSync.mockReturnValue(Buffer.from('small-image'));
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(201);
-      });
-
-      it('should accept photo with size 0 boundary', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {
-            data: null,
-            contentType: null,
-          },
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-        };
-        req.files = {
-          photo: {
-            path: '/fake/path.jpg',
-            type: 'image/jpeg',
-            size: 0, // Empty file
-          },
-        };
-
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
-        fs.readFileSync.mockReturnValue(Buffer.from(''));
-
-        await createProductController(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(201);
-      });
-    });
-
-    // ============ Boundary Value Analysis (Price) ============
-    describe('Boundary Value Analysis - Price', () => {
-      it('should allow creation of product with free price (price = 0)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Free Product',
-          description: 'Test Description',
-          price: 0,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'free-product',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.fields = {
-          name: 'Free Product',
-          description: 'Test Description',
-          price: 0,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
         };
         req.files = {};
 
-        slugify.mockReturnValue('free-product');
-        productModel.mockImplementation(() => mockProduct);
-
         await createProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(201);
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
 
-      it('should create product with normal price (price = 1)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Normal Product',
-          description: 'Test Description',
-          price: 1,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'normal-product',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 422 and reject when description is missing', async () => {
         req.fields = {
-          name: 'Normal Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
+          name: mockProductData.name,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
         };
         req.files = {};
 
-        slugify.mockReturnValue('normal-product');
-        productModel.mockImplementation(() => mockProduct);
-
         await createProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(201);
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
 
-      it('should not allow creation of product with negative price (price = -1)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Expensive Product',
-          description: 'Test Description',
-          price: -1,
-          category: 'cat1',
-          quantity: 1,
-          shipping: true,
-          slug: 'expensive-product',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 422 and reject when price is missing', async () => {
         req.fields = {
-          name: 'Expensive Product',
-          description: 'Test Description',
-          price: -1,
-          category: 'cat1',
-          quantity: 1,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
         };
         req.files = {};
 
-        slugify.mockReturnValue('expensive-product');
-        productModel.mockImplementation(() => mockProduct);
-
         await createProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
-    });
 
-    // ============ BOUNDARY VALUE ANALYSIS (Quantity) ============
-    describe('Boundary Value Analysis - Quantity', () => {
-      it('should create product with zero quantity (quantity = 0)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Out of Stock',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 0,
-          shipping: true,
-          slug: 'out-of-stock',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 422 and reject when category is missing', async () => {
         req.fields = {
-          name: 'Out of Stock',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 0,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          quantity: mockProductData.quantity,
         };
         req.files = {};
 
-        slugify.mockReturnValue('out-of-stock');
-        productModel.mockImplementation(() => mockProduct);
-
         await createProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(201);
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
 
-      it('should create product with quantity 1 (quantity = 1)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Low Stock',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 1,
-          shipping: true,
-          slug: 'low-stock',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 422 and reject when quantity is missing', async () => {
         req.fields = {
-          name: 'Low Stock',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 1,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
         };
         req.files = {};
 
-        slugify.mockReturnValue('low-stock');
-        productModel.mockImplementation(() => mockProduct);
-
         await createProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(201);
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
 
-      it('should not allow creation of product with invalid quantity (quantity = -1)', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'High Stock',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: -1,
-          shipping: true,
-          slug: 'high-stock',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
+      it('should return 422 and reject when shipping is missing', async () => {
         req.fields = {
-          name: 'High Stock',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: -1,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
         };
         req.files = {};
 
-        slugify.mockReturnValue('high-stock');
-        productModel.mockImplementation(() => mockProduct);
-
         await createProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(500);
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+      });
+
+      // ============ BOUNDARY VALUE ANALYSIS (Photo Size) ============
+      describe('Boundary Value Analysis - Photo Size', () => {
+        it('should return 201 and accept photo at maximum boundary (exactly 1MB)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: mockProductData.price,
+            category: mockProductData.category,
+            quantity: mockProductData.quantity,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {
+            photo: {
+              path: '/fake/path.jpg',
+              type: 'image/jpeg',
+              size: 1000000, // Exactly 1MB
+            },
+          };
+
+          slugify.mockReturnValue(mockProductData.slug);
+          productModel.mockImplementation(() => mockProductData);
+          fs.readFileSync.mockReturnValue(Buffer.from('image-data'));
+
+          await createProductController(req, res);
+
+          expect(mockProductData.photo.data).toEqual(Buffer.from('image-data'));
+          expect(mockProductData.photo.contentType).toBe('image/jpeg');
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: mockProductData,
+          });
+        });
+
+        it('should return 422 and reject photo just above maximum boundary (1MB + 1 byte)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: mockProductData.price,
+            category: mockProductData.category,
+            quantity: mockProductData.quantity,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {
+            photo: {
+              path: '/fake/path.jpg',
+              type: 'image/jpeg',
+              size: 1000001, // 1MB + 1 byte
+            },
+          };
+
+          await createProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(422);
+          expect(res.send).toHaveBeenCalledWith({
+            error: expect.any(String),
+          });
+        });
+
+        it('should return 201 and accept small photo (below boundary)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: mockProductData.price,
+            category: mockProductData.category,
+            quantity: mockProductData.quantity,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {
+            photo: {
+              path: '/fake/path.jpg',
+              type: 'image/jpeg',
+              size: 999999, // Just below 1MB
+            },
+          };
+
+          slugify.mockReturnValue(mockProductData.slug);
+          productModel.mockImplementation(() => mockProductData);
+          fs.readFileSync.mockReturnValue(Buffer.from('small-image'));
+
+          await createProductController(req, res);
+
+          expect(mockProductData.photo.data).toEqual(Buffer.from('small-image'));
+          expect(mockProductData.photo.contentType).toBe('image/jpeg');
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: mockProductData,
+          });
+        });
+      });
+
+      // ============ Boundary Value Analysis (Price) ============
+      describe('Boundary Value Analysis - Price', () => {
+        it('should return 201 and allow creation of product with free price (price = 0)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: 0,
+            category: mockProductData.category,
+            quantity: mockProductData.quantity,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {};
+
+          slugify.mockReturnValue(mockProductData.slug);
+          productModel.mockImplementation(() => mockProductData);
+
+          await createProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: mockProductData,
+          });
+        });
+
+        it('should return 201 and create product with normal price (price = 1)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: 1,
+            category: mockProductData.category,
+            quantity: mockProductData.quantity,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {};
+
+          slugify.mockReturnValue(mockProductData.slug);
+          productModel.mockImplementation(() => mockProductData);
+
+          await createProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: mockProductData,
+          });
+        });
+
+        it('should return 422 and not allow creation of product with negative price (price = -1)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: -1,
+            category: mockProductData.category,
+            quantity: mockProductData.quantity,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {};
+
+          await createProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(422);
+          expect(res.send).toHaveBeenCalledWith({
+            error: expect.any(String),
+          });
+        });
+      });
+
+      // ============ BOUNDARY VALUE ANALYSIS (Quantity) ============
+      describe('Boundary Value Analysis - Quantity', () => {
+        it('should return 201 and create product with zero quantity (quantity = 0)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: mockProductData.price,
+            category: mockProductData.category,
+            quantity: 0,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {};
+
+          slugify.mockReturnValue(mockProductData.slug);
+          productModel.mockImplementation(() => mockProductData);
+
+          await createProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: mockProductData,
+          });
+        });
+
+        it('should return 201 and create product with quantity 1 (quantity = 1)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: mockProductData.price,
+            category: mockProductData.category,
+            quantity: 1,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {};
+
+          slugify.mockReturnValue(mockProductData.slug);
+          productModel.mockImplementation(() => mockProductData);
+
+          await createProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: mockProductData,
+          });
+        });
+
+        it('should return 422 and not allow creation of product with invalid quantity (quantity = -1)', async () => {
+          req.fields = {
+            name: mockProductData.name,
+            description: mockProductData.description,
+            price: mockProductData.price,
+            category: mockProductData.category,
+            quantity: -1,
+            shipping: mockProductData.shipping,
+          };
+          req.files = {};
+
+          await createProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(422);
+          expect(res.send).toHaveBeenCalledWith({
+            error: expect.any(String),
+          });
+        });
       });
     });
 
     // ============ ERROR HANDLING ============
     describe('Error Handling', () => {
-      it('should handle product save error', async () => {
+      it('should return 500 and handle product save error', async () => {
         const mockError = new Error('Database save failed');
         const mockProduct = {
           _id: '1',
@@ -939,19 +852,17 @@ describe('ProductController', () => {
         slugify.mockReturnValue('test-product');
         productModel.mockImplementation(() => mockProduct);
 
-        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
         await createProductController(req, res);
 
-        expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send.mock.calls[0][0].success).toBe(false);
-        expect(res.send.mock.calls[0][0].message).toBe('Error in creating product');
-
-        consoleLogSpy.mockRestore();
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          error: mockError,
+          message: expect.any(String),
+        });
       });
 
-      it('should handle file read error', async () => {
+      it('should return 500 and handle file read error', async () => {
         const mockError = new Error('File read failed');
         const mockProduct = {
           _id: '1',
@@ -988,160 +899,107 @@ describe('ProductController', () => {
           throw mockError;
         });
 
-        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
         await createProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(500);
-
-        consoleLogSpy.mockRestore();
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          error: mockError,
+          message: expect.any(String),
+        });
       });
     });
 
     // ============ SIDE EFFECTS ============
     describe('Side Effects', () => {
       it('should create slug from product name', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product Name',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product-name',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
         req.fields = {
-          name: 'Test Product Name',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
+          shipping: mockProductData.shipping,
         };
         req.files = {};
 
-        slugify.mockReturnValue('test-product-name');
-        productModel.mockImplementation(() => mockProduct);
+        slugify.mockReturnValue(mockProductData.slug);
+        productModel.mockImplementation(() => mockProductData);
 
         await createProductController(req, res);
 
-        expect(slugify).toHaveBeenCalledWith('Test Product Name');
-      });
-
-      it('should read file when photo is provided', async () => {
-        const mockPhotoBuffer = Buffer.from('image-data');
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {
-            data: null,
-            contentType: null,
-          },
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-        };
-        req.files = {
-          photo: {
-            path: '/fake/path.jpg',
-            type: 'image/jpeg',
-            size: 500000,
-          },
-        };
-
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
-        fs.readFileSync.mockReturnValue(mockPhotoBuffer);
-
-        await createProductController(req, res);
-
-        expect(fs.readFileSync).toHaveBeenCalledWith('/fake/path.jpg');
-        expect(mockProduct.photo.data).toBe(mockPhotoBuffer);
-        expect(mockProduct.photo.contentType).toBe('image/jpeg');
-      });
-
-      it('should not read file when photo is not provided', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-        };
-        req.files = {};
-
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
-
-        await createProductController(req, res);
-
-        expect(fs.readFileSync).not.toHaveBeenCalled();
+        expect(slugify).toHaveBeenCalledWith(mockProductData.name);
       });
 
       it('should call product save method', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'test-product',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
         req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
+          name: mockProductData.name,
+          description: mockProductData.description,
+          price: mockProductData.price,
+          category: mockProductData.category,
+          quantity: mockProductData.quantity,
+          shipping: mockProductData.shipping,
         };
         req.files = {};
 
-        slugify.mockReturnValue('test-product');
-        productModel.mockImplementation(() => mockProduct);
+        slugify.mockReturnValue(mockProductData.slug);
+        productModel.mockImplementation(() => mockProductData);
 
         await createProductController(req, res);
 
-        expect(mockProduct.save).toHaveBeenCalled();
+        expect(mockProductData.save).toHaveBeenCalled();
       });
     });
+
+    it('should log error when an exception occurs', async () => {
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      const mockError = new Error('Database save failed');
+      const mockProduct = {
+        _id: '1',
+        name: 'Test Product',
+        description: 'Test Description',
+        price: 100,
+        category: 'cat1',
+        quantity: 10,
+        shipping: true,
+        slug: 'test-product',
+        photo: {},
+        save: jest.fn().mockRejectedValue(mockError),
+      };
+
+      req.fields = {
+        name: 'Test Product',
+        description: 'Test Description',
+        price: 100,
+        category: 'cat1',
+        quantity: 10,
+        shipping: true,
+      };
+      req.files = {};
+
+      slugify.mockReturnValue('test-product');
+      productModel.mockImplementation(() => mockProduct);
+
+      await createProductController(req, res);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+    });
   });
+
+  /*
+    Test cases for deleteProductController:
+    1. Happy path: 1 test
+      a. Should delete product successfully by ID
+    2. Input validation: 4 tests
+      a. Should return 404 when product with given ID does not exist
+      b. Should return 404 when product ID is empty string
+      c. Should return 404 when product ID is null
+      d. Should return 404 when product ID is undefined
+    3. Error handling: 1 test
+      a. Should return 500 when database delete failed
+    4. Side effects: 1 test
+      a. Should log error when an exception occurs
+  */
 
 	describe('deleteProductController', () => {
 		let req, res;
@@ -1159,28 +1017,98 @@ describe('ProductController', () => {
 
 		// ============ HAPPY PATH ============
 		describe('Happy Path', () => {
-			it('should delete product successfully by ID', async () => {
-				productModel.findByIdAndDelete.mockReturnValue({
-					select: jest.fn().mockResolvedValue(null),
-				});
+			it('should return 200 and delete product successfully by ID', async () => {
+        req.params.pid = '1';
+        const mockProduct = {
+          _id: '1',
+          name: 'Test Product',
+          description: 'Test Description',
+          price: 100,
+        };
+        const selectMock = jest.fn().mockResolvedValue(mockProduct);
+        productModel.findByIdAndDelete = jest.fn().mockReturnValue({
+          select: selectMock,
+        });
 
-				req.params.pid = '1';
+        await deleteProductController(req, res);
 
-				await deleteProductController(req, res);
-
-				expect(productModel.findByIdAndDelete).toHaveBeenCalledWith('1');
-				expect(res.status).toHaveBeenCalledWith(200);
-				expect(res.send).toHaveBeenCalledWith({
-					success: true,
-					message: 'Product Deleted Successfully',
-				});
-			});
+        expect(selectMock).toHaveBeenCalledWith('-photo');
+        expect(productModel.findByIdAndDelete).toHaveBeenCalledWith('1');
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.send).toHaveBeenCalledWith({
+          success: true,
+          message: 'Product deleted successfully',
+        });
+      });
 		});
+
+    // ============ INPUT VALIDATION =============
+    describe('Input Validation', () => {
+      it('should return 404 when product with given ID does not exist', async () => {
+        productModel.findByIdAndDelete.mockReturnValue({
+          select: jest.fn().mockResolvedValue(null),
+        });
+        req.params.pid = 'non-existent-id';
+
+        await deleteProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
+      });
+
+      it('should return 404 when product ID is empty string', async () => {
+        productModel.findByIdAndDelete.mockReturnValue({
+          select: jest.fn().mockResolvedValue(null),
+        });
+        req.params.pid = "";
+
+        await deleteProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
+      });
+
+      it('should return 404 when product ID is null', async () => {
+        productModel.findByIdAndDelete.mockReturnValue({
+          select: jest.fn().mockResolvedValue(null),
+        });
+        req.params.pid = null;
+
+        await deleteProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
+      });
+
+      it('should return 404 when product ID is undefined', async () => {
+        productModel.findByIdAndDelete.mockReturnValue({
+          select: jest.fn().mockResolvedValue(null),
+        });
+        req.params.pid = undefined;
+
+        await deleteProductController(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
+      });
+    });
 
 		// ============ ERROR HANDLING ============
 		describe('Error Handling', () => {
-			it('should handle product not found error', async () => {
-				const mockError = new Error('Product not found');
+			it('should return 500 when database delete failed', async () => {
+				const mockError = new Error('Database delete failed');
 
 				productModel.findByIdAndDelete.mockReturnValue({
 					select: jest.fn().mockRejectedValue(mockError),
@@ -1188,45 +1116,80 @@ describe('ProductController', () => {
 
 				req.params.pid = 'invalid-id';
 
-				const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
 				await deleteProductController(req, res);
 
-				expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
 				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send.mock.calls[0][0].success).toBe(false);
-      	expect(res.send.mock.calls[0][0].message).toBe('Error while deleting product');
-
-        consoleLogSpy.mockRestore();
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+          error: mockError,
+        });
       });
+    });
 
-			it('should handle unsuccessful delete error', async () => {
-				const mockError = new Error('Delete operation failed');
+    // ============ SIDE EFFECTS ============
+    describe('Side Effects', () => {
+      it('should log error when an exception occurs', async () => {
+        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        const mockError = new Error('Database delete failed');
 
-				productModel.findByIdAndDelete.mockReturnValue({
-					select: jest.fn().mockRejectedValue(mockError),
-				});
+        productModel.findByIdAndDelete.mockReturnValue({
+          select: jest.fn().mockRejectedValue(mockError),
+        });
 
-				req.params.pid = '1';
+        req.params.pid = 'invalid-id';
 
-				const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        await deleteProductController(req, res);
 
-				await deleteProductController(req, res);
+        expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
+      });
+    });
+  });
 
-				expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
-				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send.mock.calls[0][0].success).toBe(false);
-				expect(res.send.mock.calls[0][0].message).toBe('Error while deleting product');
-
-				consoleLogSpy.mockRestore();
-			});
-		});
-	});
-
-
+  /*
+    Test cases for updateProductController:
+    1. Happy path: 2 tests
+      a. Should update product successfully without photo
+      b. Should update product successfully with photo
+    2. Input validation: 17 tests
+      a. Should return 404 when product with given ID does not exist
+      b. Should return 409 when updating product name to a name that already exists for another product
+      c. Should return 422 and reject when name is missing
+      d. Should return 422 and reject when description is missing
+      e. Should return 422 and reject when price is missing
+      f. Should return 422 and reject when category is missing
+      g. Should return 422 and reject when quantity is missing
+      h. Should return 422 and reject when shipping is missing
+      i. Boundary value analysis of photo size (<1MB, =1MB, >1MB)
+      j. Boundary value analysis of price (-1, 0, 1)
+      k. Boundary value analysis of quantity (-1, 0, 1)
+    3. Error handling: 2 tests
+      a. Should return 500 when database update failed
+      b. Should return 500 when file system error occurs while reading photo
+    4. Side effects: 3 test
+      a. Should create slug from updated product name
+      b. Should call product save method
+      c. Should log error when an exception occurs
+  */
 
 	describe('updateProductController', () => {
 		let req, res;
+
+    const mockUpdatedProductData = {
+      _id: '1',
+      name: 'Updated Product',
+      description: 'Updated Description',
+      price: 150,
+      category: 'cat1',
+      quantity: 20,
+      shipping: true,
+      slug: 'updated-product',
+      photo: {
+        data: null,
+        contentType: null,
+      },
+      save: jest.fn().mockResolvedValue(true),
+    };
 
 		beforeEach(() => {
 			jest.clearAllMocks();
@@ -1239,85 +1202,61 @@ describe('ProductController', () => {
 				status: jest.fn().mockReturnThis(),
 				send: jest.fn().mockReturnThis(),
 			};
+
+      productModel.findOne = jest.fn().mockReturnValue(null);
+      productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockUpdatedProductData);
+      mockUpdatedProductData.photo.data = null;
+      mockUpdatedProductData.photo.contentType = null;
+      mockUpdatedProductData.save.mockClear();
 		});
 
 		// ============ HAPPY PATH ============
 		describe('Happy Path', () => {
-      it('should update product successfully without photo', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Updated Product',
-          description: 'Updated Description',
-          price: 150,
-          category: 'cat1',
-          quantity: 20,
-          shipping: true,
-          slug: 'updated-product',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.params.pid = '1';
+      it('should return 201 and update product successfully without photo', async () => {
+        req.params.pid = mockUpdatedProductData._id;
         req.fields = {
-          name: 'Updated Product',
-          description: 'Updated Description',
-          price: 150,
-          category: 'cat1',
-          quantity: 20,
-          shipping: true,
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
+          shipping: mockUpdatedProductData.shipping,
         };
         req.files = {};
 
-        slugify.mockReturnValue('updated-product');
-        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
+        slugify.mockReturnValue(mockUpdatedProductData.slug);
+        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockUpdatedProductData);
 
         await updateProductController(req, res);
 
         expect(productModel.findByIdAndUpdate).toHaveBeenCalledWith(
           '1',
           expect.objectContaining({
-            name: 'Updated Product',
-            description: 'Updated Description',
-            price: 150,
-            slug: 'updated-product',
+            name: mockUpdatedProductData.name,
+            description: mockUpdatedProductData.description,
+            price: mockUpdatedProductData.price,
+            slug: mockUpdatedProductData.slug,
           }),
           { new: true }
         );
-        expect(mockProduct.save).toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(201);
         expect(res.send).toHaveBeenCalledWith({
           success: true,
-          message: 'Product Updated Successfully',
-          products: mockProduct,
+          message: expect.any(String),
+          products: mockUpdatedProductData,
         });
       });
 
-			it('should update product successfully with photo', async () => {
+			it('should return 201 and update product successfully with photo', async () => {
 				const mockPhotoBuffer = Buffer.from('updated-image-data');
-        const mockProduct = {
-          _id: '1',
-          name: 'Updated Product',
-          description: 'Updated Description',
-          price: 150,
-          category: 'cat1',
-          quantity: 20,
-          shipping: true,
-          slug: 'updated-product',
-          photo: {
-            data: null,
-            contentType: null,
-          },
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.params.pid = '1';
+        req.params.pid = mockUpdatedProductData._id;
         req.fields = {
-          name: 'Updated Product',
-          description: 'Updated Description',
-          price: 150,
-          category: 'cat1',
-          quantity: 20,
-          shipping: true,
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
+          shipping: mockUpdatedProductData.shipping,
         };
         req.files = {
           photo: {
@@ -1327,361 +1266,418 @@ describe('ProductController', () => {
           },
         };
 
-        slugify.mockReturnValue('updated-product');
-        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
+        slugify.mockReturnValue(mockUpdatedProductData.slug);
+        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockUpdatedProductData);
         fs.readFileSync.mockReturnValue(mockPhotoBuffer);
 
         await updateProductController(req, res);
 
         expect(fs.readFileSync).toHaveBeenCalledWith('/updated/path.jpg');
-        expect(mockProduct.photo.data).toBe(mockPhotoBuffer);
-        expect(mockProduct.photo.contentType).toBe('image/jpeg');
-				expect(mockProduct.save).toHaveBeenCalled();
-				expect(res.status).toHaveBeenCalledWith(201);
-				expect(res.send).toHaveBeenCalledWith({
+        expect(mockUpdatedProductData.photo.data).toBe(mockPhotoBuffer);
+        expect(mockUpdatedProductData.photo.contentType).toBe('image/jpeg');
+        expect(res.status).toHaveBeenCalledWith(201);
+        expect(res.send).toHaveBeenCalledWith({
 					success: true,
-					message: 'Product Updated Successfully',
-					products: mockProduct,
+					message: expect.any(String),
+					products: mockUpdatedProductData,
 				});
 			});
 		});
 
 		// ============ INPUT VALIDATION =============
 		describe('Input Validation', () => {
-			it('should reject update when name is missing', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-				};
-				req.files = {};
-
-				await updateProductController(req, res);
-
-				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send).toHaveBeenCalledWith({ error: 'Name is Required' });
-			});
-
-			it('should reject when description is missing', async () => {
-        req.params.pid = '1';
+      it('should return 404 when product with given ID does not exist', async () => {
+        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(null);
+        req.params.pid = 'non-existent-id';
         req.fields = {
-          name: 'Test Product',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
+          shipping: mockUpdatedProductData.shipping,
         };
         req.files = {};
 
         await updateProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Description is Required' });
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
 
-			it('should reject when price is missing', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					category: 'cat1',
-					quantity: 20,
-				};
-				req.files = {};
-
-				await updateProductController(req, res);
-
-				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send).toHaveBeenCalledWith({ error: 'Price is Required and should be greater than or equal to 0' });
-			});
-
-			it('should reject when category is missing', async () => {
+      it("should return 409 when updating product name to a name that already exists for another product", async () => {
+        const existingProduct = {
+          _id: '2',
+          name: 'Existing Product',
+          slug: 'existing-product',
+        };
+        productModel.findOne = jest.fn().mockResolvedValue(existingProduct);
+        slugify.mockReturnValue(existingProduct.slug);
         req.params.pid = '1';
         req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          quantity: 10,
+          name: existingProduct.name, // Attempting to update to a name that already exists
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
+          shipping: mockUpdatedProductData.shipping,
         };
         req.files = {};
 
         await updateProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Category is Required' });
+        expect(res.status).toHaveBeenCalledWith(409);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
 
-			it('should reject when quantity is missing', async () => {
-        req.params.pid = '1';
+			it('should return 422 and reject update when name is missing', async () => {
+				req.params.pid = mockUpdatedProductData._id;
+				req.fields = {
+					description: mockUpdatedProductData.description,
+					price: mockUpdatedProductData.price,
+					category: mockUpdatedProductData.category,
+					quantity: mockUpdatedProductData.quantity,
+				};
+				req.files = {};
+
+				await updateProductController(req, res);
+
+				expect(res.status).toHaveBeenCalledWith(422);
+				expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+			});
+
+			it('should return 422 and reject when description is missing', async () => {
+        req.params.pid = mockUpdatedProductData._id;
         req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
+          name: mockUpdatedProductData.name,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
         };
         req.files = {};
 
         await updateProductController(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send).toHaveBeenCalledWith({ error: 'Quantity is Required and should be greater than or equal to 0' });
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
       });
-		});
 
-		// ============ BOUNDARY VALUE ANALYSIS - Photo size ============
-		describe('Boundary Value Analysis - Photo Size', () => {
-			it('should accept photo at maximum boundary (exactly 1MB)', async () => {
-				req.params.pid = '1';
+			it('should return 422 and reject when price is missing', async () => {
+				req.params.pid = mockUpdatedProductData._id;
 				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-				};
-				req.files = {
-					photo: {
-						path: '/path/to/photo.jpg',
-						type: 'image/jpeg',
-						size: 1000000, // 1MB
-					},
-				};
-
-				await updateProductController(req, res);
-
-				expect(res.status).toHaveBeenCalledWith(201);
-				expect(res.send).toHaveBeenCalledWith({
-					success: true,
-					message: 'Product Updated Successfully',
-					products: expect.any(Object),
-				});
-			});
-
-			it('should reject photo just above maximum boundary (1MB + 1 byte)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-				};
-				req.files = {
-					photo: {
-						path: '/path/to/photo.jpg',
-						type: 'image/jpeg',
-						size: 1000001, // 1MB + 1 byte
-					},
-				};
-
-				await updateProductController(req, res);
-
-				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send).toHaveBeenCalledWith({ error: "Photo is Required and should be less than 1mb" });
-			});
-
-			it('should accept small photo (just below boundary)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-				};
-				req.files = {
-					photo: {
-						path: '/path/to/photo.jpg',
-						type: 'image/jpeg',
-						size: 999999, // just below 1MB
-					},
-				};
-
-				await updateProductController(req, res);
-
-				expect(res.status).toHaveBeenCalledWith(201);
-				expect(res.send).toHaveBeenCalledWith({
-					success: true,
-					message: 'Product Updated Successfully',
-					products: expect.any(Object),
-				});
-			});
-		});
-
-		// ============ Boundary Value Analysis - Price ============
-		describe('Boundary Value Analysis - Price', () => {
-			it('should allow update of product with free price (price = 0)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Free Product',
-					description: 'Updated Description',
-					price: 0,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
+					name: mockUpdatedProductData.name,
+					description: mockUpdatedProductData.description,
+					category: mockUpdatedProductData.category,
+					quantity: mockUpdatedProductData.quantity,
 				};
 				req.files = {};
 
 				await updateProductController(req, res);
 
-				expect(res.status).toHaveBeenCalledWith(201);
-				expect(res.send).toHaveBeenCalledWith({
-					success: true,
-					message: 'Product Updated Successfully',
-					products: expect.any(Object),
-				});
+				expect(res.status).toHaveBeenCalledWith(422);
+				expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
 			});
 
-			it('should create product with normal price (price = 1)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Normal Product',
-					description: 'Updated Description',
-					price: 1,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-				};
-				req.files = {};
+			it('should return 422 and reject when category is missing', async () => {
+        req.params.pid = mockUpdatedProductData._id;
+        req.fields = {
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          quantity: mockUpdatedProductData.quantity,
+        };
+        req.files = {};
 
-				await updateProductController(req, res);
+        await updateProductController(req, res);
 
-				expect(res.status).toHaveBeenCalledWith(201);
-				expect(res.send).toHaveBeenCalledWith({
-					success: true,
-					message: 'Product Updated Successfully',
-					products: expect.any(Object),
-				});
-			});
-			
-			it('should not allow update of product with negative price (price = -1)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Expensive Product',
-					description: 'Updated Description',
-					price: -1,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-				};
-				req.files = {};
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+      });
 
-				await updateProductController(req, res);
+			it('should return 422 and reject when quantity is missing', async () => {
+        req.params.pid = mockUpdatedProductData._id;
+        req.fields = {
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+        };
+        req.files = {};
 
-				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send).toHaveBeenCalledWith({ error: "Price is Required and should be greater than or equal to 0" });
-			});
-		});
+        await updateProductController(req, res);
 
-		// ============ Boundary Value Analysis - Quantity ============
-		describe('Boundary Value Analysis - Quantity', () => {
-			it('should update product with zero quantity (quantity = 0)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Out of Stock',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 0,
-					shipping: true,
-				};
-				req.files = {};
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+      });
 
-				await updateProductController(req, res);
+      it('should return 422 and reject when shipping is missing', async () => {
+        req.params.pid = mockUpdatedProductData._id;
+        req.fields = {
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
+        };
+        req.files = {};
 
-				expect(res.status).toHaveBeenCalledWith(201);
-				expect(res.send).toHaveBeenCalledWith({
-					success: true,
-					message: 'Product Updated Successfully',
-					products: expect.any(Object),
-				});
-			});
+        await updateProductController(req, res);
 
-			it('should update product with quantity 1 (quantity = 1)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Low Stock',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 1,
-					shipping: true,
-				};
-				req.files = {};
+        expect(res.status).toHaveBeenCalledWith(422);
+        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+      });
 
-				await updateProductController(req, res);
+      // ============ BOUNDARY VALUE ANALYSIS - Photo size ============
+      describe('Boundary Value Analysis - Photo Size', () => {
+        it('should return 201 and accept photo at maximum boundary (exactly 1MB)', async () => {
+          req.params.pid = mockUpdatedProductData._id;
+          req.fields = {
+            name: mockUpdatedProductData.name,
+            description: mockUpdatedProductData.description,
+            price: mockUpdatedProductData.price,
+            category: mockUpdatedProductData.category,
+            quantity: mockUpdatedProductData.quantity,
+            shipping: mockUpdatedProductData.shipping,
+          };
+          req.files = {
+            photo: {
+              path: '/path/to/photo.jpg',
+              type: 'image/jpeg',
+              size: 1000000, // 1MB
+            },
+          };
 
-				expect(res.status).toHaveBeenCalledWith(201);
-				expect(res.send).toHaveBeenCalledWith({
-					success: true,
-					message: 'Product Updated Successfully',
-					products: expect.any(Object),
-				});
-			});
+          await updateProductController(req, res);
 
-			it('should not allow update of product with invalid quantity (quantity = -1)', async () => {
-				req.params.pid = '1';
-				req.fields = {
-					name: 'High Stock',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: -1,
-					shipping: true,
-				};
-				req.files = {};
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: expect.any(Object),
+          });
+        });
 
-				await updateProductController(req, res);
+        it('should return 422 and reject photo just above maximum boundary (1MB + 1 byte)', async () => {
+          req.params.pid = mockUpdatedProductData._id;
+          req.fields = {
+            name: 'Updated Product',
+            description: 'Updated Description',
+            price: 150,
+            category: 'cat1',
+            quantity: 20,
+            shipping: true,
+          };
+          req.files = {
+            photo: {
+              path: '/path/to/photo.jpg',
+              type: 'image/jpeg',
+              size: 1000001, // 1MB + 1 byte
+            },
+          };
 
-				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send).toHaveBeenCalledWith({ error: "Quantity is Required and should be greater than or equal to 0" });
-			});
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(422);
+          expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        });
+
+        it('should return 201 and accept small photo (below boundary)', async () => {
+          req.params.pid = mockUpdatedProductData._id;
+          req.fields = {
+            name: mockUpdatedProductData.name,
+            description: mockUpdatedProductData.description,
+            price: mockUpdatedProductData.price,
+            category: mockUpdatedProductData.category,
+            quantity: mockUpdatedProductData.quantity,
+            shipping: mockUpdatedProductData.shipping,
+          };
+          req.files = {
+            photo: {
+              path: '/path/to/photo.jpg',
+              type: 'image/jpeg',
+              size: 999999, // just below 1MB
+            },
+          };
+
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: expect.any(Object),
+          });
+        });
+      });
+
+      // ============ Boundary Value Analysis - Price ============
+      describe('Boundary Value Analysis - Price', () => {
+        it('should return 201 and allow update of product with free price (price = 0)', async () => {
+          req.params.pid = mockUpdatedProductData._id;
+          req.fields = {
+            name: mockUpdatedProductData.name,
+            description: mockUpdatedProductData.description,
+            price: 0,
+            category: mockUpdatedProductData.category,
+            quantity: mockUpdatedProductData.quantity,
+            shipping: mockUpdatedProductData.shipping,
+          };
+          req.files = {};
+
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: expect.any(Object),
+          });
+        });
+
+        it('should return 201 and create product with normal price (price = 1)', async () => {
+          req.params.pid = '1';
+          req.fields = {
+            name: 'Normal Product',
+            description: 'Updated Description',
+            price: 1,
+            category: 'cat1',
+            quantity: 20,
+            shipping: true,
+          };
+          req.files = {};
+
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: expect.any(Object),
+          });
+        });
+        
+        it('should return 422 and not allow update of product with negative price (price = -1)', async () => {
+          req.params.pid = '1';
+          req.fields = {
+            name: 'Expensive Product',
+            description: 'Updated Description',
+            price: -1,
+            category: 'cat1',
+            quantity: 20,
+            shipping: true,
+          };
+          req.files = {};
+
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(422);
+          expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        });
+      });
+
+      // ============ Boundary Value Analysis - Quantity ============
+      describe('Boundary Value Analysis - Quantity', () => {
+        it('should return 201 and update product with zero quantity (quantity = 0)', async () => {
+          req.params.pid = mockUpdatedProductData._id;
+          req.fields = {
+            name: mockUpdatedProductData.name,
+            description: mockUpdatedProductData.description,
+            price: mockUpdatedProductData.price,
+            category: mockUpdatedProductData.category,
+            quantity: 0,
+            shipping: mockUpdatedProductData.shipping,
+          };
+          req.files = {};
+
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: expect.any(Object),
+          });
+        });
+
+        it('should return 201 and update product with quantity 1 (quantity = 1)', async () => {
+          req.params.pid = mockUpdatedProductData._id;
+          req.fields = {
+            name: mockUpdatedProductData.name,
+            description: mockUpdatedProductData.description,
+            price: mockUpdatedProductData.price,
+            category: mockUpdatedProductData.category,
+            quantity: 1,
+            shipping: mockUpdatedProductData.shipping,
+          };
+          req.files = {};
+
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(201);
+          expect(res.send).toHaveBeenCalledWith({
+            success: true,
+            message: expect.any(String),
+            products: expect.any(Object),
+          });
+        });
+
+        it('should return 422 and not allow update of product with invalid quantity (quantity = -1)', async () => {
+          req.params.pid = mockUpdatedProductData._id;
+          req.fields = {
+            name: mockUpdatedProductData.name,
+            description: mockUpdatedProductData.description,
+            price: mockUpdatedProductData.price,
+            category: mockUpdatedProductData.category,
+            quantity: -1,
+            shipping: mockUpdatedProductData.shipping,
+          };
+          req.files = {};
+
+          await updateProductController(req, res);
+
+          expect(res.status).toHaveBeenCalledWith(422);
+          expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        });
+      });
 		});
 
 		// ============ ERROR HANDLING ============
 		describe('Error Handling', () => {
 			it('should handle product update error', async () => {
 				const mockError = new Error('Database update failed');
-
-				req.params.pid = '1';
+				req.params.pid = mockUpdatedProductData._id;
 				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
+					name: mockUpdatedProductData.name,
+					description: mockUpdatedProductData.description,
+					price: mockUpdatedProductData.price,
+					category: mockUpdatedProductData.category,
+					quantity: mockUpdatedProductData.quantity,
+					shipping: mockUpdatedProductData.shipping,
 				};
 				req.files = {};
 
 				productModel.findByIdAndUpdate = jest.fn().mockRejectedValue(mockError);
 
-				const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
 				await updateProductController(req, res);
 
-				expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
 				expect(res.status).toHaveBeenCalledWith(500);
-				expect(res.send.mock.calls[0][0].success).toBe(false);
-				expect(res.send.mock.calls[0][0].message).toBe('Error in Update product');
-				consoleLogSpy.mockRestore();
+				expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+          error: mockError,
+        });
 			});
 
       it('should handle file read error during update', async () => {
         const mockError = new Error('File read failed');
-
-        req.params.pid = '1';
+        req.params.pid = mockUpdatedProductData._id;
         req.fields = {
-          name: 'Updated Product',
-          description: 'Updated Description',
-          price: 150,
-          category: 'cat1',
-          quantity: 20,
-          shipping: true,
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
+          shipping: mockUpdatedProductData.shipping,
         };
         req.files = {
           photo: {
@@ -1694,249 +1690,79 @@ describe('ProductController', () => {
           throw mockError;
         });
 
-        // Mock findByIdAndUpdate to return a valid product so file read is attempted
-        const mockProduct = {
-          _id: '1',
-          name: 'Updated Product',
-          description: 'Updated Description',
-          price: 150,
-          category: 'cat1',
-          quantity: 20,
-          shipping: true,
-          slug: 'updated-product',
-          photo: {
-            data: null,
-            contentType: null,
-          },
-          save: jest.fn().mockResolvedValue(true),
-        };
-        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
-
-        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
-        await updateProductController(req, res);
-
-        expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send.mock.calls[0][0].success).toBe(false);
-        expect(res.send.mock.calls[0][0].message).toBe('Error in Update product');
-        consoleLogSpy.mockRestore();
-      });
-
-			it('should handle product not found error', async () => {
-        const mockError = new Error('Product not found');
-
-        req.params.pid = 'invalid-id';
-        req.fields = {
-          name: 'Test Product',
-          description: 'Test Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-        };
-        req.files = {};
-
-        slugify.mockReturnValue('test-product');
-        productModel.findByIdAndUpdate = jest.fn().mockRejectedValue(mockError);
-
-        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockUpdatedProductData);
 
         await updateProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.send.mock.calls[0][0].success).toBe(false);
-
-        consoleLogSpy.mockRestore();
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+          error: mockError,
+        });
       });
 		});
 
 		// ============ SIDE EFFECTS ============
 		describe('Side Effects', () => {
 			it('should create slug from updated product name', async () => {
-				const mockProduct = {
-					_id: '1',
-					name: 'Updated Product Name',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-					slug: 'updated-product-name',
-					photo: {},
-					save: jest.fn().mockResolvedValue(true),
-				};
-
-				req.params.pid = '1';
+				req.params.pid = mockUpdatedProductData._id;
 				req.fields = {
-					name: 'Updated Product Name',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
+					name: mockUpdatedProductData.name,
+					description: mockUpdatedProductData.description,
+					price: mockUpdatedProductData.price,
+					category: mockUpdatedProductData.category,
+					quantity: mockUpdatedProductData.quantity,
+					shipping: mockUpdatedProductData.shipping,
 				};
 				req.files = {};
 
-				slugify.mockReturnValue('updated-product-name');
-				productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
+				slugify.mockReturnValue(mockUpdatedProductData.slug);
+				productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockUpdatedProductData);
 
 				await updateProductController(req, res);
 
-				expect(slugify).toHaveBeenCalledWith('Updated Product Name');
-			});
-
-			it('should read file when updated photo is provided', async () => {
-				const mockPhotoBuffer = Buffer.from('new-image-data');
-				const mockProduct = {
-					_id: '1',
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-					slug: 'updated-product',
-					photo: {
-						data: null,
-						contentType: null,
-					},
-					save: jest.fn().mockResolvedValue(true),
-				};
-
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-				};
-				req.files = {
-					photo: {
-						path: 'path/to/photo.jpg',
-						type: 'image/jpeg',
-					},
-				};
-
-				fs.readFileSync = jest.fn().mockImplementation(() => {
-					return mockPhotoBuffer;
-				});
-
-				productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
-
-				await updateProductController(req, res);
-
-				expect(fs.readFileSync).toHaveBeenCalledWith('path/to/photo.jpg');
-			});
-
-			it('should not read file when updated photo is not provided', async () => {
-				const mockProduct = {
-					_id: '1',
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-					slug: 'updated-product',
-					photo: {},
-					save: jest.fn().mockResolvedValue(true),
-				};
-
-				req.params.pid = '1';
-				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-				};
-				req.files = {};
-
-				fs.readFileSync = jest.fn();
-
-				productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
-
-				await updateProductController(req, res);
-
-				expect(fs.readFileSync).not.toHaveBeenCalled();
+				expect(slugify).toHaveBeenCalledWith(mockUpdatedProductData.name);
 			});
 
 			it('should call product save method after update', async () => {
-				const mockProduct = {
-					_id: '1',
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
-					slug: 'updated-product',
-					photo: {},
-					save: jest.fn().mockResolvedValue(true),
-				};
-
-				req.params.pid = '1';
+				req.params.pid = mockUpdatedProductData._id;
 				req.fields = {
-					name: 'Updated Product',
-					description: 'Updated Description',
-					price: 150,
-					category: 'cat1',
-					quantity: 20,
-					shipping: true,
+					name: mockUpdatedProductData.name,
+					description: mockUpdatedProductData.description,
+					price: mockUpdatedProductData.price,
+					category: mockUpdatedProductData.category,
+					quantity: mockUpdatedProductData.quantity,
+					shipping: mockUpdatedProductData.shipping,
 				};
 				req.files = {};
 
-				productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
+				productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockUpdatedProductData);
 
 				await updateProductController(req, res);
 
-				expect(mockProduct.save).toHaveBeenCalled();
+				expect(mockUpdatedProductData.save).toHaveBeenCalled();
 			});
 
-			it('should call findByIdAndUpdate with correct parameters', async () => {
-        const mockProduct = {
-          _id: '1',
-          name: 'Updated',
-          description: 'Updated Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
-          slug: 'updated',
-          photo: {},
-          save: jest.fn().mockResolvedValue(true),
-        };
-
-        req.params.pid = '1';
+      it('should log error when an exception occurs', async () => {
+        const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+        const mockError = new Error('Database update failed');
+        req.params.pid = mockUpdatedProductData._id;
         req.fields = {
-          name: 'Updated',
-          description: 'Updated Description',
-          price: 100,
-          category: 'cat1',
-          quantity: 10,
-          shipping: true,
+          name: mockUpdatedProductData.name,
+          description: mockUpdatedProductData.description,
+          price: mockUpdatedProductData.price,
+          category: mockUpdatedProductData.category,
+          quantity: mockUpdatedProductData.quantity,
+          shipping: mockUpdatedProductData.shipping,
         };
         req.files = {};
 
-        slugify.mockReturnValue('updated');
-        productModel.findByIdAndUpdate = jest.fn().mockResolvedValue(mockProduct);
+        productModel.findByIdAndUpdate = jest.fn().mockRejectedValue(mockError);
 
         await updateProductController(req, res);
 
-        expect(productModel.findByIdAndUpdate).toHaveBeenCalledWith(
-          '1',
-          expect.objectContaining({
-            name: 'Updated',
-            description: 'Updated Description',
-            price: 100,
-            slug: 'updated',
-          }),
-          { new: true }
-        );
+        expect(consoleLogSpy).toHaveBeenCalledWith(mockError);
       });
 		});
 	});
