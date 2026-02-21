@@ -345,7 +345,7 @@ export const braintreeTokenController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error generating payment token",
-      error: error,
+      error,
     });
   }
 };
@@ -372,7 +372,9 @@ export const brainTreePaymentController = async (req, res) => {
 
     // Refactor: Use reduce for calculating total and add validation for price - YAN WEIDONG A0258151H
     let total = cart.reduce((sum, item) => {
-      if (!item.price || typeof item.price !== "number") {
+      // Fix: Check for number type and non-negative instead of falsy check
+      // This allows price = 0 (free items) but rejects undefined, null, strings, and negative values
+      if (typeof item.price !== "number" || isNaN(item.price) || item.price < 0) {
         throw new Error("Invalid price in cart item");
       }
       return sum + item.price;
@@ -410,7 +412,7 @@ export const brainTreePaymentController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error Processing Payment",
-      error: error.message
+      error,
     });
   }
 };
