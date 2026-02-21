@@ -24,7 +24,7 @@ jest.mock('slugify');
   *   a. status 500 if database error occurs
   */
 describe("createCategoryController", () => {
-  let res, req, consoleLogSpy;
+  let res, req;
   const mockSlug = 'mock-slug';
   const validCategoryName = 'Shoes';
 
@@ -39,7 +39,7 @@ describe("createCategoryController", () => {
       send: jest.fn()
     };
     slugify.mockReturnValue(mockSlug);
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {})
   });
 
   afterEach(() => {
@@ -189,7 +189,7 @@ describe("createCategoryController", () => {
   *   a. status 500 if database error occurs
   */
 describe("updateCategoryController", () => {
-  let res, req, consoleLogSpy;
+  let res, req;
   const mockSlug = 'mock-slug';
   const validCategoryName = 'Shoes';
   const validCategoryId = 'validId';
@@ -214,7 +214,7 @@ describe("updateCategoryController", () => {
     };
     slugify.mockReturnValue(mockSlug);
     jest.spyOn(mongoose.Types.ObjectId, "isValid").mockReturnValue(true);
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -397,14 +397,14 @@ describe("updateCategoryController", () => {
   *   a. status 500 if database error occurs
   */
 describe("categoryController", () => {
-  let res, req, consoleLogSpy;
+  let res, req;
   beforeEach(() => {
     req = {};
     res = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn()
     };
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -491,7 +491,7 @@ describe("categoryController", () => {
   *   a. status 500 if database error occurs
   */
 describe("singleCategoryController", () => {
-  let res, req, consoleLogSpy;
+  let res, req;
   const mockSlug = 'mock-slug';
   const mockCategory = {
     _id: 'validId',
@@ -509,7 +509,7 @@ describe("singleCategoryController", () => {
       status: jest.fn().mockReturnThis(),
       send: jest.fn()
     };
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -638,7 +638,7 @@ describe("singleCategoryController", () => {
   *   a. status 500 if database error occurs
   */
 describe("deleteCategoryController", () => {
-  let res, req, consoleLogSpy;
+  let res, req;
   const validCategoryId = 'validId';
   const mockCategory = {
     _id: validCategoryId,
@@ -657,7 +657,7 @@ describe("deleteCategoryController", () => {
       send: jest.fn()
     };
     jest.spyOn(mongoose.Types.ObjectId, "isValid").mockReturnValue(true);
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
