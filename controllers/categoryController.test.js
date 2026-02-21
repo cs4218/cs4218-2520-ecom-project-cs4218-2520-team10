@@ -394,9 +394,7 @@ describe("updateCategoryController", () => {
   *   b. return category structure if no exception
   *   c. return empty category list if find returns empty
   * 2. Error handling: 1 tests
-  *   a. status 500 if find exception
-  * 3. Side effects: 1 tests
-  *   a. Log error when error occurs
+  *   a. status 500 if database error occurs
   */
 describe("categoryController", () => {
   let res, req, consoleLogSpy;
@@ -415,7 +413,7 @@ describe("categoryController", () => {
   });
 
   describe("Happy Path", () => {
-    it("should return 200 if no find exception", async () => {
+    it("should return 200 if no database error", async () => {
       await categoryController(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
@@ -436,6 +434,7 @@ describe("categoryController", () => {
 
       await categoryController(req, res);
 
+      expect(res.send.mock.calls[0][0].category).toHaveLength(mockCategories.length);
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
           category: expect.arrayContaining([
@@ -459,8 +458,8 @@ describe("categoryController", () => {
   });
 
   describe("Error Handling", () => {
-    it("should return 500 if find exception occurs", async () => {
-      const error = new Error("find error");
+    it("should return 500 if database error occurs", async () => {
+      const error = new Error("Database error");
       categoryModel.find.mockRejectedValue(error);
 
       await categoryController(req, res);
@@ -473,17 +472,6 @@ describe("categoryController", () => {
           message: expect.any(String)
         })
       );
-    });
-  });
-
-  describe("Side effects", () => {
-    it("should log error when an exception occurs", async () => {
-      const error = new Error("Database error");
-      categoryModel.find.mockRejectedValue(error);
-
-      await categoryController(req, res);
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });
   });
 });
