@@ -152,7 +152,6 @@ export const singleCategoryController = async (req, res) => {
 export const deleteCategoryController = async (req, res) => { // Minor fix: typo - Shaun Lee Xuan Wei A0252626E
   try {
     const { id } = req.params;
-    const category = await categoryModel.findByIdAndDelete(id);
     // Fix: add validation for category id - Shaun Lee Xuan Wei A0252626E
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(422).send({
@@ -160,6 +159,7 @@ export const deleteCategoryController = async (req, res) => { // Minor fix: typo
         message: "Invalid category id"
       });
     }
+    const category = await categoryModel.findByIdAndDelete(id);
     // Fix: add validation for category id not found
     if (!category) {
       return res.status(404).send({

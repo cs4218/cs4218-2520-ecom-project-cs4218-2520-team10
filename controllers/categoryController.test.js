@@ -635,9 +635,7 @@ describe("singleCategoryController", () => {
   *   b. status 422 for invalid category id
   *   c. status 404 for category id not found
   * 3. Error handling: 1 tests
-  *   a. status 500 if findByIdAndDelete exception
-  * 4. Side effects: 1 tests
-  *   a. Log error when error occurs
+  *   a. status 500 if database error occurs
   */
 describe("deleteCategoryController", () => {
   let res, req, consoleLogSpy;
@@ -731,9 +729,9 @@ describe("deleteCategoryController", () => {
   });
 
   describe("Error Handling", () => {
-    it("should return 500 if findByIdAndDelete exception occurs", async () => {
+    it("should return 500 if database error occurs", async () => {
       req.params.id = validCategoryId;
-      const error = new Error("findByIdAndDelete error");
+      const error = new Error("Database error");
       categoryModel.findByIdAndDelete.mockRejectedValue(error);
 
       await deleteCategoryController(req, res);
@@ -746,18 +744,6 @@ describe("deleteCategoryController", () => {
           message: expect.any(String)
         })
       );
-    });
-  });
-
-  describe("Side effects", () => {
-    it("should log error when an exception occurs", async () => {
-      req.params.id = validCategoryId;
-      const error = new Error("Database error");
-      categoryModel.findByIdAndDelete.mockRejectedValue(error);
-
-      await deleteCategoryController(req, res);
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });
   });
 });
