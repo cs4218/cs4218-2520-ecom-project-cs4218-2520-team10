@@ -356,10 +356,10 @@ describe('ProductController', () => {
       h. Boundary value analysis of photo size (<1MB, =1MB, >1MB)
       i. Boundary value analysis of price (-1, 0, 1)
       j. Boundary value analysis of quantity (-1, 0, 1)
-    3. Error handling: 1 test
+    3. Error handling: 2 tests
       a. Should handle database error
       b. Should handle file system error when reading photo
-    4. Side effects: 1 test
+    4. Side effects: 3 tests
       a. Should create product slug correctly using product name
       b. Should call save method on product model instance to save product to database
       c. Should log error when an exception occurs
