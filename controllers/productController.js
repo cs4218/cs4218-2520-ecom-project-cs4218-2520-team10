@@ -207,6 +207,7 @@ export const updateProductController = async (req, res) => {
         return res.status(422).send({ success: false, message: "Shipping is required" });
     }
 
+    // Bug fix: Added check for existing product with the same slug to prevent duplicates - Ong Chang Heng Bertrand A0253013X
     const slug = slugify(name);
     const existingProduct = await productModel.findOne({ slug, _id: { $ne: req.params.pid } });
     if (existingProduct) {

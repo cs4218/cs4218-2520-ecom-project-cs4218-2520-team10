@@ -14,6 +14,7 @@ const Products = () => {
       setProducts(data.products);
     } catch (error) {
       console.log(error);
+      // Bug fix: Added error handling for failed API call - Ong Chang Heng Bertrand A0253013X
       toast.error("Something Went Wrong");
     }
   };
