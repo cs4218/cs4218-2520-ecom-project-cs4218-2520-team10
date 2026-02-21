@@ -10,6 +10,7 @@ import cors from "cors";
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 
+// Enhancement: Add Swagger documentation for to improve developer experience and facilitate API testing - YAN WEIDONG A0258151H
 // Swagger definition
 const swaggerOptions = {
   swaggerDefinition: {

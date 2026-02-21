@@ -297,7 +297,7 @@ export const orderStatusController = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "An error occurred while updating the order status.",
-      error: error.message,
+      error: error, // Fix: Send entire error object for better debugging - YAN WEIDONG A0258151H
     });
   }
 };
