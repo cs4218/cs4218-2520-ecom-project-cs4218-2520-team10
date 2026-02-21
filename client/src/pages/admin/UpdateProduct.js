@@ -32,7 +32,8 @@ const UpdateProduct = () => {
       setPrice(data.product.price);
       // Bug fix: Removed duplicate setPrice call - Ong Chang Heng Bertrand A0253013X
       setQuantity(data.product.quantity);
-      setShipping(data.product.shipping ? "1" : "0");
+      // Bug fix: Updated setShipping to convert boolean to string for Select component - Ong Chang Heng Bertrand A0253013X
+      setShipping(String(Number(data.product.shipping)));
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
