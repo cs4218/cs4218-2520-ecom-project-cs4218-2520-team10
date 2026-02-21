@@ -44,11 +44,12 @@ import { useCart } from "../context/cart";
     c. should add main product to cart when 'ADD TO CART' button is clicked
     d. should add related product to cart when 'ADD TO CART' button is clicked
     e. should display message when no related products found (0 related products)
-  2. Error Handling: 4 tests
+  2. Error Handling: 5 tests
     a. should display error toast when fetching product details
     b. should handle error when fetching related products
     c. should display error toast when fetching related products
     d. should display error toast when handling missing product data gracefully
+    e. should not call get product API when slug is missing
   3. Side Effects / API Calls: 2 tests
     a. should fetch product details on component mount
     b. should fetch related products after fetching main product
@@ -240,6 +241,16 @@ describe("ProductDetails Component", () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
+      });
+    });
+
+    it("should not call get product when slug is missing", async () => {
+      useParams.mockReturnValue({ slug: "" });
+
+      render(<ProductDetails />);
+
+      await waitFor(() => {
+        expect(axios.get).not.toHaveBeenCalledWith(expect.stringContaining('/api/v1/product/get-product/'));
       });
     });
   });

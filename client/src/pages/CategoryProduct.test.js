@@ -40,9 +40,10 @@ import { useCart } from "../context/cart";
     a. should display category name and products when fetched successfully
     b. should add product to cart when 'ADD TO CART' button is clicked
     c. should display message when no products found (0 products)
-  2. Error Handling: 2 tests
+  2. Error Handling: 3 tests
     a. should handle error when fetching category products
     b. should handle missing category data gracefully
+    3. should not call get category API when slug is missing
   3. Side Effects / API Calls: 2 tests
     a. should call API with correct slug when component mounts
     b. should re-fetch products when slug changes
@@ -176,6 +177,16 @@ describe("CategoryProduct Component", () => {
         expect(screen.getByTestId('category-name')).toBeInTheDocument();
         expect(screen.getByTestId('product-count')).toHaveTextContent('0');
         expect(screen.queryByTestId('product-name-1')).not.toBeInTheDocument();
+      });
+    });
+
+    it("should not call get category API when slug is missing", async () => {
+      useParams.mockReturnValue({ slug: "" });
+
+      render(<CategoryProduct />);
+
+      await waitFor(() => {
+        expect(axios.get).not.toHaveBeenCalledWith(expect.stringContaining('/api/v1/product/product-category/'));
       });
     });
   });

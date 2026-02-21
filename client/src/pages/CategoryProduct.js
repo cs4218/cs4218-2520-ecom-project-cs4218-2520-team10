@@ -16,7 +16,7 @@ const CategoryProduct = () => {
   useEffect(() => {
     if (params?.slug) getProductsByCat();
   }, [params?.slug]);
-  
+
   const getProductsByCat = async () => {
     try {
       const { data } = await axios.get(
