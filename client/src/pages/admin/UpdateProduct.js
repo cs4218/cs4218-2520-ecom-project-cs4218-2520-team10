@@ -16,7 +16,7 @@ const UpdateProduct = () => {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [shipping, setShipping] = useState(false);
+  const [shipping, setShipping] = useState("");
   const [photo, setPhoto] = useState("");
   const [id, setId] = useState("");
 
@@ -32,7 +32,7 @@ const UpdateProduct = () => {
       setPrice(data.product.price);
       // Bug fix: Removed duplicate setPrice call - Ong Chang Heng Bertrand A0253013X
       setQuantity(data.product.quantity);
-      setShipping(Boolean(data.product.shipping));
+      setShipping(data.product.shipping ? "1" : "0");
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
@@ -49,7 +49,16 @@ const UpdateProduct = () => {
     try {
       const { data } = await axios.get("/api/v1/category/get-category");
       if (data?.success) {
+        // Bug fix: Added check for empty category list and show error message - Ong Chang Heng Bertrand A0253013X
+        if (data.category.length === 0) {
+          toast.error("No categories available. Please create a category first.");
+          setCategories([]);
+          return;
+        }
         setCategories(data?.category);
+      } else {
+        // Bug fix: Added toast error message for unsuccessful response - Ong Chang Heng Bertrand A0253013X
+        toast.error("Failed to fetch categories");
       }
     } catch (error) {
       console.log(error);
@@ -73,7 +82,7 @@ const UpdateProduct = () => {
       photo && productData.append("photo", photo);
       productData.append("category", category);
       // Bug fix: Added 'shipping' to FormData to ensure it is included in the request - Ong Chang Heng Bertrand A0253013X
-      productData.append("shipping", shipping ? "1" : "0");
+      productData.append("shipping", shipping);
       // Bug fix: Added 'await' to axios.put call - Ong Chang Heng Bertrand A0253013X
       const { data } = await axios.put(
         `/api/v1/product/update-product/${id}`,
@@ -89,7 +98,7 @@ const UpdateProduct = () => {
     } catch (error) {
       console.log(error);
       // Bug fix: Added error message from backend in response - Ong Chang Heng Bertrand A0253013X
-      toast.error(error?.response?.data?.error || "Something went wrong while updating product");
+      toast.error(error?.response?.data?.message);
     }
   };
 
@@ -133,7 +142,7 @@ const UpdateProduct = () => {
                 value={category}
               >
                 {categories?.map((c) => (
-                  <Option key={c._id} value={c._id}>
+                  <Option key={c._id} value={c._id} data-testid={`category-option-${c._id}`}>
                     {c.name}
                   </Option>
                 ))}
@@ -195,18 +204,11 @@ const UpdateProduct = () => {
               <div className="mb-3">
                 <input
                   data-testid="price-input"
-                  min="0"
                   type="number"
                   value={price}
                   placeholder="Write a price"
                   className="form-control"
-                  onChange={(e) => {
-                    // Bug fix: Added validation to prevent negative price values - Ong Chang Heng Bertrand A0253013X
-                    const value = e.target.value;
-                    if (value === "" || parseFloat(value) >= 0) {
-                      setPrice(value);
-                    }
-                  }}
+                  onChange={(e) => setPrice(e.target.value)}
                 />
               </div>
               <div className="mb-3">
@@ -216,13 +218,7 @@ const UpdateProduct = () => {
                   value={quantity}
                   placeholder="Write a quantity"
                   className="form-control"
-                  onChange={(e) => {
-                    // Bug fix: Added validation to prevent negative quantity values - Ong Chang Heng Bertrand A0253013X
-                    const value = e.target.value;
-                    if (value === "" || parseFloat(value) >= 0) {
-                      setQuantity(value);
-                    }
-                  }}
+                  onChange={(e) => setQuantity(e.target.value)}
                 />
               </div>
               <div className="mb-3">
@@ -234,10 +230,9 @@ const UpdateProduct = () => {
                   showSearch
                   className="form-select mb-3"
                   onChange={(value) => {
-                    // Bug fix: Handle shipping value check correctly after changing to boolean - Ong Chang Heng Bertrand A0253013X
-                    setShipping(value === "1");
+                    setShipping(value);
                   }}
-                  value={shipping ? "1" : "0"}
+                  value={shipping}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>

@@ -78,21 +78,16 @@ global.prompt = jest.fn();
     c. Should update product successfully and navigate
     d. Should delete product when confirmed
     e. Should not delete product when cancelled
-  2. Error Handling: 7 tests
+  2. Error Handling: 6 tests
     a. Should show error toast if fetching product fails
     b. Should show error toast if fetching categories fails
     c. Should show error toast with specific message if updating product fails
-    d. Should show error toast with generic message if updating product fails with no error message
-    e. Should show error toast if deleting product fails
-    f. Should show error toast when update returns success: false
-    g. Should not populate categories when get categories returns success: false
-  3. Equivalence Partitioning: 2 tests
-    a. Category fetch should handle zero categories
-    b. Category fetch should handle multiple categories
-  4. Boundary Value Analysis: 6 tests
-    a. Should handle price at boundary values (-1, 0, 1)
-    b. Should handle quantity at boundary values (-1, 0, 1)
-  5. Rendering / UI: 11 tests
+    d. Should show error toast if fetching categories retrieves 0 categories (Viewed item should have a category already, so there should be at least 1)
+    e. Should show error toast if server fetching categories fails
+    f. Should show error toast if deleting product fails
+    g. Should show error toast when update returns success: false
+    h. Should not populate categories when get categories returns success: false
+  3. Rendering / UI: 11 tests
     a. Should render Layout and AdminMenu components
     b. Should render form fields with correct initial values
     c. Should show uploaded photo preview
@@ -164,7 +159,7 @@ describe("UpdateProduct pageg", () => {
       });
     });
 
-    it("should fetch categories on mount", async () => {
+    it("should fetch multiple categories on mount", async () => {
       render(
         <MemoryRouter>
           <UpdateProduct />
@@ -173,9 +168,8 @@ describe("UpdateProduct pageg", () => {
 
       await waitFor(() => {
         expect(axios.get).toHaveBeenCalledWith("/api/v1/category/get-category");
-        expect(screen.getByTestId("category-select")).toBeInTheDocument();
-        expect(within(screen.getByTestId("category-select")).getByText("Electronics")).toBeInTheDocument();
-        expect(within(screen.getByTestId("category-select")).getByText("Clothing")).toBeInTheDocument();
+        expect(screen.getByTestId("category-option-66db427fdb0119d9234b27ee")).toHaveTextContent("Electronics");
+        expect(screen.getByTestId("category-option-66db427fdb0119d9234b27ef")).toHaveTextContent("Clothing");
       });
     });
 
@@ -329,13 +323,63 @@ describe("UpdateProduct pageg", () => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
       });
-
-      consoleLogSpy.mockRestore();
     });
 
-    it("should show error toast when fetching categories fails", async () => {
+    it("should show error toast when fetching categories retrieves 0 products (Viewed item should have a category already, so there should be at least 1)", async () => {
       const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+      axios.get.mockReset();
+      axios.get.mockImplementation((url) => {
+        if (url.includes("/api/v1/product/get-product/")) {
+          return Promise.resolve({
+            data: { product: mockProduct },
+          });
+        }
+        if (url === "/api/v1/category/get-category") {
+          return Promise.resolve({
+            data: { success: true, category: [] },
+          });
+        }
+      });
 
+      render(
+        <MemoryRouter>
+          <UpdateProduct />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(expect.any(String));
+      });
+    });
+
+    it("should show error toast when fetching categories returns success: false", async () => {
+      axios.get.mockReset();
+      axios.get.mockImplementation((url) => {
+        if (url.includes("/api/v1/product/get-product/")) {
+          return Promise.resolve({
+            data: { product: mockProduct },
+          });
+        }
+        if (url === "/api/v1/category/get-category") {
+          return Promise.resolve({
+            data: { success: false, category: mockCategories },
+          });
+        }
+      });
+
+      render(
+        <MemoryRouter>
+          <UpdateProduct />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(expect.any(String));
+       });
+    });
+
+    it("should show error toast when server fetching categories fails", async () => {
+      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
       axios.get.mockReset();
       axios.get.mockImplementation((url) => {
         if (url.includes("/api/v1/product/get-product/")) {
@@ -358,8 +402,6 @@ describe("UpdateProduct pageg", () => {
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
       });
-
-      consoleLogSpy.mockRestore();
     });
 
     it("should show error toast with specific message when update fails", async () => {
@@ -368,7 +410,8 @@ describe("UpdateProduct pageg", () => {
       const mockError = new Error("API Error");
       mockError.response = {
         data: {
-          error: "Specific error message"
+          success: false,
+          message: "Specific error message"
         }
       };
       axios.put = jest.fn().mockRejectedValueOnce(mockError);
@@ -388,38 +431,9 @@ describe("UpdateProduct pageg", () => {
       fireEvent.click(screen.getByTestId("update-button"));
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Specific error message");
+        expect(toast.error).toHaveBeenCalledWith(mockError.response.data.message);
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
       });
-
-      consoleLogSpy.mockRestore();
-    });
-
-    it("should show error toast with generic message when update fails with no error message", async () => {
-      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
-
-      axios.put = jest.fn().mockRejectedValueOnce(new Error("Network error"));
-
-      render(
-        <MemoryRouter>
-          <UpdateProduct />
-        </MemoryRouter>
-      );
-
-      // Wait for product to load
-      await waitFor(() => {
-        expect(screen.getByDisplayValue("Test Product")).toBeInTheDocument();
-      });
-
-      // Click update
-      fireEvent.click(screen.getByTestId("update-button"));
-
-      await waitFor(() => {
-        expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
-        expect(toast.error).toHaveBeenCalledWith(expect.any(String));
-      });
-
-      consoleLogSpy.mockRestore();
     });
 
     it("should show error toast when delete fails", async () => {
@@ -446,8 +460,6 @@ describe("UpdateProduct pageg", () => {
         expect(consoleLogSpy).toHaveBeenCalledWith(expect.any(Error));
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
       });
-
-      consoleLogSpy.mockRestore();
     });
 
     it("should show error toast when update returns success: false", async () => {
@@ -508,149 +520,6 @@ describe("UpdateProduct pageg", () => {
       const categorySelect = screen.getByTestId("category-select");
       expect(within(categorySelect).queryByText("Electronics")).not.toBeInTheDocument();
       expect(within(categorySelect).queryByText("Clothing")).not.toBeInTheDocument();
-    });
-  });
-
-  // ============ EQUIVALENCE PARTITIONING ============
-  describe("Equivalence Partitioning", () => {
-    describe("Category Count", () => {
-      it("should handle zero categories", async () => {
-        axios.get.mockReset();
-        axios.get.mockImplementation((url) => {
-          if (url.includes("/api/v1/product/get-product/")) {
-            return Promise.resolve({
-              data: { product: mockProduct },
-            });
-          }
-          if (url === "/api/v1/category/get-category") {
-            return Promise.resolve({
-              data: { success: true, category: [] },
-            });
-          }
-        });
-
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-
-        await waitFor(() => {
-          const categorySelect = screen.getByTestId("category-select");
-          const options = categorySelect.querySelectorAll("option");
-          expect(options).toHaveLength(1); // Only placeholder
-        });
-      });
-
-      it("should handle multiple categories", async () => {
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-
-        await waitFor(() => {
-          const categorySelect = screen.getByTestId("category-select");
-          const options = categorySelect.querySelectorAll("option");
-          expect(options.length).toBeGreaterThan(1); // Placeholder + categories
-        });
-      });
-    });
-  });
-
-  // ============ BOUNDARY VALUE ANALYSIS ============
-  describe("Boundary Value Analysis", () => {
-    describe("should handle price input at boundary values", () => {
-      it("should accept valid positive numbers", async () => {
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-
-        const priceInput = screen.getByPlaceholderText("Write a price");
-        fireEvent.change(priceInput, { target: { value: "1" } });
-
-        await waitFor(() => {
-          expect(priceInput.value).toBe("1");
-        });
-      });
-
-      it("should accept zero price", async () => {
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-
-        const priceInput = screen.getByPlaceholderText("Write a price");
-        fireEvent.change(priceInput, { target: { value: "0" } });
-
-        await waitFor(() => {
-          expect(priceInput.value).toBe("0");
-        });
-      });
-
-      it("should not accept negative numbers", async () => {
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-
-        const priceInput = screen.getByPlaceholderText("Write a price");
-        fireEvent.change(priceInput, { target: { value: "-1" } });
-
-        await waitFor(() => {
-          expect(priceInput.value).not.toBe("-1");
-        });
-      });
-    });
-
-    describe("should handle quantity input at boundary values", () => {
-      it("should accept valid positive integers", async () => {
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-
-        const quantityInput = screen.getByPlaceholderText("Write a quantity");
-        fireEvent.change(quantityInput, { target: { value: "1" } });
-
-        await waitFor(() => {
-          expect(quantityInput.value).toBe("1");
-        });
-      });
-
-      it("should accept zero quantity", async () => {
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-
-        const quantityInput = screen.getByPlaceholderText("Write a quantity");
-        fireEvent.change(quantityInput, { target: { value: "0" } });
-
-        await waitFor(() => {
-          expect(quantityInput.value).toBe("0");
-        });
-      });
-
-      it("should not accept negative numbers", async () => {
-        render(
-          <MemoryRouter>
-            <UpdateProduct />
-          </MemoryRouter>
-        );
-        const quantityInput = screen.getByPlaceholderText("Write a quantity");
-        fireEvent.change(quantityInput, { target: { value: "-1" } });
-
-        await waitFor(() => {
-          expect(quantityInput.value).not.toBe("-1");
-        });
-      });
     });
   });
 

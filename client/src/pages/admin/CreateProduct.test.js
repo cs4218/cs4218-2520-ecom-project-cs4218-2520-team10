@@ -43,7 +43,7 @@ jest.mock("react-hot-toast", () => ({
 jest.mock("antd", () => {
   const Select = ({ children, onChange, placeholder, ...props }) => (
     <select
-      data-testid={`select-${placeholder}`}
+			{...props}
       onChange={(e) => onChange(e.target.value)}
     >
       <option value="">{placeholder}</option>
@@ -59,7 +59,31 @@ jest.mock("antd", () => {
 // Mock URL.createObjectURL
 global.URL.createObjectURL = jest.fn(() => "mocked-url");
 
-describe("CreateProduct Component", () => {
+/*
+	Test cases for CreateProduct component:
+	1. Happy Path: 2 tests
+		a. Should submit form data and navigate on successful creation
+		b. Should fetch categories on mount
+		c. Should fetch zero categories on mount
+	2. Error Handling: 5 tests
+		a. Should show error toast when product creation fails due to server error
+		b. Should show error toast when product creation fails
+		c. Should show error toast when fetching categories fails
+		d. Should show error toast when fetching categories returns success: false
+		e. Should not populate categories when get categories returns success: false
+	3. Rendering / UI: 9 tests
+		a. Should render Layout and AdminMenu components
+		b. Should render form fields and buttons
+		c. Should change category on select
+		d. Should change shipping on select
+		e. Should render category and shipping as dropdowns
+		f. Should render name and description as text inputs
+		g. Should render price and quantity as number inputs
+		h. Should render create product button
+		i. Should render photo name and image preview after image upload
+*/
+
+describe("CreateProduct Page", () => {
   const mockCategories = [
 		{ _id: "66db427fdb0119d9234b27ee", name: "Electronics" },
     { _id: "66db427fdb0119d9234b27ef", name: "Clothing" },
@@ -92,7 +116,7 @@ describe("CreateProduct Component", () => {
 			});
 
       // Select category
-      const categorySelect = screen.getByTestId("select-Select a category");
+      const categorySelect = screen.getByTestId("category-select");
       fireEvent.change(categorySelect, { target: { value: "66db427fdb0119d9234b27ee" } });
 
 			// Upload photo
@@ -115,11 +139,11 @@ describe("CreateProduct Component", () => {
 			});
 
 			// Select shipping
-			const shippingSelect = screen.getByTestId("select-Select shipping");
+			const shippingSelect = screen.getByTestId("shipping-select");
 			fireEvent.change(shippingSelect, { target: { value: "1" } });
 
       // Click CREATE PRODUCT button
-      fireEvent.click(screen.getByText("CREATE PRODUCT"));
+      fireEvent.click(screen.getByTestId("create-button"));
 
       await waitFor(() => {
         expect(axios.post).toHaveBeenCalledWith(
@@ -154,32 +178,26 @@ describe("CreateProduct Component", () => {
         expect(screen.getByTestId("category-option-66db427fdb0119d9234b27ef")).toHaveTextContent("Clothing");
       });
     });
-  });
 
-  // ============ EQUIVALENCE PARTITIONING ============
-  describe("Equivalence Partitioning", () => {
-    describe("Category Count", () => {
-      it("should handle zero categories", async () => {
-        // Override the default beforeEach mock
-        axios.get.mockReset();
-        axios.get.mockResolvedValueOnce({
-          data: { success: true, category: [] },
-        });
+		it("should fetch zero categories on mount", async () => {
+			axios.get.mockReset();
+			axios.get.mockResolvedValueOnce({
+				data: { success: true, category: [] },
+			});
 
-        render(
-          <MemoryRouter>
-            <CreateProduct />
-          </MemoryRouter>
-        );
+			render(
+				<MemoryRouter>
+					<CreateProduct />
+				</MemoryRouter>
+			);
 
-        await waitFor(() => {
-          const categorySelect = screen.getByTestId("select-Select a category");
-          // Only the placeholder option should exist
-          const options = categorySelect.querySelectorAll("option");
-          expect(options).toHaveLength(1); // Only placeholder
-        });
-      });
-    });
+			await waitFor(() => {
+				const categorySelect = screen.getByTestId("category-select");
+				// Only the placeholder option should exist
+				const options = categorySelect.querySelectorAll("option");
+				expect(options).toHaveLength(1); // Only placeholder
+			});
+		});
   });
 
   // ============ ERROR HANDLING ============
@@ -257,7 +275,24 @@ describe("CreateProduct Component", () => {
       consoleLogSpy.mockRestore();
     });
 
-    it("should handle unsuccessful category fetch response", async () => {
+		it("should show error toast when fetching categories returns success: false", async () => {
+			axios.get.mockReset();
+			axios.get.mockResolvedValueOnce({
+				data: { success: false, category: [] },
+			});
+
+			render(
+				<MemoryRouter>
+					<CreateProduct />
+				</MemoryRouter>
+			);
+
+			await waitFor(() => {
+				expect(toast.error).toHaveBeenCalledWith("Failed to load categories");
+			});
+		});
+
+    it("should handle unsuccessful server category fetch response", async () => {
       axios.get.mockReset();
       axios.get.mockResolvedValueOnce({
         data: { success: false, category: [] },
@@ -286,10 +321,8 @@ describe("CreateProduct Component", () => {
 				</MemoryRouter>
 			);
 
-			await waitFor(() => {
-				expect(screen.getByTestId("layout")).toBeInTheDocument();
-				expect(screen.getByTestId("admin-menu")).toBeInTheDocument();
-			});
+			expect(screen.getByTestId("layout")).toBeInTheDocument();
+			expect(screen.getByTestId("admin-menu")).toBeInTheDocument();
 		});
 
 		it("should render form fields and buttons", async () => {
@@ -299,15 +332,38 @@ describe("CreateProduct Component", () => {
 				</MemoryRouter>
 			);
 
+			expect(screen.getByTestId("category-select")).toBeInTheDocument();
+			expect(screen.getByTestId("shipping-select")).toBeInTheDocument();
+			expect(screen.getByTestId("name-input")).toBeInTheDocument();
+			expect(screen.getByTestId("description-input")).toBeInTheDocument();
+			expect(screen.getByTestId("price-input")).toBeInTheDocument();
+			expect(screen.getByTestId("quantity-input")).toBeInTheDocument();
+			expect(screen.getByTestId("upload-photo-input")).toBeInTheDocument();
+		});
+
+		it("should change category on select", async () => {
+			render(
+				<MemoryRouter>
+					<CreateProduct />
+				</MemoryRouter>
+			);
 			await waitFor(() => {
-				expect(screen.getByLabelText("Upload Photo")).toBeInTheDocument();
-				expect(screen.getByPlaceholderText("Write a name")).toBeInTheDocument();
-				expect(screen.getByPlaceholderText("Write a description")).toBeInTheDocument();
-				expect(screen.getByPlaceholderText("Write a price")).toBeInTheDocument();
-				expect(screen.getByPlaceholderText("Write a quantity")).toBeInTheDocument();
-				expect(screen.getByTestId("select-Select a category")).toBeInTheDocument();
-				expect(screen.getByTestId("select-Select shipping")).toBeInTheDocument();
+				const categorySelect = screen.getByTestId("category-select");
+				fireEvent.change(categorySelect, { target: { value: "66db427fdb0119d9234b27ee" } });
+				expect(categorySelect.value).toBe("66db427fdb0119d9234b27ee");
 			});
+		});
+
+		it("should change shipping on select", async () => {
+			render(
+				<MemoryRouter>
+					<CreateProduct />
+				</MemoryRouter>
+			);
+
+			const shippingSelect = screen.getByTestId("shipping-select");
+			fireEvent.change(shippingSelect, { target: { value: "1" } });
+			expect(shippingSelect.value).toBe("1");
 		});
 
 		it("should render category and shipping as dropdowns", async () => {
@@ -317,10 +373,8 @@ describe("CreateProduct Component", () => {
 				</MemoryRouter>
 			);
 
-			await waitFor(() => {
-				expect(screen.getByTestId("select-Select a category").tagName).toBe("SELECT");
-				expect(screen.getByTestId("select-Select shipping").tagName).toBe("SELECT");
-			});
+			expect(screen.getByTestId("category-select").tagName).toBe("SELECT");
+			expect(screen.getByTestId("shipping-select").tagName).toBe("SELECT");
 		});
 
 		 it("should render name and description as text inputs", async () => {
@@ -330,15 +384,14 @@ describe("CreateProduct Component", () => {
 				</MemoryRouter>
 			);
 
-			await waitFor(() => {
-				const priceInput = screen.getByPlaceholderText("Write a price");
-				expect(priceInput).toHaveAttribute("type", "number");
-				expect(priceInput.tagName).toBe("INPUT");
+			const priceInput = screen.getByTestId("price-input");
+			expect(priceInput).toHaveAttribute("type", "number");
+			expect(priceInput.tagName).toBe("INPUT");
 
-				const quantityInput = screen.getByPlaceholderText("Write a quantity");
-				expect(quantityInput).toHaveAttribute("type", "number");
-				expect(quantityInput.tagName).toBe("INPUT");
-			});
+			const quantityInput = screen.getByTestId("quantity-input");
+			expect(quantityInput).toHaveAttribute("type", "number");
+			expect(quantityInput.tagName).toBe("INPUT");
+
 		});
 
 		 it("should render price and quantity as number inputs", async () => {
@@ -348,15 +401,25 @@ describe("CreateProduct Component", () => {
 				</MemoryRouter>
 			);
 
-			await waitFor(() => {
-				const nameInput = screen.getByPlaceholderText("Write a name");
-				expect(nameInput).toHaveAttribute("type", "text");
-				expect(nameInput.tagName).toBe("INPUT");
+			const nameInput = screen.getByTestId("name-input");
+			expect(nameInput).toHaveAttribute("type", "text");
+			expect(nameInput.tagName).toBe("INPUT");
 
-				const descInput = screen.getByPlaceholderText("Write a description");
-				expect(descInput).toHaveAttribute("type", "text");
-				expect(descInput.tagName).toBe("TEXTAREA");
-			});
+			const descInput = screen.getByTestId("description-input");
+			expect(descInput).toHaveAttribute("type", "text");
+			expect(descInput.tagName).toBe("TEXTAREA");
+		});
+
+		it("should render create product button", async () => {
+			render(
+				<MemoryRouter>
+					<CreateProduct />
+				</MemoryRouter>
+			);
+
+			const button = screen.getByText("CREATE PRODUCT");
+			expect(button).toBeInTheDocument();
+			expect(button.tagName).toBe("BUTTON");
 		});
 
 		it("should render photo name and image preview after image upload", async () => {
@@ -371,26 +434,10 @@ describe("CreateProduct Component", () => {
 			const fileInput = document.querySelector('input[type="file"]');
 			fireEvent.change(fileInput, { target: { files: [file] } });
 
-      await waitFor(() => {
-				const preview = screen.getByAltText("product_photo");
-        expect(preview).toBeInTheDocument();
-        expect(preview).toHaveAttribute("src", "mocked-url");
-        expect(screen.getByText("test-photo.png")).toBeInTheDocument();
-      });
-		});
-
-		it("should render CREATE PRODUCT button", async () => {
-			render(
-				<MemoryRouter>
-					<CreateProduct />
-				</MemoryRouter>
-			);
-
-			await waitFor(() => {
-				const button = screen.getByText("CREATE PRODUCT");
-				expect(button).toBeInTheDocument();
-				expect(button.tagName).toBe("BUTTON");
-			});
+			const preview = screen.getByAltText("product_photo");
+			expect(preview).toBeInTheDocument();
+			expect(preview).toHaveAttribute("src", "mocked-url");
+			expect(screen.getByText("test-photo.png")).toBeInTheDocument();
 		});
 	});
 });

@@ -24,6 +24,8 @@ const CreateProduct = () => {
       const { data } = await axios.get("/api/v1/category/get-category");
       if (data?.success) {
         setCategories(data?.category);
+      } else {
+        toast.error("Failed to load categories");
       }
     } catch (error) {
       console.log(error);
@@ -63,7 +65,8 @@ const CreateProduct = () => {
       }
     } catch (error) {
       console.log(error);
-      toast.error("Something went wrong");
+      // Bug fix: Added check for specific error message in response and fallback to generic message - Ong Chang Heng Bertrand A0253013X
+      toast.error(error?.response?.data?.error || "Something went wrong");
     }
   };
 
@@ -79,6 +82,7 @@ const CreateProduct = () => {
             <div className="m-1 w-75">
               <Select
                 bordered={false}
+                data-testid="category-select"
                 placeholder="Select a category"
                 size="large"
                 showSearch
@@ -97,6 +101,7 @@ const CreateProduct = () => {
                 <label className="btn btn-outline-secondary col-md-12">
                   {photo ? photo.name : "Upload Photo"}
                   <input
+                    data-testid="upload-photo-input"
                     type="file"
                     name="photo"
                     accept="image/*"
@@ -119,6 +124,7 @@ const CreateProduct = () => {
               </div>
               <div className="mb-3">
                 <input
+                  data-testid="name-input"
                   type="text"
                   value={name}
                   placeholder="Write a name"
@@ -128,6 +134,7 @@ const CreateProduct = () => {
               </div>
               <div className="mb-3">
                 <textarea
+                  data-testid="description-input"
                   type="text"
                   value={description}
                   placeholder="Write a description"
@@ -138,6 +145,7 @@ const CreateProduct = () => {
 
               <div className="mb-3">
                 <input
+                  data-testid="price-input"
                   type="number"
                   value={price}
                   placeholder="Write a price"
@@ -147,6 +155,7 @@ const CreateProduct = () => {
               </div>
               <div className="mb-3">
                 <input
+                  data-testid="quantity-input"
                   type="number"
                   value={quantity}
                   placeholder="Write a quantity"
@@ -156,12 +165,14 @@ const CreateProduct = () => {
               </div>
               <div className="mb-3">
                 <Select
+                  data-testid="shipping-select"
                   bordered={false}
                   placeholder="Select shipping"
                   size="large"
                   showSearch
                   className="form-select mb-3"
                   onChange={(value) => {
+                    // Bug fix: Update shipping state to boolean value based on selected option - Ong Chang Heng Bertrand A0253013X
                     setShipping(value);
                   }}
                 >
@@ -170,7 +181,7 @@ const CreateProduct = () => {
                 </Select>
               </div>
               <div className="mb-3">
-                <button className="btn btn-primary" onClick={handleCreate}>
+                <button className="btn btn-primary" onClick={handleCreate} data-testid="create-button">
                   CREATE PRODUCT
                 </button>
               </div>
