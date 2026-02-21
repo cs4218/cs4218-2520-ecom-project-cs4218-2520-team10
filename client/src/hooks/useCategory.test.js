@@ -11,38 +11,40 @@ jest.mock('axios');
 /**
   * Unit tests for useCategory
   *
-  * 1. Happy path: 2 tests
-  *   a. initial state empty array
-  *   b. return categories when api return valid response
+  * 1. Happy path: 3 tests
+  *   a. categories empty, loading true, error null for initial state
+  *   b. valid loaded state and non-empty categories
+  *   c. valid loaded state and empty categories
   * 2. Input API output: 2 tests
-  *   a. axios returns undefined category
-  *   b. axios returns null category
+  *   a. valid loaded state and empty categories on undefined categories from api
+  *   b. valid loaded state and empty categories on null categories from api
   * 3. Error handling: 1 tests
-  *   a. return empty array on error
-  * 4. Side effects: 1 tests
-  *   a. Log error when error occurs
+  *   a. valid error state
   */
 describe('useCategory', () => {
-  let consoleLogSpy;
-
   beforeEach(() => {
-    consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+    jest.spyOn(console, "log").mockImplementation();
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe("Happy Path", () => {
-    it("should return initial data as empty array", () => {
-      axios.get.mockResolvedValue(new Promise(() => {}));
+    it("should have valid initial state", async () => {
+      axios.get.mockResolvedValue({ data: { categories: [] }});
 
       const { result } = renderHook(() => useCategory());
 
-      expect(result.current).toEqual([]);
+      await waitFor(() => expect(result.current).toEqual({
+        categories: [],
+        loading: true,
+        error: null
+      }));
     });
 
-    it('should return categories when API returns valid data', async () => {
+    it('should have valid loaded state and returned non empty categories', async () => {
       const mockCategories = [
         {
           _id: "validId1",
@@ -54,65 +56,73 @@ describe('useCategory', () => {
           name: "Clothing",
           slug: "clothing"
         }
-      ]
-      axios.get.mockResolvedValue({
-        data: {
-          category: mockCategories
-        }
-      });
+      ];
+      axios.get.mockResolvedValue({ data: { category: mockCategories } });
 
       const { result } = renderHook(() => useCategory());
 
-      await waitFor(() => {expect(result.current).toEqual(mockCategories)});
+      await waitFor(() => {
+        expect(result.current).toEqual({
+          categories: mockCategories,
+          loading: false,
+          error: null
+        })
+      });
+    });
+
+    it('should have valid loaded state and returned empty categories', async () => {
+      axios.get.mockResolvedValue({ data: { category: [] } });
+
+      const { result } = renderHook(() => useCategory());
+
+      await waitFor(() => {
+        expect(result.current).toEqual({
+          categories: [],
+          loading: false,
+          error: null
+        })
+      });
     });
   });
 
   describe("Invalid API Output", () => {
     it('should return empty array when API returns undefined', async () => {
-      axios.get.mockResolvedValue({
-        data: {
-          category: undefined
-        }
-      });
+      axios.get.mockResolvedValue({ data: { category: undefined } });
 
       const { result } = renderHook(() => useCategory());
-      await act(async () => await Promise.resolve());
 
-      await waitFor(() => expect(result.current).toEqual([]))
+      await waitFor(() => expect(result.current).toEqual({
+        categories: [],
+        loading: false,
+        error: null
+      }));
     });
 
     it('should return empty array when API returns null', async () => {
-      axios.get.mockResolvedValue({
-        data: {
-          category: null
-        }
-      });
+      axios.get.mockResolvedValue({ data: { category: null } });
 
       const { result } = renderHook(() => useCategory());
-      await act(async () => await Promise.resolve());
 
-      await waitFor(() => expect(result.current).toEqual([]));
+      await waitFor(() => expect(result.current).toEqual({
+        categories: [],
+        loading: false,
+        error: null
+      }));
     });
   });
 
   describe("Error Handling", () => {
     it('should handle API error gracefully', async () => {
-      axios.get.mockRejectedValue(new Error('Network error'));
-
-      const { result } = renderHook(() => useCategory());
-
-      expect(result.current).toEqual([]);
-    });
-  });
-
-  describe("Side Effects", () => {
-    it('should log error if occurs', async () => {
       const error = new Error('Network error');
       axios.get.mockRejectedValue(error);
 
-      renderHook(() => useCategory());
+      const { result } = renderHook(() => useCategory());
 
-      await waitFor(() => expect(consoleLogSpy).toHaveBeenCalledWith(error));
+      await waitFor(() => expect(result.current).toEqual({
+        categories: [],
+        loading: false,
+        error
+      }));
     });
   });
 });
