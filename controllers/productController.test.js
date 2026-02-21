@@ -492,7 +492,8 @@ describe('ProductController', () => {
 
         expect(res.status).toHaveBeenCalledWith(409);
         expect(res.send).toHaveBeenCalledWith({
-          error: expect.any(String),
+          success: false,
+          message: expect.any(String),
         });
       });
 
@@ -508,7 +509,10 @@ describe('ProductController', () => {
         await createProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       it('should return 422 and reject when description is missing', async () => {
@@ -523,7 +527,10 @@ describe('ProductController', () => {
         await createProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       it('should return 422 and reject when price is missing', async () => {
@@ -538,7 +545,10 @@ describe('ProductController', () => {
         await createProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       it('should return 422 and reject when category is missing', async () => {
@@ -553,7 +563,10 @@ describe('ProductController', () => {
         await createProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       it('should return 422 and reject when quantity is missing', async () => {
@@ -568,7 +581,10 @@ describe('ProductController', () => {
         await createProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       it('should return 422 and reject when shipping is missing', async () => {
@@ -584,7 +600,10 @@ describe('ProductController', () => {
         await createProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       // ============ BOUNDARY VALUE ANALYSIS (Photo Size) ============
@@ -643,8 +662,9 @@ describe('ProductController', () => {
 
           expect(res.status).toHaveBeenCalledWith(422);
           expect(res.send).toHaveBeenCalledWith({
-            error: expect.any(String),
-          });
+          success: false,
+          message: expect.any(String),
+        });
         });
 
         it('should return 201 and accept small photo (below boundary)', async () => {
@@ -746,8 +766,9 @@ describe('ProductController', () => {
 
           expect(res.status).toHaveBeenCalledWith(422);
           expect(res.send).toHaveBeenCalledWith({
-            error: expect.any(String),
-          });
+          success: false,
+          message: expect.any(String),
+        });
         });
       });
 
@@ -816,8 +837,9 @@ describe('ProductController', () => {
 
           expect(res.status).toHaveBeenCalledWith(422);
           expect(res.send).toHaveBeenCalledWith({
-            error: expect.any(String),
-          });
+          success: false,
+          message: expect.any(String),
+        });
         });
       });
     });
@@ -1302,7 +1324,10 @@ describe('ProductController', () => {
         await updateProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       it("should return 409 when updating product name to a name that already exists for another product", async () => {
@@ -1327,7 +1352,10 @@ describe('ProductController', () => {
         await updateProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(409);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
 			it('should return 422 and reject update when name is missing', async () => {
@@ -1343,7 +1371,10 @@ describe('ProductController', () => {
 				await updateProductController(req, res);
 
 				expect(res.status).toHaveBeenCalledWith(422);
-				expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+				expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
 			});
 
 			it('should return 422 and reject when description is missing', async () => {
@@ -1359,7 +1390,10 @@ describe('ProductController', () => {
         await updateProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
 			it('should return 422 and reject when price is missing', async () => {
@@ -1375,7 +1409,10 @@ describe('ProductController', () => {
 				await updateProductController(req, res);
 
 				expect(res.status).toHaveBeenCalledWith(422);
-				expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+				expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
 			});
 
 			it('should return 422 and reject when category is missing', async () => {
@@ -1391,7 +1428,10 @@ describe('ProductController', () => {
         await updateProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
 			it('should return 422 and reject when quantity is missing', async () => {
@@ -1407,7 +1447,10 @@ describe('ProductController', () => {
         await updateProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       it('should return 422 and reject when shipping is missing', async () => {
@@ -1424,7 +1467,10 @@ describe('ProductController', () => {
         await updateProductController(req, res);
 
         expect(res.status).toHaveBeenCalledWith(422);
-        expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
       });
 
       // ============ BOUNDARY VALUE ANALYSIS - Photo size ============
@@ -1478,7 +1524,10 @@ describe('ProductController', () => {
           await updateProductController(req, res);
 
           expect(res.status).toHaveBeenCalledWith(422);
-          expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+          expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
         });
 
         it('should return 201 and accept small photo (below boundary)', async () => {
@@ -1571,7 +1620,10 @@ describe('ProductController', () => {
           await updateProductController(req, res);
 
           expect(res.status).toHaveBeenCalledWith(422);
-          expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+          expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: expect.any(String),
+        });
         });
       });
 
@@ -1636,7 +1688,10 @@ describe('ProductController', () => {
           await updateProductController(req, res);
 
           expect(res.status).toHaveBeenCalledWith(422);
-          expect(res.send).toHaveBeenCalledWith({ error: expect.any(String) });
+          expect(res.send).toHaveBeenCalledWith({
+            success: false,
+            message: expect.any(String),
+          });
         });
       });
 		});

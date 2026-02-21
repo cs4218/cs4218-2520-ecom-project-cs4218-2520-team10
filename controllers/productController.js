@@ -27,29 +27,30 @@ export const createProductController = async (req, res) => {
     switch (true) {
       case !name:
         // Bug fix: Changed status code from 500 to 422 for validation error - Ong Chang Heng Bertrand A0253013X
-        return res.status(422).send({ error: "Name is required" });
+        // Bug fix: Added success: false and changed error field to message for consistency in error response structure - Ong Chang Heng Bertrand A0253013X
+        return res.status(422).send({ success: false, message: "Name is required" });
       case !description:
-        return res.status(422).send({ error: "Description is required" });
+        return res.status(422).send({ success: false, message: "Description is required" });
       case price === undefined || price === null || price === "" || price < 0: // Bug fix from "!price" - Ong Chang Heng Bertrand A0253013X
-        return res.status(422).send({ error: "Price is required and should be greater than or equal to 0" });
+        return res.status(422).send({ success: false, message: "Price is required and should be greater than or equal to 0" });
       case !category:
-        return res.status(422).send({ error: "Category is required" });
+        return res.status(422).send({ success: false, message: "Category is required" });
       case quantity === undefined || quantity === null || quantity === ""|| quantity < 0: // Bug fix from "!quantity" - Ong Chang Heng Bertrand A0253013X
-        return res.status(422).send({ error: "Quantity is required and should be greater than or equal to 0" });
+        return res.status(422).send({ success: false, message: "Quantity is required and should be greater than or equal to 0" });
       case photo && photo.size > 1000000:
         return res
           .status(422)
-          .send({ error: "Photo should be less than 1mb" });
+          .send({ success: false, message: "Photo should be less than 1mb" });
       // Bug fix: Added validation for shipping field - Ong Chang Heng Bertrand A0253013X
       case shipping === undefined || shipping === null || shipping === "":
-        return res.status(422).send({ error: "Shipping is required" });
+        return res.status(422).send({ success: false, message: "Shipping is required" });
     }
 
     // Bug fix: Added check for existing product with the same slug to prevent duplicates - Ong Chang Heng Bertrand A0253013X
     const slug = slugify(name);
     const existingProduct = await productModel.findOne({ slug });
     if (existingProduct) {
-      return res.status(409).send({ error: "Product with this name already exists" });
+      return res.status(409).send({ success: false, message: "Product with this name already exists" });
     }
 
     const products = new productModel({ ...req.fields, slug: slug });
@@ -186,29 +187,30 @@ export const updateProductController = async (req, res) => {
     //Validation
     switch (true) {
       // Bug fix: Changed return status code from 500 to 422 for validation errors - Ong Chang Heng Bertrand A0253013X
+      // Bug fix: Added success: false and changed error field to message for consistency in error response structure - Ong Chang Heng Bertrand A0253013X
       case !name:
-        return res.status(422).send({ error: "Name is required" });
+        return res.status(422).send({ success: false, message: "Name is required" });
       case !description:
-        return res.status(422).send({ error: "Description is required" });
+        return res.status(422).send({ success: false, message: "Description is required" });
       case price === undefined || price === null || price === "" || price < 0: // Bug fix from "!price" - Ong Chang Heng Bertrand A0253013X
-        return res.status(422).send({ error: "Price is required and should be greater than or equal to 0" });
+        return res.status(422).send({ success: false, message: "Price is required and should be greater than or equal to 0" });
       case !category:
-        return res.status(422).send({ error: "Category is required" });
+        return res.status(422).send({ success: false, message: "Category is required" });
       case quantity === undefined || quantity === null || quantity === ""|| quantity < 0: // Bug fix from "!quantity" - Ong Chang Heng Bertrand A0253013X
-        return res.status(422).send({ error: "Quantity is required and should be greater than or equal to 0" });
+        return res.status(422).send({ success: false, message: "Quantity is required and should be greater than or equal to 0" });
       case photo && photo.size > 1000000:
         return res
           .status(422)
-          .send({ error: "Photo should be less than 1mb" });
+          .send({ success: false, message: "Photo should be less than 1mb" });
       // Bug fix: Added validation for shipping field - Ong Chang Heng Bertrand A0253013X
       case shipping === undefined || shipping === null || shipping === "":
-        return res.status(422).send({ error: "Shipping is required" });
+        return res.status(422).send({ success: false, message: "Shipping is required" });
     }
 
     const slug = slugify(name);
     const existingProduct = await productModel.findOne({ slug, _id: { $ne: req.params.pid } });
     if (existingProduct) {
-      return res.status(409).send({ error: "Another product with this name already exists" });
+      return res.status(409).send({ success: false, message: "Another product with this name already exists" });
     }
 
     const products = await productModel.findByIdAndUpdate(
@@ -220,7 +222,8 @@ export const updateProductController = async (req, res) => {
     // Bug fix: Added check for product existence and return 404 if not found - Ong Chang Heng Bertrand A0253013X
     if (!products) {
       return res.status(404).send({
-        error: "Product not found",
+        success: false,
+        message: "Product not found",
       });
     }
 
