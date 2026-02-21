@@ -14,11 +14,11 @@ import { isAdmin, requireSignIn } from "../middlewares/authMiddleware.js";
 //router object
 const router = express.Router();
 
+// Docs: Added for Swagger Docs - YAN WEIDONG A0258151H
 /**
  * The following OpenAPI documentation were generated with the help of AI.
  */
 
-//routing
 /**
  * @openapi
  * /api/v1/auth/register:
@@ -229,7 +229,7 @@ router.get("/user-auth", requireSignIn, (req, res) => {
  *       403:
  *         description: Forbidden (Admin role required)
  */
-//protected Admin route auth
+// protected Admin route auth
 router.get("/admin-auth", requireSignIn, isAdmin, (req, res) => {
   res.status(200).send({ ok: true });
 });

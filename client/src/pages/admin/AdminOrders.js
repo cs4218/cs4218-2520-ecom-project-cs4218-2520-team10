@@ -10,6 +10,7 @@ import { ORDER_STATUS_LIST } from "../../constants/orderStatus";
 const { Option } = Select;
 
 const AdminOrders = () => {
+  // Refactoring: Updated to use constant enum - YAN WEIDONG A0258151H
   const [status, setStatus] = useState(ORDER_STATUS_LIST);
   const [changeStatus, setCHangeStatus] = useState("");
   const [orders, setOrders] = useState([]);
