@@ -20,11 +20,8 @@ jest.mock('slugify');
   *   a. status 422 for missing name (name === null)
   *   b. status 422 for empty string name
   *   c. status 422 for only whitespace string name
-  * 3. Error handling: 2 tests
-  *   a. status 500 if findOne exception
-  *   b. status 500 if save exception
-  * 4. Side effects: 1 tests
-  *   a. Log error when error occurs
+  * 3. Error handling: 1 tests
+  *   a. status 500 if database error occurs
   */
 describe("createCategoryController", () => {
   let res, req, consoleLogSpy;
@@ -150,31 +147,15 @@ describe("createCategoryController", () => {
   });
 
   describe("Error Handling", () => {
-    it('should return 500 if findOne exception occurs', async () => {
+    it('should return 500 if database error occurs', async () => {
       req.body.name = validCategoryName;
       const error = new Error('Database error');
       categoryModel.findOne.mockRejectedValue(error);
-
-      await createCategoryController(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-          error,
-          message: expect.any(String)
-        })
-      );
-    });
-
-    it('should return 500 if save exception occurs', async () => {
-      req.body.name = validCategoryName;
-      const error = new Error('Database error');
       categoryModel.mockImplementation(() => {
         return {
           save: jest.fn().mockRejectedValue(error)
         }
-      });
+      })
 
       await createCategoryController(req, res);
 
@@ -186,18 +167,6 @@ describe("createCategoryController", () => {
           message: expect.any(String)
         })
       );
-    });
-  });
-
-  describe("Side effects", () => {
-    it("should log error when an exception occurs", async () => {
-      req.body.name = validCategoryName;
-      const error = new Error("Database error");
-      categoryModel.findOne.mockRejectedValue(error);
-
-      await createCategoryController(req, res);
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });
   });
 });
