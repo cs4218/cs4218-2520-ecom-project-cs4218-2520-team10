@@ -185,18 +185,15 @@ describe("createCategoryController", () => {
   *   e. status 422 for null category id
   *   f. status 422 for invalid category id
   *   g. status 404 for category id not found
-  * 3. Error handling: 2 tests
-  *   a. status 500 if findOne exception
-  *   b. status 500 if findByIdAndUpdate exception
-  * 4. Side effects: 1 tests
-  *   a. Log error when error occurs
+  * 3. Error handling: 1 tests
+  *   a. status 500 if database error occurs
   */
 describe("updateCategoryController", () => {
   let res, req, consoleLogSpy;
   const mockSlug = 'mock-slug';
   const validCategoryName = 'Shoes';
   const validCategoryId = 'validId';
-  const categoryObj = {
+  const mockCategory = {
     _id: validCategoryId,
     name: validCategoryName,
     slug: mockSlug
@@ -230,7 +227,7 @@ describe("updateCategoryController", () => {
       req.body.id = validCategoryId;
       req.body.name = validCategoryName;
       categoryModel.findOne.mockResolvedValue(null);
-      categoryModel.findByIdAndUpdate.mockResolvedValue(categoryObj);
+      categoryModel.findByIdAndUpdate.mockResolvedValue(mockCategory);
 
       await updateCategoryController(req, res);
 
@@ -246,13 +243,14 @@ describe("updateCategoryController", () => {
     it("should return updated category if valid new name given", async () => {
       req.params.id = validCategoryId;
       req.body.name = validCategoryName;
-      categoryModel.findByIdAndUpdate.mockResolvedValue(categoryObj);
+      categoryModel.findOne.mockResolvedValue(null);
+      categoryModel.findByIdAndUpdate.mockResolvedValue(mockCategory);
 
       await updateCategoryController(req, res);
 
       expect(res.send).toHaveBeenCalledWith(
         expect.objectContaining({
-          category: categoryObj
+          category: mockCategory
         })
       );
     });
@@ -303,7 +301,7 @@ describe("updateCategoryController", () => {
 
     it("should return 422 for duplicate name", async () => {
       req.body.name = validCategoryName;
-      categoryModel.findOne.mockResolvedValue({ name: validCategoryName });
+      categoryModel.findOne.mockResolvedValue(mockCategory);
 
       await updateCategoryController(req, res);
 
@@ -319,6 +317,7 @@ describe("updateCategoryController", () => {
     it("should return 422 for null category id", async () => {
       req.params.id = null;
       req.body.name = validCategoryName;
+      categoryModel.findOne.mockResolvedValue(null);
       jest.spyOn(mongoose.Types.ObjectId, "isValid").mockReturnValue(false);
 
       await updateCategoryController(req, res);
@@ -366,53 +365,23 @@ describe("updateCategoryController", () => {
   });
 
   describe("Error Handling", () => {
-    it("should return 500 if findOne exception occurs", async () => {
+    it("should return 500 if database error occurs", async () => {
       req.body.name = validCategoryName;
       req.params.id = validCategoryId;
-      const error = new Error("findOne error");
-      categoryModel.findOne.mockRejectedValue(error);
-
-      await updateCategoryController(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-          error,
-          message: expect.any(String)
-        })
-      );
-    });
-
-    it("should return 500 if findIdAndUpdate exception occurs", async () => {
-      req.body.name = validCategoryName;
-      req.params.id = validCategoryId;
-      const error = new Error("findIdAndUpdate error");
-      categoryModel.findByIdAndUpdate.mockRejectedValue(error);
-
-      await updateCategoryController(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.send).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-          error,
-          message: expect.any(String)
-        })
-      );
-    });
-  });
-
-  describe("Side effects", () => {
-    it("should log error when an exception occurs", async () => {
-      req.params.id = validCategoryId;
-      req.body.name = validCategoryName;
       const error = new Error("Database error");
+      categoryModel.findOne.mockRejectedValue(error);
       categoryModel.findByIdAndUpdate.mockRejectedValue(error);
 
       await updateCategoryController(req, res);
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(error);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error,
+          message: expect.any(String)
+        })
+      );
     });
   });
 });
