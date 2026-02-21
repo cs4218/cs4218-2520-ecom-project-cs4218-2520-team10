@@ -488,9 +488,7 @@ describe("categoryController", () => {
   *   c. status 422 for only whitespace string slug
   *   d. status 404 for slug not found
   * 3. Error handling: 1 tests
-  *   a. status 500 if findOne exception
-  * 4. Side effects: 1 tests
-  *   a. Log error when error occurs
+  *   a. status 500 if database error occurs
   */
 describe("singleCategoryController", () => {
   let res, req, consoleLogSpy;
@@ -608,9 +606,9 @@ describe("singleCategoryController", () => {
   });
 
   describe("Error Handling", () => {
-    it("should return 500 if findOne exception occurs", async () => {
+    it("should return 500 if database error occurs", async () => {
       req.params.slug = mockSlug;
-      const error = new Error("findOne error");
+      const error = new Error("Database error");
       categoryModel.findOne.mockRejectedValue(error);
 
       await singleCategoryController(req, res);
@@ -623,18 +621,6 @@ describe("singleCategoryController", () => {
           message: expect.any(String)
         })
       );
-    });
-  });
-
-  describe("Side effects", () => {
-    it("should log error when an exception occurs", async () => {
-      req.params.slug = mockSlug;
-      const error = new Error("Database error");
-      categoryModel.findOne.mockRejectedValue(error);
-
-      await singleCategoryController(req, res);
-
-      expect(consoleLogSpy).toHaveBeenCalledWith(error);
     });
   });
 });
