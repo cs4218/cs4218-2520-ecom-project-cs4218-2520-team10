@@ -2,7 +2,7 @@
 /**
  * NOTE: The following tests and documentation are created with the help of AI based on user defined test scenario plan.
  */
-import { brainTreePaymentController } from "./productController.js";
+import { braintreePaymentController } from "./productController.js";
 
 // Mock dependencies
 const mockOrderSave = jest.fn();
@@ -37,7 +37,7 @@ jest.mock("../models/orderModel.js", () => {
 global.mockOrderSave = mockOrderSave;
 
 /**
- * Unit Tests for brainTreePaymentController
+ * Unit Tests for braintreePaymentController
  *
  * Test Strategy: Output-based testing with comprehensive coverage
  *
@@ -123,7 +123,7 @@ global.mockOrderSave = mockOrderSave;
  * 23 | Payment Processing   | Branch                       | Gateway throws synchronous exception               | 500 Error
  * 24 | Order Creation       | Branch, EP, Decision         | Order save fails                                   | 500 Error
  */
-describe("brainTreePaymentController", () => {
+describe("braintreePaymentController", () => {
   let req, res;
   const mockUserId = "user123";
   const mockNonce = "fake-nonce";
@@ -183,7 +183,7 @@ describe("brainTreePaymentController", () => {
       global.mockOrderSave.mockResolvedValue(detailedSavedOrder);
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.json).toHaveBeenCalledWith({
@@ -205,7 +205,7 @@ describe("brainTreePaymentController", () => {
       global.mockOrderSave.mockResolvedValue(mockSavedOrder);
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.json).toHaveBeenCalledWith({
@@ -231,7 +231,7 @@ describe("brainTreePaymentController", () => {
       global.mockOrderSave.mockResolvedValue(mockSavedOrder);
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.json).toHaveBeenCalled();
@@ -249,7 +249,7 @@ describe("brainTreePaymentController", () => {
       global.mockOrderSave.mockResolvedValue(buyerSavedOrder);
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.json).toHaveBeenCalledWith(
@@ -267,7 +267,7 @@ describe("brainTreePaymentController", () => {
       // nonce is undefined
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -282,7 +282,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: null, cart: simpleCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -297,7 +297,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: "", cart: simpleCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -315,7 +315,7 @@ describe("brainTreePaymentController", () => {
       // cart is undefined
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -330,7 +330,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: null };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -345,7 +345,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: "not-an-array" };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -360,7 +360,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: { item: "product" } };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -375,7 +375,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: [] };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(400);
@@ -393,7 +393,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: mockCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -410,7 +410,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: mockCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -427,7 +427,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: mockCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -444,7 +444,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: mockCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -465,7 +465,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: mockCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -487,7 +487,7 @@ describe("brainTreePaymentController", () => {
       req.body = { nonce: mockNonce, cart: mockCart };
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -512,7 +512,7 @@ describe("brainTreePaymentController", () => {
       global.mockOrderSave.mockResolvedValue(mockSavedOrder);
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.json).toHaveBeenCalledWith({
@@ -539,7 +539,7 @@ describe("brainTreePaymentController", () => {
       global.mockOrderSave.mockResolvedValue(mockSavedOrder);
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.json).toHaveBeenCalled();
@@ -558,7 +558,7 @@ describe("brainTreePaymentController", () => {
       });
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -583,7 +583,7 @@ describe("brainTreePaymentController", () => {
       });
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -605,7 +605,7 @@ describe("brainTreePaymentController", () => {
       });
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);
@@ -631,7 +631,7 @@ describe("brainTreePaymentController", () => {
       global.mockOrderSave.mockRejectedValue(mockError);
 
       // ── ACT ──────────────────────────────────────
-      await brainTreePaymentController(req, res);
+      await braintreePaymentController(req, res);
 
       // ── ASSERT ───────────────────────────────────
       expect(res.status).toHaveBeenCalledWith(500);

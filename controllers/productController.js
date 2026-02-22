@@ -351,7 +351,8 @@ export const braintreeTokenController = async (req, res) => {
 };
 
 //payment
-export const brainTreePaymentController = async (req, res) => {
+// Refactor: Update function name to match with module naming convention - YAN WEIDONG A0258151H
+export const braintreePaymentController = async (req, res) => {
   try {
     const { nonce, cart } = req.body;
 
