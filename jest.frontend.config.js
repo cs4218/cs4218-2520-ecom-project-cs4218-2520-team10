@@ -23,10 +23,9 @@ export default {
   // only run these tests
   // Fix: Added context test files to test match - KIM SHI TONG A0265858J
   testMatch: [
-    "<rootDir>/client/src/pages/Auth/*.test.js",
+    "<rootDir>/client/src/pages/**/*.test.js",
     "<rootDir>/client/src/context/*.test.js"
   ],
-
   // jest code coverage
   // Fix: Added context folder to coverage collection - KIM SHI TONG A0265858J
   collectCoverage: true,

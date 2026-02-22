@@ -14,7 +14,8 @@ const Products = () => {
       setProducts(data.products);
     } catch (error) {
       console.log(error);
-      toast.error("Someething Went Wrong");
+      // Bug fix: Added error handling for failed API call - Ong Chang Heng Bertrand A0253013X
+      toast.error("Something Went Wrong");
     }
   };
 
@@ -29,13 +30,15 @@ const Products = () => {
           <AdminMenu />
         </div>
         <div className="col-md-9 ">
-          <h1 className="text-center">All Products List</h1>
+          {/* Added data-testid to relevant elements for testing purposes - Ong Chang Heng Bertrand A0253013X */}
+          <h1 className="text-center" data-testid="all-products-title">All Products List</h1>
           <div className="d-flex">
             {products?.map((p) => (
               <Link
                 key={p._id}
                 to={`/dashboard/admin/product/${p.slug}`}
                 className="product-link"
+                data-testid={`product-link-${p._id}`}
               >
                 <div className="card m-2" style={{ width: "18rem" }}>
                   <img
@@ -44,8 +47,8 @@ const Products = () => {
                     alt={p.name}
                   />
                   <div className="card-body">
-                    <h5 className="card-title">{p.name}</h5>
-                    <p className="card-text">{p.description}</p>
+                    <h5 className="card-title" data-testid={`product-name-${p._id}`}>{p.name}</h5>
+                    <p className="card-text" data-testid={`product-description-${p._id}`}>{p.description}</p>
                   </div>
                 </div>
               </Link>

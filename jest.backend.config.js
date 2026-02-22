@@ -6,13 +6,12 @@ export default {
   testEnvironment: "node",
 
   // which test to run
-  // Fix: Added helpers and middlewares folders to test match - KIM SHI TONG A0265858J
-  testMatch: ["<rootDir>/controllers/*.test.js", "<rootDir>/helpers/*.test.js", "<rootDir>/middlewares/*.test.js"],
+  testMatch: ["<rootDir>/controllers/*.test.js", "<rootDir>/helpers/*.test.js", "<rootDir>/middlewares/*.test.js", "<rootDir>/models/*.test.js"],
 
   // jest code coverage
   // Fix: Added helpers and middlewares folders to coverage collection - KIM SHI TONG A0265858J
   collectCoverage: true,
-  collectCoverageFrom: ["controllers/**", "helpers/**", "middlewares/**"],
+  collectCoverageFrom: ["controllers/**", "helpers/**", "middlewares/**", "models/**"],
   coverageThreshold: {
     global: {
       lines: 100,
