@@ -405,7 +405,7 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
-        message: 'Already Register please login',
+        message: 'Already Registered. Please Login',
       });
       });
 

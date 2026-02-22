@@ -140,7 +140,7 @@ describe("AuthController", () => {
         expect(res.send).toHaveBeenCalledWith(
           expect.objectContaining({
             success: true,
-            message: "login successfully",
+            message: "Login Successfully",
             token: mockToken,
           })
         );
@@ -342,7 +342,7 @@ describe("AuthController", () => {
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
-          message: "Error in login",
+          message: "Error in Login",
           error: dbError,
         });
       });
@@ -367,7 +367,7 @@ describe("AuthController", () => {
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
-          message: "Error in login",
+          message: "Error in Login",
           error: bcryptError,
         });
       });
@@ -393,7 +393,7 @@ describe("AuthController", () => {
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
-          message: "Error in login",
+          message: "Error in Login",
           error: jwtError,
         });
       });

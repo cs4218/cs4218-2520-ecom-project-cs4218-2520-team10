@@ -347,7 +347,7 @@ describe('AuthController', () => {
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
-          message: 'Something went wrong',
+          message: 'Something Went Wrong',
           error: dbError
         });
       });
@@ -371,7 +371,7 @@ describe('AuthController', () => {
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
-          message: 'Something went wrong',
+          message: 'Something Went Wrong',
           error: hashError
         });
       });
@@ -396,7 +396,7 @@ describe('AuthController', () => {
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
-          message: 'Something went wrong',
+          message: 'Something Went Wrong',
           error: updateError
         });
       });
