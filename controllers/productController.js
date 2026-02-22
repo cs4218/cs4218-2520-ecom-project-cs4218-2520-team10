@@ -42,7 +42,7 @@ export const createProductController = async (req, res) => {
           .status(422)
           .send({ success: false, message: "Photo should be less than 1mb" });
       // Bug fix: Added validation for shipping field - Ong Chang Heng Bertrand A0253013X
-      case shipping === undefined || shipping === null || shipping === "":
+      case !shipping:
         return res.status(422).send({ success: false, message: "Shipping is required" });
     }
 
@@ -216,7 +216,7 @@ export const updateProductController = async (req, res) => {
 
     const products = await productModel.findByIdAndUpdate(
       req.params.pid,
-      { ...req.fields, slug: slugify(name) },
+      { ...req.fields, slug: slug },
       { new: true },
     );
 

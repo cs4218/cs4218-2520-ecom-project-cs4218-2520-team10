@@ -7,8 +7,6 @@ import { getProductController, getSingleProductController, createProductControll
 import productModel from '../models/productModel.js';
 import fs from 'fs';
 import slugify from 'slugify';
-import { error } from 'console';
-import { sl } from 'date-fns/locale';
 
 jest.mock('braintree');
 
