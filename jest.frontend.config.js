@@ -16,15 +16,34 @@ export default {
     "\\.(css|scss)$": "identity-obj-proxy",
   },
 
-  // ignore all node_modules except styleMock (needed for css imports)
-  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
+  // ignore all node_modules except styleMock and axios (needed for ES modules)
+  // Added axios to transformIgnorePatterns for ES module support - KIM SHI TONG A0265858J
+  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js|axios)$)"],
 
   // only run these tests
-  testMatch: ["<rootDir>/client/src/pages/Auth/*.test.js"],
-
+  testMatch: [
+    "<rootDir>/client/src/pages/**/*.test.js",
+    "<rootDir>/client/src/context/*.test.js",
+    "<rootDir>/client/src/hooks/*.test.js",
+    "<rootDir>/client/src/components/Form/CategoryForm.test.js"
+  ],
   // jest code coverage
   collectCoverage: true,
-  collectCoverageFrom: ["client/src/pages/Auth/**"],
+  collectCoverageFrom: [
+    "client/src/context/auth.js",
+    "client/src/pages/Auth/Register.js",
+    "client/src/pages/Auth/Login.js",
+    "client/src/pages/Admin/CreateCategory.js",
+    "client/src/pages/Admin/CreateProduct.js",
+    "client/src/pages/Admin/Products.js",
+    "client/src/pages/Admin/UpdateProduct.js",
+    "client/src/pages/user/Orders.js",
+    "client/src/pages/ProductDetails.js",
+    "client/src/pages/CategoryProduct.js",
+    "client/src/pages/Categories.js",
+    "client/src/hooks/useCategory.js",
+    "client/src/components/Form/CategoryForm.js"
+  ],
   coverageThreshold: {
     global: {
       lines: 100,
