@@ -24,7 +24,8 @@ export default {
     "<rootDir>/client/src/pages/Auth/*.test.js",
     "<rootDir>/client/src/hooks/*.test.js",
     "<rootDir>/client/src/pages/Categories.test.js",
-    "<rootDir>/client/src/components/Form/CategoryForm.test.js"
+    "<rootDir>/client/src/components/Form/CategoryForm.test.js",
+    "<rootDir>/client/src/pages/admin/CreateCategory.test.js"
   ],
 
   // jest code coverage
@@ -33,7 +34,8 @@ export default {
     "client/src/pages/Auth/**",
     "client/src/hooks/**",
     "client/src/pages/Categories.js",
-    "client/src/components/Form/CategoryForm.js"
+    "client/src/components/Form/CategoryForm.js",
+    "client/src/pages/admin/CreateCategory.js"
   ],
   coverageThreshold: {
     global: {
