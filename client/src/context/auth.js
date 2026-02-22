@@ -1,4 +1,5 @@
-import { useState, useContext, createContext, useEffect } from "react";
+// Fix: Added React import - KIM SHI TONG A0265858J
+import React, { useState, useContext, createContext, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -13,14 +14,20 @@ const AuthProvider = ({ children }) => {
     axios.defaults.headers.common["Authorization"] = auth?.token;
 
     useEffect(() => {
-       const data = localStorage.getItem("auth");
-       if (data) {
-        const parseData = JSON.parse(data);
-        setAuth({
-            ...auth,
-            user: parseData.user,
-            token: parseData.token,
-        });
+       // Fix: Added try-catch error handling for localStorage parsing - KIM SHI TONG A0265858J
+       try {
+           const data = localStorage.getItem("auth");
+           if (data) {
+            const parseData = JSON.parse(data);
+            setAuth({
+                ...auth,
+                user: parseData.user,
+                token: parseData.token,
+            });
+           }
+       } catch (error) {
+           console.log("Failed to load auth from localStorage:", error);
+           // Keep default state: {user: null, token: ""}
        }
        //eslint-disable-next-line
     }, []);
@@ -32,6 +39,13 @@ const AuthProvider = ({ children }) => {
 };
 
 // custom hook
-const useAuth = () => useContext(AuthContext);
+// Fix: Added validation to ensure useAuth is used within AuthProvider - KIM SHI TONG A0265858J
+const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};
 
 export {useAuth, AuthProvider};

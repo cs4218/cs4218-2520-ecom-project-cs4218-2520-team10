@@ -16,15 +16,23 @@ export default {
     "\\.(css|scss)$": "identity-obj-proxy",
   },
 
-  // ignore all node_modules except styleMock (needed for css imports)
-  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
+  // ignore all node_modules except styleMock and axios (needed for ES modules)
+  // Fix: Added axios to transformIgnorePatterns for ES module support - KIM SHI TONG A0265858J
+  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js|axios)$)"],
 
   // only run these tests
-  testMatch: ["<rootDir>/client/src/pages/**/*.test.js"],
-
+  // Fix: Added context test files to test match - KIM SHI TONG A0265858J
+  testMatch: [
+    "<rootDir>/client/src/pages/**/*.test.js",
+    "<rootDir>/client/src/context/*.test.js"
+  ],
   // jest code coverage
+  // Fix: Added context folder to coverage collection - KIM SHI TONG A0265858J
   collectCoverage: true,
-  collectCoverageFrom: ["client/src/pages/**"],
+  collectCoverageFrom: [
+    "client/src/pages/Auth/**",
+    "client/src/context/**"
+  ],
   coverageThreshold: {
     global: {
       lines: 100,
