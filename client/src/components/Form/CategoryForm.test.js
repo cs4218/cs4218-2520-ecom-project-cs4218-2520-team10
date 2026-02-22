@@ -27,6 +27,7 @@ describe("CategoryForm", () => {
     it("renders category form with empty value", () => {
       const mockValue = "";
       render(<CategoryForm value={mockValue} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+
       const input = screen.getByPlaceholderText("Enter new category");
       const button = screen.getByRole("button", { name: "Submit" });
 
@@ -38,6 +39,7 @@ describe("CategoryForm", () => {
     it("renders category form with non-empty value", () => {
       const mockValue = "some value";
       render(<CategoryForm value={mockValue} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+
       const input = screen.getByPlaceholderText("Enter new category");
       const button = screen.getByRole("button", { name: "Submit" });
 
@@ -52,8 +54,8 @@ describe("CategoryForm", () => {
       const user = userEvent.setup();
       const newValue = "New Category";
       render(<CategoryForm value="" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-      const input = screen.getByPlaceholderText(/enter new category/i);
 
+      const input = screen.getByPlaceholderText("Enter new category");
       await user.type(input, newValue);
 
       expect(mockSetValue).toHaveBeenCalledTimes(newValue.length);
@@ -63,8 +65,8 @@ describe("CategoryForm", () => {
     it("calls handleSubmit once on form submit", async () => {
       const user = userEvent.setup();
       render(<CategoryForm value="Test" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-      const button = screen.getByRole("button", { name: "Submit" });
 
+      const button = screen.getByRole("button", { name: "Submit" });
       await user.click(button);
 
       expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
@@ -73,8 +75,8 @@ describe("CategoryForm", () => {
     it("never calls setValue with undefined or null", async () => {
       const user = userEvent.setup();
       render(<CategoryForm value="test" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-      const input = screen.getByPlaceholderText("Enter new category");
 
+      const input = screen.getByPlaceholderText("Enter new category");
       await user.type(input, "New Category");
       await user.clear(input);
 
@@ -90,6 +92,7 @@ describe("CategoryForm", () => {
     it("default input value to empty string when value prop is undefined", () => {
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
       const { rerender } = render(<CategoryForm value={undefined} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+
       const input = screen.getByPlaceholderText("Enter new category");
       rerender(<CategoryForm value={""} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
 
@@ -101,6 +104,7 @@ describe("CategoryForm", () => {
     it("default input value to empty string when value prop is null", () => {
       const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
       render(<CategoryForm value={null} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+
       const input = screen.getByPlaceholderText("Enter new category");
       const button = screen.getByRole("button", { name: "Submit" });
 

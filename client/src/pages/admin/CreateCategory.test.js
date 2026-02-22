@@ -59,9 +59,9 @@ describe("CreateCategory", () => {
         },
       });
       render(<CreateCategory />);
-      const headers = screen.getAllByRole("columnheader");
 
-      await waitFor(() => {expect(axios.get).toHaveBeenCalled()});
+      const headers = await screen.findAllByRole("columnheader");
+
       expect(headers).toHaveLength(2);
       expect(headers[0]).toHaveTextContent("Name");
       expect(headers[1]).toHaveTextContent("Actions");
@@ -140,6 +140,7 @@ describe("CreateCategory", () => {
         const editButton = screen.getByRole("button", {name: "Edit"});
         await user.click(editButton);
       });
+
       await waitFor(async () => {
         const updateModal = screen.getByTestId("update-modal");
         expect(updateModal).toBeInTheDocument();
@@ -165,15 +166,13 @@ describe("CreateCategory", () => {
         const editButton = screen.getByRole("button", {name: "Edit"});
         await user.click(editButton);
       });
+      let updateModal;
       await waitFor(async () => {
-        const updateModal = screen.getByTestId("update-modal");
-        expect(updateModal).toBeInTheDocument();
-      });
-      await waitFor(async () => {
-        const updateModal = screen.getByTestId("update-modal");
+        updateModal = screen.getByTestId("update-modal");
         await user.click(updateModal);
-        expect(updateModal).not.toBeInTheDocument();
       });
+
+      expect(updateModal).not.toBeInTheDocument();
     });
   });
 
