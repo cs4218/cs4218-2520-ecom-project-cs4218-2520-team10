@@ -10,13 +10,9 @@ import userEvent from '@testing-library/user-event';
 /**
   * Unit tests for CategoryForm component
   * 
-  * 1. renders the category form when the value is an empty string
-  * 2. Renders the category form when the value is a non-empty string
-  * 3. default input value to empty string when value prop is undefined
-  * 4. default input value to empty string when value prop is null
-  * 5. calls setValue on every input change
-  * 6. calls handleSubmit once on form submit
-  * 7. never calls setValue with undefined or null
+  * 1. 2 rendering tests
+  * 2. 3 happy path tests
+  * 3. 2 error handling tests
   */
 describe("CategoryForm", () => {
   const mockSetValue = jest.fn();
@@ -27,85 +23,91 @@ describe("CategoryForm", () => {
     jest.restoreAllMocks();
   });
 
-  it("renders category form with empty value", () => {
-    const mockValue = "";
-    render(<CategoryForm value={mockValue} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-    const input = screen.getByPlaceholderText("Enter new category");
-    const button = screen.getByRole("button", { name: "Submit" });
+  describe("Rendering", () => {
+    it("renders category form with empty value", () => {
+      const mockValue = "";
+      render(<CategoryForm value={mockValue} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      const input = screen.getByPlaceholderText("Enter new category");
+      const button = screen.getByRole("button", { name: "Submit" });
 
-    expect(input).toBeInTheDocument();
-    expect(input.value).toBe(mockValue);
-    expect(button).toBeInTheDocument();
+      expect(input).toBeInTheDocument();
+      expect(input.value).toBe(mockValue);
+      expect(button).toBeInTheDocument();
+    });
+
+    it("renders category form with non-empty value", () => {
+      const mockValue = "some value";
+      render(<CategoryForm value={mockValue} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      const input = screen.getByPlaceholderText("Enter new category");
+      const button = screen.getByRole("button", { name: "Submit" });
+
+      expect(input).toBeInTheDocument();
+      expect(input.value).toBe(mockValue);
+      expect(button).toBeInTheDocument();
+    });
   });
 
-  it("renders category form with non-empty value", () => {
-    const mockValue = "some value";
-    render(<CategoryForm value={mockValue} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-    const input = screen.getByPlaceholderText("Enter new category");
-    const button = screen.getByRole("button", { name: "Submit" });
+  describe("Happy Path", () => {
+    it("calls setValue on every input change", async () => {
+      const user = userEvent.setup();
+      const newValue = "New Category";
+      render(<CategoryForm value="" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      const input = screen.getByPlaceholderText(/enter new category/i);
 
-    expect(input).toBeInTheDocument();
-    expect(input.value).toBe(mockValue);
-    expect(button).toBeInTheDocument();
-  });
+      await user.type(input, newValue);
 
-  it("default input value to empty string when value prop is undefined", () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-    const { rerender } = render(<CategoryForm value={undefined} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-    const input = screen.getByPlaceholderText("Enter new category");
-    rerender(<CategoryForm value={""} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      expect(mockSetValue).toHaveBeenCalledTimes(newValue.length);
+      expect(mockSetValue.mock.calls.map(c => c[0]).join("")).toBe(newValue);
+    });
 
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(input).toBeInTheDocument();
-    expect(input.value).toBe("");
-  });
+    it("calls handleSubmit once on form submit", async () => {
+      const user = userEvent.setup();
+      render(<CategoryForm value="Test" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      const button = screen.getByRole("button", { name: "Submit" });
 
-  it("default input value to empty string when value prop is null", () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-    render(<CategoryForm value={null} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-    const input = screen.getByPlaceholderText("Enter new category");
-    const button = screen.getByRole("button", { name: "Submit" });
+      await user.click(button);
 
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
-    expect(input).toBeInTheDocument();
-    expect(input.value).toBe("");
-    expect(button).toBeInTheDocument();
-  });
+      expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
+    });
 
-  it("calls setValue on every input change", async () => {
-    const user = userEvent.setup();
-    const newValue = "New Category";
-    render(<CategoryForm value="" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-    const input = screen.getByPlaceholderText(/enter new category/i);
+    it("never calls setValue with undefined or null", async () => {
+      const user = userEvent.setup();
+      render(<CategoryForm value="test" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      const input = screen.getByPlaceholderText("Enter new category");
 
-    await user.type(input, newValue);
+      await user.type(input, "New Category");
+      await user.clear(input);
 
-    expect(mockSetValue).toHaveBeenCalledTimes(newValue.length);
-    expect(mockSetValue.mock.calls.map(c => c[0]).join("")).toBe(newValue);
-  });
+      mockSetValue.mock.calls.forEach(([arg]) => {
+        expect(arg).not.toBeUndefined();
+        expect(arg).not.toBeNull();
+        expect(typeof arg).toBe("string");
+      });
+    });
+  })
 
-  it("calls handleSubmit once on form submit", async () => {
-    const user = userEvent.setup();
-    render(<CategoryForm value="Test" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-    const button = screen.getByRole("button", { name: "Submit" });
+  describe("Error Handling", () => {
+    it("default input value to empty string when value prop is undefined", () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      const { rerender } = render(<CategoryForm value={undefined} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      const input = screen.getByPlaceholderText("Enter new category");
+      rerender(<CategoryForm value={""} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
 
-    await user.click(button);
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(input).toBeInTheDocument();
+      expect(input.value).toBe("");
+    });
 
-    expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
-  });
+    it("default input value to empty string when value prop is null", () => {
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+      render(<CategoryForm value={null} setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
+      const input = screen.getByPlaceholderText("Enter new category");
+      const button = screen.getByRole("button", { name: "Submit" });
 
-  it("never calls setValue with undefined or null", async () => {
-    const user = userEvent.setup();
-    render(<CategoryForm value="test" setValue={mockSetValue} handleSubmit={mockHandleSubmit} />);
-    const input = screen.getByPlaceholderText("Enter new category");
-
-    await user.type(input, "New Category");
-    await user.clear(input);
-
-    mockSetValue.mock.calls.forEach(([arg]) => {
-      expect(arg).not.toBeUndefined();
-      expect(arg).not.toBeNull();
-      expect(typeof arg).toBe("string");
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(input).toBeInTheDocument();
+      expect(input.value).toBe("");
+      expect(button).toBeInTheDocument();
     });
   });
 });
