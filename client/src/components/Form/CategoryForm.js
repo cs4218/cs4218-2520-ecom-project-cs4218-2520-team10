@@ -9,7 +9,7 @@ const CategoryForm = ({ handleSubmit, value, setValue }) => {
             type="text"
             className="form-control"
             placeholder="Enter new category"
-            value={value}
+            value={value || ""} // Fix: handle undefined or null values - Shaun Lee Xuan Wei A0252626E
             onChange={(e) => setValue(e.target.value)}
           />
         </div>
