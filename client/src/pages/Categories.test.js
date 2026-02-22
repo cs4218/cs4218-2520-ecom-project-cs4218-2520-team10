@@ -25,88 +25,90 @@ describe('Categories Page', () => {
     jest.resetAllMocks();
   });
 
-  it('renders no links if empty categories', () => {
-    useCategory.mockReturnValue({
-      categories: [],
-      loading: false,
-      error: null
+  describe("Rendering", () => {
+    it('renders no links if empty categories', () => {
+      useCategory.mockReturnValue({
+        categories: [],
+        loading: false,
+        error: null
+      });
+      render(
+        <MemoryRouter initialEntries={["/categories"]}>
+          <Routes>
+            <Route path="/categories" element={<Categories />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(screen.queryAllByRole('link')).toHaveLength(0);
     });
-    render(
-      <MemoryRouter initialEntries={["/categories"]}>
-        <Routes>
-          <Route path="/categories" element={<Categories />} />
-        </Routes>
-      </MemoryRouter>
-    );
 
-    expect(screen.queryAllByRole('link')).toHaveLength(0);
-  });
+    it('renders no links if undefined categories', () => {
+      useCategory.mockReturnValue({
+        categories: undefined,
+        loading: false,
+        error: null
+      });
+      render(
+        <MemoryRouter initialEntries={["/categories"]}>
+          <Routes>
+            <Route path="/categories" element={<Categories />} />
+          </Routes>
+        </MemoryRouter>
+      );
 
-  it('renders no links if undefined categories', () => {
-    useCategory.mockReturnValue({
-      categories: undefined,
-      loading: false,
-      error: null
+      expect(screen.queryAllByRole('link')).toHaveLength(0);
     });
-    render(
-      <MemoryRouter initialEntries={["/categories"]}>
-        <Routes>
-          <Route path="/categories" element={<Categories />} />
-        </Routes>
-      </MemoryRouter>
-    );
 
-    expect(screen.queryAllByRole('link')).toHaveLength(0);
-  });
+    it('renders no links if null categories', () => {
+      useCategory.mockReturnValue({
+        categories: null,
+        loading: false,
+        error: null
+      });
+      render(
+        <MemoryRouter initialEntries={["/categories"]}>
+          <Routes>
+            <Route path="/categories" element={<Categories />} />
+          </Routes>
+        </MemoryRouter>
+      );
 
-  it('renders no links if null categories', () => {
-    useCategory.mockReturnValue({
-      categories: null,
-      loading: false,
-      error: null
+      expect(screen.queryAllByRole('link')).toHaveLength(0);
     });
-    render(
-      <MemoryRouter initialEntries={["/categories"]}>
-        <Routes>
-          <Route path="/categories" element={<Categories />} />
-        </Routes>
-      </MemoryRouter>
-    );
 
-    expect(screen.queryAllByRole('link')).toHaveLength(0);
-  });
+    it("renders links with correct text and href given valid categories", () => {
+      const mockCategories = [
+        {
+          _id: "validId1",
+          name: "Book",
+          slug: "book"
+        },
+        {
+          _id: "validId2",
+          name: "Clothing",
+          slug: "clothing"
+        },
+      ];
+      useCategory.mockReturnValue({
+        categories: mockCategories,
+        loading: false,
+        error: null
+      });
+      render(
+        <MemoryRouter initialEntries={["/categories"]}>
+          <Routes>
+            <Route path="/categories" element={<Categories />} />
+          </Routes>
+        </MemoryRouter>
+      );
+      const links = screen.queryAllByRole('link');
 
-  it("renders links with correct text and href given valid categories", () => {
-    const mockCategories = [
-      {
-        _id: "validId1",
-        name: "Book",
-        slug: "book"
-      },
-      {
-        _id: "validId2",
-        name: "Clothing",
-        slug: "clothing"
-      },
-    ];
-    useCategory.mockReturnValue({
-      categories: mockCategories,
-      loading: false,
-      error: null
-    });
-    render(
-      <MemoryRouter initialEntries={["/categories"]}>
-        <Routes>
-          <Route path="/categories" element={<Categories />} />
-        </Routes>
-      </MemoryRouter>
-    );
-    const links = screen.queryAllByRole('link');
-
-    expect(links).toHaveLength(mockCategories.length);
-    links.forEach((link, index) => {
-      expect(link).toHaveTextContent(new RegExp(`^${mockCategories[index].name}$`));
-      expect(link).toHaveAttribute('href', `/category/${mockCategories[index].slug}`);
+      expect(links).toHaveLength(mockCategories.length);
+      links.forEach((link, index) => {
+        expect(link).toHaveTextContent(new RegExp(`^${mockCategories[index].name}$`));
+        expect(link).toHaveAttribute('href', `/category/${mockCategories[index].slug}`);
+      });
     });
   });
 });
