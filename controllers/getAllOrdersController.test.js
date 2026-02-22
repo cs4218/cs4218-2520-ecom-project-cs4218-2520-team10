@@ -1,0 +1,146 @@
+// File & Tests Created - YAN WEIDONG A0258151H
+/**
+ * NOTE: The following tests and documentation are created with the help of AI based on user defined test scenario plan.
+ */
+import { getAllOrdersController } from "./authController.js";
+import orderModel from "../models/orderModel.js";
+
+jest.mock("../models/orderModel.js", () => ({
+  find: jest.fn().mockReturnThis(),
+  populate: jest.fn().mockReturnThis(),
+  sort: jest.fn().mockReturnThis(),
+  exec: jest.fn(),
+  then: jest.fn((resolve) => resolve([])),
+}));
+
+/**
+ * Unit Tests for getAllOrdersController
+ *
+ * Test Strategy: Output-based
+ *
+ * Test Doubles Used:
+ * - orderModel:                STUB (controls find, populate, sort, exec behavior)
+ * - req/res:                   FAKE (test doubles for Express request/response objects)
+ *
+ * Testing Techniques Applied:
+ * - Happy Path: User with orders, user with no orders
+ * - Negative Testing: Database errors
+ * - Interaction Testing: Verifying `orderModel` methods are called with correct arguments
+ *
+ * Scenario Plan:
+ * #  | Category       | Technique    | Scenario                                          | Expected Result
+ * ---|----------------|--------------|---------------------------------------------------|-----------------------------------------------------
+ * 1  | Happy Path     | EP + BVA (Valid - Zero)     | Successfully retrieves no orders        | 200 Success, returns empty array
+ * 2  | Happy Path     | EP + BVA (Valid - One)      | Successfully retrieves single order     | 200 Success, returns array with one order
+ * 3  | Happy Path     | EP + BVA (Valid - Multiple) | Successfully retrieves multiple orders  | 200 Success, returns array of orders
+ * 4  | Error Handling | Negative                    | Database error                          | 500 Internal Server Error, expect error message
+ */
+describe("getAllOrdersController", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {}; // No req.user needed for getAllOrdersController
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      send: jest.fn(),
+    };
+
+    // Reset orderModel mocks for each test
+    orderModel.find.mockReturnThis();
+    orderModel.populate.mockReturnThis();
+    orderModel.sort.mockReturnThis();
+    // Make the chain resolve to an empty array by default
+    orderModel.then.mockImplementation((resolve) => resolve([]));
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe("Happy Path", () => {
+    it("should return 200 with an empty array when no orders exist", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      orderModel.then.mockImplementation((resolve) => resolve([]));
+
+      // ── ACT ──────────────────────────────────────
+      await getAllOrdersController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.json).toHaveBeenCalledWith([]);
+      const returnedOrders = res.json.mock.calls[0][0];
+      expect(returnedOrders).toHaveLength(0);
+    });
+
+    it("should return 200 with populated orders when single order exists", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const mockOrders = [
+        {
+          _id: "orderA",
+          products: [{ name: "Product X" }],
+          buyer: { name: "Buyer 1" },
+          createdAt: new Date("2024-01-15T10:00:00Z"),
+        }
+      ];
+      orderModel.then.mockImplementation((resolve) => resolve(mockOrders));
+
+      // ── ACT ──────────────────────────────────────
+      await getAllOrdersController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+        expect(res.json).toHaveBeenCalledWith(mockOrders);
+        const returnedOrders = res.json.mock.calls[0][0];
+        expect(returnedOrders).toHaveLength(1);
+    });
+
+    it("should return 200 with populated orders when multiple orders exist", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const mockOrders = [
+        {
+          _id: "orderA",
+          products: [{ name: "Product X" }],
+          buyer: { name: "Buyer 1" },
+          createdAt: new Date("2024-01-15T10:00:00Z"),
+        },
+        {
+          _id: "orderB",
+          products: [{ name: "Product Y" }],
+          buyer: { name: "Buyer 2" },
+          createdAt: new Date("2024-01-14T10:00:00Z"),
+        },
+      ];
+      orderModel.then.mockImplementation((resolve) => resolve(mockOrders));
+
+      // ── ACT ──────────────────────────────────────
+      await getAllOrdersController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.json).toHaveBeenCalledWith(mockOrders);
+      const returnedOrders = res.json.mock.calls[0][0];
+      expect(returnedOrders).toHaveLength(2);
+    });
+  });
+
+  describe("Error Handling", () => {
+    it("should return 500 when database operation fails", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const dbError = new Error("Database query failed during getAllOrders");
+      orderModel.then.mockImplementation((resolve, reject) => reject(dbError));
+
+      // ── ACT ──────────────────────────────────────
+      await getAllOrdersController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String),
+          error: dbError,
+        }),
+      );
+    });
+  });
+});

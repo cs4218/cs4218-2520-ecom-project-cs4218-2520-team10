@@ -16,26 +16,24 @@ export default {
     "\\.(css|scss)$": "identity-obj-proxy",
   },
 
-  // ignore all node_modules except styleMock (needed for css imports)
-  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js)$)"],
+  // ignore all node_modules except styleMock and axios (needed for ES modules)
+  // Added axios to transformIgnorePatterns for ES module support - KIM SHI TONG A0265858J
+  transformIgnorePatterns: ["/node_modules/(?!(styleMock\\.js|axios)$)"],
 
   // only run these tests
   testMatch: [
-    "<rootDir>/client/src/pages/Auth/*.test.js",
+    "<rootDir>/client/src/pages/**/*.test.js",
+    "<rootDir>/client/src/context/*.test.js",
     "<rootDir>/client/src/hooks/*.test.js",
-    "<rootDir>/client/src/pages/Categories.test.js",
-    "<rootDir>/client/src/components/Form/CategoryForm.test.js",
-    "<rootDir>/client/src/pages/admin/CreateCategory.test.js"
+    "<rootDir>/client/src/components/Form/CategoryForm.test.js"
   ],
-
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
-    "client/src/pages/Auth/**",
+    "client/src/pages/**",
+    "client/src/context/**",
     "client/src/hooks/**",
-    "client/src/pages/Categories.js",
-    "client/src/components/Form/CategoryForm.js",
-    "client/src/pages/admin/CreateCategory.js"
+    "client/src/components/Form/CategoryForm.js"
   ],
   coverageThreshold: {
     global: {

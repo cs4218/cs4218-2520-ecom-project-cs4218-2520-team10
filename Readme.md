@@ -1,4 +1,17 @@
-# CS4218 Project - Virtual Vault
+# CS4218 Project Team 10 - Virtual Vault
+
+## 0. Contribution Summary
+
+The following table outlines the testing contribution for our 4-member team based on the project architecture.
+
+| Team Member | Feature | Client Related Files (`/client/src/`) | Server Related Files (`./`)
+| :--- | :--- | :--- | :--- |
+| **Kim Shi Tong A0265858J** | **Auth & Registration** | <ul><li>`context/auth.js`</li><li>`pages/Auth/Register.js`</li><li>`pages/Auth/Login.js`</li></ul> | <ul><li>`helpers/authHelper.js`</li><li>`middlewares/authMiddleware.js`</li><li>`controllers/authController.js` (Register, Login, Forgot, Test)</li></ul> |
+| **Yan Weidong A0258151H** | **Orders & Payments** | <ul><li>`pages/user/Orders.js`</li></ul> | <ul><li>`controllers/authController.js` (updateProfileController, getOrdersController, getAllOrdersController, orderStatusController)</li><li>`models/orderModel.js` <li>`controllers/authController.js` (braintreeTokenController, braintreePaymentController)</li></ul> |
+| **Ong Chang Heng Bertrand A0253013X** | **Products** | <ul><li>`pages/ProductDetails.js`</li><li>`pages/CategoryProduct.js`</li><li>`pages/admin/CreateProduct.js`</li><li>`pages/admin/UpdateProduct.js`</li><li>`pages/admin/Products.js`</li></ul> | <ul><li>`controllers/productController.js` (getProductController, getSingleProductController, createProductController, updateProductController, deleteProductController)</li><li>`models/productModel.js`</li></ul> |
+| **Shaun Lee Xuan Wei A0252626E** | **Categories** | <ul><li>`hooks/useCategory.js`</li><li>`pages/Categories.js`</li><li>`components/Form/CategoryForm.js`</li><li>`pages/admin/CreateCategory.js`</li></ul> | <ul><li>`controllers/categoryController.js` (Create, Update, Single, Delete)</li></ul> |
+
+---
 
 ## 1. Project Introduction
 
