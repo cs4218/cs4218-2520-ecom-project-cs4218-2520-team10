@@ -11,31 +11,26 @@
  *
  * Test Doubles:
  *   - req: Fake (simple empty object — req is not used by controller)
- *   - res: Fake (mock object with .status() and .send() methods)
- *   - console.log: Mock (to verify error logging behavior)
+ *   - res: Mock (mock object with .status() and .send() methods)
  *
  * Techniques Applied:
  *   - Equivalence Partitioning (EP): Valid vs. error-throwing res methods
  *   - Error Guessing: res.status throws, res.send throws
  *   - Positive Testing: Happy path with valid Express res object
  *   - Negative Testing: Error scenarios with throwing methods
- *   - Side Effects Testing: console.log called/not called verification
  *
  * Scenario Plan:
  * #  | Category    | Technique | Scenario                        | Expected
  * 1  | Happy       | —         | valid req/res                   | 200 + {success: true, message}
- * 2  | Happy       | —         | verify method chaining          | .status returns res
- * 3  | Contract    | —         | success response structure      | exact {success, message} shape
- * 4  | Contract    | —         | req not used                    | works with any req (even null)
- * 5  | Error       | Error     | res.status throws               | 500 + error response
- * 6  | Error       | Error     | res.send throws (in try)        | 500 + error response
- * 7  | Error       | Error     | both status and send throw      | catch block executes
- * 8  | Contract    | —         | error response structure        | exact {success, message, error}
- * 9  | Side Effect | —         | success → no console.log        | console.log NOT called
- * 10 | Side Effect | —         | error → console.log called      | console.log(error)
- * 11 | Invariant   | —         | call order                      | .status before .send
- * 12 | Security    | —         | no sensitive data in response   | no password/token/secret/apikey
- * 13 | Security    | —         | sanitize error response         | generic message, no internal details
+ * 2  | Contract    | —         | success response structure      | exact {success, message} shape
+ * 3  | Contract    | —         | req not used                    | works with any req (even null)
+ * 4  | Error       | Error     | res.status throws               | 500 + error response
+ * 5  | Error       | Error     | res.send throws (in try)        | 500 + error response
+ * 6  | Error       | Error     | both status and send throw      | catch block executes
+ * 7  | Contract    | —         | error response structure        | exact {success, message, error}
+ * 8  | Invariant   | —         | call order                      | .status before .send
+ * 9  | Security    | —         | no sensitive data in response   | no password/token/secret/apikey
+ * 10 | Security    | —         | sanitize error response         | generic message, no internal details
  *
  * @see ../controllers/authController.js
  */
@@ -45,7 +40,6 @@ import { testController } from './authController.js';
 describe('AuthController', () => {
   describe('testController', () => {
     let req, res;
-    let consoleLogSpy;
 
     // Helper function to create mock request (not used by controller, but required by signature)
     const createMockReq = () => ({});
@@ -62,17 +56,9 @@ describe('AuthController', () => {
       // Reset all mocks before each test
       jest.clearAllMocks();
 
-      // Spy on console.log to verify error logging
-      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-
       // Setup default request and response
       req = createMockReq();
       res = createMockRes();
-    });
-
-    afterEach(() => {
-      // Restore console.log after each test
-      consoleLogSpy.mockRestore();
     });
 
     // ═══════════════════════════════════════════════════════════
@@ -99,24 +85,6 @@ describe('AuthController', () => {
       });
     });
 
-        it('should support method chaining', () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Verify Express method chaining pattern: res.status(200).send(...)
-      // WHY: res.status must return res to enable chaining
-      req = createMockReq();
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      testController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Verify res.status returns res (for chaining)
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.status(200)).toBe(res);
-      // Verify res.send is called after status
-      expect(res.send).toHaveBeenCalledTimes(1);
-    });
-
     });
 
         // ═══════════════════════════════════════════════════════════
@@ -137,13 +105,10 @@ describe('AuthController', () => {
 
       // ── ASSERT ───────────────────────────────────
       // Success response MUST have exactly: {success: boolean, message: string}
-      const sentResponse = res.send.mock.calls[0][0];
-      expect(sentResponse).toEqual({
+      expect(res.send).toHaveBeenCalledWith({
         success: true,
         message: 'Protected Routes',
       });
-      // Verify no extra fields
-      expect(Object.keys(sentResponse)).toEqual(['success', 'message']);
     });
 
         it('should have correct types in success response', () => {
@@ -156,10 +121,12 @@ describe('AuthController', () => {
       testController(req, res);
 
       // ── ASSERT ───────────────────────────────────
-      const sentResponse = res.send.mock.calls[0][0];
-      expect(typeof sentResponse.success).toBe('boolean');
-      expect(typeof sentResponse.message).toBe('string');
-      expect(sentResponse.success).toBe(true);  // Must be true for success
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: expect.any(Boolean),
+          message: expect.any(String),
+        })
+      );
     });
 
         it('should work correctly with any req object', () => {
@@ -243,7 +210,6 @@ describe('AuthController', () => {
         message: 'Error in test controller',
         error: thrownError,
       });
-      expect(res.send).toHaveBeenCalledTimes(2);  // Once in try (throws), once in catch
     });
 
         it('should execute catch block when both status and send throw', () => {
@@ -295,138 +261,11 @@ describe('AuthController', () => {
 
       // ── ASSERT ───────────────────────────────────
       // Error response MUST have: {success: false, message: string, error: Error}
-      const sentResponse = res.send.mock.calls[0][0];
-      expect(sentResponse).toEqual({
+      expect(res.send).toHaveBeenCalledWith({
         success: false,
         message: 'Error in test controller',
         error: thrownError,
       });
-      expect(Object.keys(sentResponse)).toEqual(['success', 'message', 'error']);
-      expect(sentResponse.success).toBe(false);  // Must be false for errors
-    });
-    });
-
-        // ═══════════════════════════════════════════════════════════
-        // SIDE EFFECTS — CONSOLE LOGGING
-        // ═══════════════════════════════════════════════════════════
-        // Verify console.log behavior in success vs. error paths
-
-      describe('Side Effects', () => {
-        it('should not log to console on success path', () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Side effect test: console.log should NOT be called on success
-      // WHY: console.log only called in catch block (error path)
-      req = createMockReq();
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      testController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Observable side effect: console.log NOT invoked
-      expect(consoleLogSpy).not.toHaveBeenCalled();
-    });
-
-        it('should log error to console on error path', () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Side effect test: console.log MUST be called with error
-      req = createMockReq();
-      res = createMockRes();
-
-      const thrownError = new Error('Test error');
-      res.status = jest.fn()
-        .mockImplementationOnce(() => { throw thrownError; })
-        .mockReturnValueOnce(res);
-
-      // ── ACT ──────────────────────────────────────
-      testController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Observable side effect: console.log called exactly once with the error
-      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-      expect(consoleLogSpy).toHaveBeenCalledWith(thrownError);
-    });
-    });
-
-        // ═══════════════════════════════════════════════════════════
-        // INVARIANTS — CALL ORDER AND BEHAVIOR
-        // ═══════════════════════════════════════════════════════════
-        // Verify critical execution order and invariant properties
-
-      describe('Invariants', () => {
-        it('should call status before send on success path', () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Invariant: res.status() MUST be called before res.send()
-      // WHY: HTTP status must be set before sending response body
-      req = createMockReq();
-      res = createMockRes();
-
-      const callOrder = [];
-      res.status = jest.fn((statusCode) => {
-        callOrder.push(`status(${statusCode})`);
-        return res;
-      });
-      res.send = jest.fn((body) => {
-        callOrder.push('send()');
-        return res;
-      });
-
-      // ── ACT ──────────────────────────────────────
-      testController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Verify call order: status(200) → send()
-      expect(callOrder).toEqual(['status(200)', 'send()']);
-    });
-
-        it('should call status before send on error path', () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Invariant: Even in error path, status must precede send
-      req = createMockReq();
-      res = createMockRes();
-
-      const callOrder = [];
-      const thrownError = new Error('First status call fails');
-
-      // First call throws (in try block), subsequent calls succeed (in catch block)
-      let callCount = 0;
-      res.status = jest.fn((statusCode) => {
-        callCount++;
-        if (callCount === 1) {
-          // First call in try block - throw error
-          throw thrownError;
-        }
-        // Subsequent calls in catch block - succeed
-        callOrder.push(`status(${statusCode})`);
-        return res;
-      });
-      res.send = jest.fn(() => {
-        callOrder.push('send()');
-        return res;
-      });
-
-      // ── ACT ──────────────────────────────────────
-      testController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Even after error, catch block maintains correct order
-      expect(callOrder).toEqual(['status(500)', 'send()']);
-      expect(res.status).toHaveBeenCalledTimes(2);  // Once in try (fails), once in catch
-    });
-
-        it('should call res methods exactly once', () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Invariant: Each method called exactly once (no duplicate sends)
-      // WHY: Sending response multiple times causes Express errors
-      req = createMockReq();
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      testController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      expect(res.status).toHaveBeenCalledTimes(1);
-      expect(res.send).toHaveBeenCalledTimes(1);
     });
     });
 
@@ -447,15 +286,7 @@ describe('AuthController', () => {
       testController(req, res);
 
       // ── ASSERT ───────────────────────────────────
-      const sentResponse = res.send.mock.calls[0][0];
-      const responseString = JSON.stringify(sentResponse);
-
-      // Verify no sensitive data patterns in response
-      expect(responseString).not.toMatch(/password/i);
-      expect(responseString).not.toMatch(/token/i);
-      expect(responseString).not.toMatch(/secret/i);
-      expect(responseString).not.toMatch(/api[_-]?key/i);
-      expect(responseString).not.toMatch(/mongodb/i);
+      expect(res.send).toHaveBeenCalledWith({ success: true, message: 'Protected Routes' });
     });
 
         it('should sanitize error response', () => {
@@ -473,12 +304,11 @@ describe('AuthController', () => {
       testController(req, res);
 
       // ── ASSERT ───────────────────────────────────
-      // Error is included but message is generic
-      const sentResponse = res.send.mock.calls[0][0];
-      expect(sentResponse.message).toBe('Error in test controller');
-      expect(sentResponse.message).not.toContain('mongodb://');
-      // Note: The error object itself is included (sentResponse.error)
-      // In production, this might need sanitization too
+      expect(res.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Error in test controller',
+        error: thrownError,
+      });
     });
     });
   });

@@ -79,7 +79,7 @@ export const loginController = async (req, res) => {
     if (!user) {
       return res.status(404).send({
         success: false,
-        message: "Email is not registerd",
+        message: "Email is not registered", //Fixed by Kim Shi Tong A0265858J
       });
     }
     const match = await comparePassword(password, user.password);

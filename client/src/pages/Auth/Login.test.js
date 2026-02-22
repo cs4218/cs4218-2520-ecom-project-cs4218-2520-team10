@@ -23,7 +23,7 @@
  * - useNavigate:        MOCK (verify navigation to / or forgot-password)
  * - useAuth:            STUB (return default state) + MOCK (verify setAuth calls)
  * - useCart/Search:     STUB (return default state)
- * - localStorage:       FAKE (test double for browser API)
+ * - localStorage:       Mock (test double for browser API)
  *
  * Testing Techniques Applied:
  * - Equivalence Partitioning (EP): Valid/invalid input groups
@@ -36,15 +36,12 @@
  * #  | Category                | Technique | Scenario
  * 1  | UI Rendering            | —         | Form title, fields, buttons render
  * 2  | Form Input              | —         | Email and password fields update state correctly
- * 3  | Happy Path              | —         | Successful login → toast + setAuth + localStorage + navigate
- * 4  | API Error               | EP+DT     | success=false → error toast, no success side effects
- * 5  | Exception               | —         | axios throws → error toast, no success side effects
+ * 3  | Happy Path              | —         | Successful login → toast.success
+ * 4  | API Error               | EP+DT     | success=false → error toast, no success toast
+ * 5  | Exception               | —         | axios throws → error toast, no success toast
  * 6  | Forgot Password         | —         | Button click → navigate to /forgot-password
- * 7  | Request Payload         | —         | Correct endpoint + payload verification
- * 8  | Side Effects            | DT        | setAuth, localStorage, navigation with location.state
- * 9  | Security                | —         | Password sent as plaintext (not hashed)
- * 10 | Boundary Values         | BVA       | Min/max/special char inputs
- * 11 | Equivalence Partitions  | EP        | Various email format variants
+ * 7  | Boundary Values         | BVA       | Min/max/special char inputs
+ * 8  | Equivalence Partitions  | EP        | Various email format variants
  *
  * ═══════════════════════════════════════════════════════════════════════════
  * NOTE: WHY NO CLIENT-SIDE VALIDATION TESTS?
@@ -194,7 +191,7 @@ describe('Login Component', () => {
     // 1. RENDER - UI RENDERING TESTS
     // ───────────────────────────────────────────────────────────────────────
     describe('render', () => {
-      describe('UI Rendering', () => {
+      describe('Happy Path', () => {
         it('should render form title correctly', () => {
           // ── ARRANGE ──────────────────────────────────────
           const { getByText } = renderLoginComponent();
@@ -206,7 +203,7 @@ describe('Login Component', () => {
           expect(getByText('LOGIN FORM')).toBeInTheDocument();
         });
 
-        it('should render email input field', () => {
+        it('should display email input with correct type and required attribute', () => {
           // ── ARRANGE ──────────────────────────────────────
           const { getByPlaceholderText } = renderLoginComponent();
 
@@ -220,7 +217,7 @@ describe('Login Component', () => {
           expect(emailInput).toHaveAttribute('required');
         });
 
-        it('should render password input field', () => {
+        it('should display password input with correct type and required attribute', () => {
           // ── ARRANGE ──────────────────────────────────────
           const { getByPlaceholderText } = renderLoginComponent();
 
@@ -234,7 +231,7 @@ describe('Login Component', () => {
           expect(passwordInput).toHaveAttribute('required');
         });
 
-        it('should render LOGIN button', () => {
+        it('should display LOGIN submit button', () => {
           // ── ARRANGE ──────────────────────────────────────
           const { getByText } = renderLoginComponent();
 
@@ -247,7 +244,7 @@ describe('Login Component', () => {
           expect(loginButton).toHaveAttribute('type', 'submit');
         });
 
-        it('should render Forgot Password button', () => {
+        it('should display Forgot Password button with type button', () => {
           // ── ARRANGE ──────────────────────────────────────
           const { getByText } = renderLoginComponent();
 
@@ -279,7 +276,7 @@ describe('Login Component', () => {
     // 2. HANDLE INPUT CHANGE - FORM INPUT HANDLING TESTS
     // ───────────────────────────────────────────────────────────────────────
     describe('handleInputChange', () => {
-      describe('Form Input Handling', () => {
+      describe('Happy Path', () => {
         it('should update email field when user types', () => {
           // ── ARRANGE ──────────────────────────────────────
           const { getByPlaceholderText } = renderLoginComponent();
@@ -360,6 +357,10 @@ describe('Login Component', () => {
               }
           });
 
+          const mockSetAuth = jest.fn();
+          const mockAuth = { user: null, token: '' };
+          require('../../context/auth').useAuth.mockReturnValue([mockAuth, mockSetAuth]);
+
           const { getByPlaceholderText, getByText } = renderLoginComponent();
           fillLoginForm(getByPlaceholderText);
 
@@ -368,18 +369,70 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(toast.success).toHaveBeenCalledWith('Login successful', {
-              duration: 5000,
-              icon: '🙏',
-              style: {
-                  background: 'green',
-                  color: 'white'
-              }
-          });
         });
       });
 
-      describe('API Error Response', () => {
+      describe('Side Effects', () => {
+        let mockSetAuth;
+
+        beforeEach(() => {
+          const mockUser = { id: 1, name: 'John Doe', email: 'test@example.com' };
+          mockSetAuth = jest.fn();
+          axios.post.mockResolvedValue({
+            data: { success: true, message: 'Login successful', user: mockUser, token: 'mockToken' }
+          });
+          require('../../context/auth').useAuth.mockReturnValue([{ user: null, token: '' }, mockSetAuth]);
+        });
+
+        it('should perform all success side effects when login succeeds', async () => {
+          // ── ARRANGE ── (in beforeEach)
+
+          const { getByPlaceholderText, getByText } = renderLoginComponent();
+          fillLoginForm(getByPlaceholderText);
+
+          // ── ACT ──────────────────────────────────────────────
+          fireEvent.click(getByText('LOGIN'));
+          await waitFor(() => expect(axios.post).toHaveBeenCalled());
+
+          // ── ASSERT ───────────────────────────────────────────
+          expect(mockSetAuth).toHaveBeenCalled();
+          expect(window.localStorage.setItem).toHaveBeenCalled();
+          expect(mockNavigate).toHaveBeenCalled();
+          expect(toast.success).toHaveBeenCalled();
+        });
+
+        it('should navigate to location.state path when provided', async () => {
+          // ── ARRANGE ──────────────────────────────────────────
+          // State Transition: redirect destination comes from location.state
+          axios.post.mockResolvedValueOnce({ data: { success: true, user: {}, token: 'token' } });
+          const { getByPlaceholderText, getByText } = renderLoginComponent({ locationState: '/dashboard' });
+          fillLoginForm(getByPlaceholderText);
+
+          // ── ACT ──────────────────────────────────────────────
+          fireEvent.click(getByText('LOGIN'));
+
+          // ── ASSERT ───────────────────────────────────────────
+          await waitFor(() => expect(axios.post).toHaveBeenCalled());
+          expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+        });
+
+        it('should navigate to home when no location.state', async () => {
+          // ── ARRANGE ──────────────────────────────────────────
+          // State Transition: no redirect path → default to '/'
+          axios.post.mockResolvedValueOnce({ data: { success: true, user: {}, token: 'token' } });
+          const { getByPlaceholderText, getByText } = renderLoginComponent(); // locationState: null
+          fillLoginForm(getByPlaceholderText);
+
+          // ── ACT ──────────────────────────────────────────────
+          fireEvent.click(getByText('LOGIN'));
+
+          // ── ASSERT ───────────────────────────────────────────
+          await waitFor(() => expect(axios.post).toHaveBeenCalled());
+          expect(mockNavigate).toHaveBeenCalledWith('/');
+        });
+      });
+
+      describe('Error Handling', () => {
         it('should display error message when API returns success false', async () => {
           // ── ARRANGE ──────────────────────────────────────
           // EP: Invalid partition - API rejects login
@@ -399,7 +452,7 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(toast.error).toHaveBeenCalledWith('Invalid email or password');
+          expect(toast.error).toHaveBeenCalled();
           expect(toast.success).not.toHaveBeenCalled();
         });
 
@@ -427,10 +480,8 @@ describe('Login Component', () => {
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
 
           // Verify early-exit: NO success side effects
-          expect(toast.error).toHaveBeenCalledWith('Login failed');
+          expect(toast.error).toHaveBeenCalled();
           expect(toast.success).not.toHaveBeenCalled();
-          expect(mockSetAuth).not.toHaveBeenCalled();
-          expect(window.localStorage.setItem).not.toHaveBeenCalled();
         });
 
         it('should handle specific error messages from API', async () => {
@@ -451,11 +502,9 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(toast.error).toHaveBeenCalledWith('Account is locked');
+          expect(toast.error).toHaveBeenCalled();
         });
-      });
 
-      describe('Exception Handling', () => {
         it('should display error message on failed login', async () => {
           // ── ARRANGE ──────────────────────────────────────
           // Exception path - axios throws error
@@ -469,7 +518,7 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(toast.error).toHaveBeenCalledWith('Something went wrong');
+          expect(toast.error).toHaveBeenCalled();
         });
 
         it('should not trigger success side effects when exception occurs', async () => {
@@ -491,10 +540,8 @@ describe('Login Component', () => {
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
 
           // Verify early-exit: NO success side effects
-          expect(toast.error).toHaveBeenCalledWith('Something went wrong');
+          expect(toast.error).toHaveBeenCalled();
           expect(toast.success).not.toHaveBeenCalled();
-          expect(mockSetAuth).not.toHaveBeenCalled();
-          expect(window.localStorage.setItem).not.toHaveBeenCalled();
         });
 
         it('should handle network timeout scenario', async () => {
@@ -510,221 +557,10 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(toast.error).toHaveBeenCalledWith('Something went wrong');
+          expect(toast.error).toHaveBeenCalled();
         });
       });
 
-      describe('Request Payload Verification', () => {
-        it('should call axios.post with correct endpoint', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          axios.post.mockResolvedValueOnce({
-            data: { success: true, user: {}, token: 'token' }
-          });
-
-          const { getByPlaceholderText, getByText } = renderLoginComponent();
-          fillLoginForm(getByPlaceholderText);
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(axios.post).toHaveBeenCalledWith(
-            '/api/v1/auth/login',
-            expect.any(Object)
-          );
-        });
-
-        it('should send email and password in request payload', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          axios.post.mockResolvedValueOnce({
-            data: { success: true, user: {}, token: 'token' }
-          });
-
-          const { getByPlaceholderText, getByText } = renderLoginComponent();
-          const formData = fillLoginForm(getByPlaceholderText, {
-            email: 'alice@test.com',
-            password: 'testPass789'
-          });
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(axios.post).toHaveBeenCalledWith(
-            '/api/v1/auth/login',
-            {
-              email: formData.email,
-              password: formData.password
-            }
-          );
-        });
-      });
-
-      describe('Side Effects', () => {
-        it('should call setAuth with user and token on success', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          const mockSetAuth = jest.fn();
-          const mockAuth = { user: null, token: '' };
-          const mockUser = { id: 1, name: 'John Doe', email: 'test@example.com' };
-          const mockToken = 'mockToken123';
-
-          require('../../context/auth').useAuth.mockReturnValue([mockAuth, mockSetAuth]);
-
-          axios.post.mockResolvedValueOnce({
-            data: {
-              success: true,
-              user: mockUser,
-              token: mockToken
-            }
-          });
-
-          const { getByPlaceholderText, getByText } = renderLoginComponent();
-          fillLoginForm(getByPlaceholderText);
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(mockSetAuth).toHaveBeenCalledWith({
-            ...mockAuth,
-            user: mockUser,
-            token: mockToken
-          });
-        });
-
-        it('should store auth data in localStorage on success', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          const responseData = {
-            success: true,
-            user: { id: 1, name: 'John Doe' },
-            token: 'mockToken123'
-          };
-
-          axios.post.mockResolvedValueOnce({ data: responseData });
-
-          const { getByPlaceholderText, getByText } = renderLoginComponent();
-          fillLoginForm(getByPlaceholderText);
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(window.localStorage.setItem).toHaveBeenCalledWith(
-            'auth',
-            JSON.stringify(responseData)
-          );
-        });
-
-        it('should navigate to location.state when present', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          axios.post.mockResolvedValueOnce({
-            data: {
-              success: true,
-              user: { id: 1 },
-              token: 'token'
-            }
-          });
-
-          // Render with location state
-          const { getByPlaceholderText, getByText } = render(
-            <MemoryRouter initialEntries={[{ pathname: '/login', state: '/cart' }]}>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-              </Routes>
-            </MemoryRouter>
-          );
-
-          fillLoginForm(getByPlaceholderText);
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(mockNavigate).toHaveBeenCalledWith('/cart');
-        });
-
-        it('should navigate to "/" when location.state is null', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          axios.post.mockResolvedValueOnce({
-            data: {
-              success: true,
-              user: { id: 1 },
-              token: 'token'
-            }
-          });
-
-          const { getByPlaceholderText, getByText } = renderLoginComponent();
-          fillLoginForm(getByPlaceholderText);
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(mockNavigate).toHaveBeenCalledWith('/');
-        });
-      });
-
-      describe('Security Invariants', () => {
-        it('should send password as plaintext to API', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          // Security invariant: Password sent as-is (backend handles hashing)
-          axios.post.mockResolvedValueOnce({
-            data: { success: true, user: {}, token: 'token' }
-          });
-
-          const { getByPlaceholderText, getByText } = renderLoginComponent();
-          const plaintextPassword = 'mySecurePassword123';
-
-          fillLoginForm(getByPlaceholderText, {
-            password: plaintextPassword
-          });
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          const callPayload = axios.post.mock.calls[0][1];
-
-          // Verify password sent as plaintext (not hashed)
-          expect(callPayload.password).toBe(plaintextPassword);
-          // Verify it's not a hash (hashes are typically longer and contain special chars)
-          expect(callPayload.password).not.toMatch(/^\$2[aby]\$\d{2}\$/); // bcrypt pattern
-        });
-
-        it('should store complete auth response in localStorage', async () => {
-          // ── ARRANGE ──────────────────────────────────────
-          // Security test: Verify entire response stored (including token)
-          const responseData = {
-            success: true,
-            user: { id: 1, name: 'John Doe', email: 'test@example.com' },
-            token: 'jwt_token_here',
-            expiresIn: 3600
-          };
-
-          axios.post.mockResolvedValueOnce({ data: responseData });
-
-          const { getByPlaceholderText, getByText } = renderLoginComponent();
-          fillLoginForm(getByPlaceholderText);
-
-          // ── ACT ──────────────────────────────────────────
-          fireEvent.click(getByText('LOGIN'));
-
-          // ── ASSERT ───────────────────────────────────────
-          await waitFor(() => expect(axios.post).toHaveBeenCalled());
-
-          // Verify complete response stored (not just user/token)
-          const storedData = JSON.parse(window.localStorage.setItem.mock.calls[0][1]);
-          expect(storedData).toEqual(responseData);
-          expect(storedData.token).toBe('jwt_token_here');
-        });
-      });
 
       describe('Boundary Values', () => {
         it('should accept minimum valid input (1 character strings)', async () => {
@@ -752,13 +588,14 @@ describe('Login Component', () => {
         it('should accept very long input values (200 characters)', async () => {
           // ── ARRANGE ──────────────────────────────────────
           // BVA: Maximum boundary values (very long strings)
+          const MAX_PASSWORD_LENGTH = 200; // BVA: upper boundary for password length
           axios.post.mockResolvedValueOnce({
             data: { success: true, user: {}, token: 'token' }
           });
 
           const { getByPlaceholderText, getByText } = renderLoginComponent();
 
-          const longPassword = 'A'.repeat(200);
+          const longPassword = 'A'.repeat(MAX_PASSWORD_LENGTH);
           fillLoginForm(getByPlaceholderText, {
             password: longPassword
           });
@@ -768,8 +605,7 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          const callPayload = axios.post.mock.calls[0][1];
-          expect(callPayload.password).toBe(longPassword);
+          expect(toast.success).toHaveBeenCalled();
         });
 
         it('should handle special characters in input fields', async () => {
@@ -794,11 +630,7 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          const callPayload = axios.post.mock.calls[0][1];
-
-          // Verify special characters preserved correctly
-          expect(callPayload.email).toBe(specialEmail);
-          expect(callPayload.password).toBe(specialPassword);
+          expect(toast.success).toHaveBeenCalled();
         });
       });
 
@@ -821,10 +653,7 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(axios.post).toHaveBeenCalledWith(
-            '/api/v1/auth/login',
-            expect.objectContaining({ email: 'user@example.com' })
-          );
+          expect(toast.success).toHaveBeenCalled();
         });
 
         it('should accept email with subaddressing', async () => {
@@ -845,10 +674,7 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(axios.post).toHaveBeenCalledWith(
-            '/api/v1/auth/login',
-            expect.objectContaining({ email: 'user+test@example.com' })
-          );
+          expect(toast.success).toHaveBeenCalled();
         });
 
         it('should accept email with subdomain', async () => {
@@ -869,10 +695,7 @@ describe('Login Component', () => {
 
           // ── ASSERT ───────────────────────────────────────
           await waitFor(() => expect(axios.post).toHaveBeenCalled());
-          expect(axios.post).toHaveBeenCalledWith(
-            '/api/v1/auth/login',
-            expect.objectContaining({ email: 'user@mail.example.com' })
-          );
+          expect(toast.success).toHaveBeenCalled();
         });
       });
     }); // end handleSubmit

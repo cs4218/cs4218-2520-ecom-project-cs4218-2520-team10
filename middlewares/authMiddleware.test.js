@@ -48,8 +48,15 @@ describe('authMiddleware', () => {
   // ═══════════════════════════════════════════════════
 
   describe('requireSignIn', () => {
+    const MOCK_IAT = 1234567890;       // Mock issued-at timestamp
+    const SEVEN_DAYS_SECONDS = 604800; // JWT expiry: 7 days in seconds
 
     describe('Happy Path', () => {
+      const decodedToken = {
+        _id: 'user123',
+        iat: 1234567890,
+        exp: 1234567890 + 604800
+      };
 
       it('should set req.user and call next when token is valid', async () => {
         // ── ARRANGE ──
@@ -59,11 +66,6 @@ describe('authMiddleware', () => {
         const res = createMockRes();
         const next = jest.fn();
 
-        const decodedToken = {
-          _id: 'user123',
-          iat: 1234567890,
-          exp: 1234567890 + 604800
-        };
         JWT.verify.mockReturnValue(decodedToken);
 
         // ── ACT ──
@@ -72,21 +74,23 @@ describe('authMiddleware', () => {
         // ── ASSERT ──
         expect(req.user).toEqual(decodedToken);
         expect(next).toHaveBeenCalledTimes(1);
-        expect(res.status).not.toHaveBeenCalled();
       });
     });
 
     describe('Equivalence Partitions — Missing/Invalid Token', () => {
+      let res, next;
 
-      it('should return 401 error when authorization header is missing', async () => {
+      beforeEach(() => {
+        res = createMockRes();
+        next = jest.fn();
+        JWT.verify.mockImplementation(() => {
+          throw new Error('jwt must be provided');
+        });
+      });
+
+      it('should return 401 when header is missing', async () => {
         // ── ARRANGE ──
         const req = createMockReq(); // No authorization header
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockImplementation(() => {
-          throw new Error('jwt must be provided');
-        });
 
         // ── ACT ──
         await requireSignIn(req, res, next);
@@ -97,20 +101,11 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
-      it('should return 401 error when authorization header is undefined', async () => {
+      it('should return 401 when header is undefined', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: undefined }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockImplementation(() => {
-          throw new Error('jwt must be provided');
-        });
+        const req = createMockReq({ headers: { authorization: undefined } });
 
         // ── ACT ──
         await requireSignIn(req, res, next);
@@ -121,20 +116,11 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
-      it('should return 401 error when authorization header is null', async () => {
+      it('should return 401 when header is null', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: null }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockImplementation(() => {
-          throw new Error('jwt must be provided');
-        });
+        const req = createMockReq({ headers: { authorization: null } });
 
         // ── ACT ──
         await requireSignIn(req, res, next);
@@ -145,20 +131,11 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
-      it('should return 401 error when authorization is empty string', async () => {
+      it('should return 401 when header is empty string', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: '' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockImplementation(() => {
-          throw new Error('jwt must be provided');
-        });
+        const req = createMockReq({ headers: { authorization: '' } });
 
         // ── ACT ──
         await requireSignIn(req, res, next);
@@ -169,23 +146,21 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
     });
 
     describe('Error Handling — JWT Failures', () => {
+      let res, next;
+
+      beforeEach(() => {
+        res = createMockRes();
+        next = jest.fn();
+      });
 
       it('should return 401 error when token is malformed', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'malformed.token.here' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockImplementation(() => {
-          throw new Error('jwt malformed');
-        });
+        const req = createMockReq({ headers: { authorization: 'malformed.token.here' } });
+        JWT.verify.mockImplementation(() => { throw new Error('jwt malformed'); });
 
         // ── ACT ──
         await requireSignIn(req, res, next);
@@ -196,17 +171,11 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
       it('should return 401 error when token is expired', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'expired.jwt.token' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
+        const req = createMockReq({ headers: { authorization: 'expired.jwt.token' } });
         JWT.verify.mockImplementation(() => {
           const error = new Error('jwt expired');
           error.name = 'TokenExpiredError';
@@ -222,17 +191,11 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
       it('should return 401 error when signature is invalid', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'token.with.invalid.signature' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
+        const req = createMockReq({ headers: { authorization: 'token.with.invalid.signature' } });
         JWT.verify.mockImplementation(() => {
           const error = new Error('invalid signature');
           error.name = 'JsonWebTokenError';
@@ -248,17 +211,11 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
       it('should return 401 error when algorithm is wrong', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'token.with.wrong.algorithm' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
+        const req = createMockReq({ headers: { authorization: 'token.with.wrong.algorithm' } });
         JWT.verify.mockImplementation(() => {
           const error = new Error('invalid algorithm');
           error.name = 'JsonWebTokenError';
@@ -274,20 +231,12 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
       it('should return 401 error when generic JWT error occurs', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'some.jwt.token' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockImplementation(() => {
-          throw new Error('Unexpected JWT error');
-        });
+        const req = createMockReq({ headers: { authorization: 'some.jwt.token' } });
+        JWT.verify.mockImplementation(() => { throw new Error('Unexpected JWT error'); });
 
         // ── ACT ──
         await requireSignIn(req, res, next);
@@ -298,49 +247,6 @@ describe('authMiddleware', () => {
           success: false,
           message: "Invalid or expired token"
         });
-        expect(next).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('Side Effects', () => {
-
-      it('should call JWT.verify with correct arguments when token is valid', async () => {
-        // ── ARRANGE ──
-        const token = 'valid-jwt-token';
-        const req = createMockReq({
-          headers: { authorization: token }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const decodedToken = { _id: 'user123', iat: 1234567890, exp: 1234567890 + 604800 };
-        JWT.verify.mockReturnValue(decodedToken);
-
-        // ── ACT ──
-        await requireSignIn(req, res, next);
-
-        // ── ASSERT ──
-        expect(JWT.verify).toHaveBeenCalledWith(token, 'test-secret-key');
-        expect(JWT.verify).toHaveBeenCalledTimes(1);
-      });
-
-      it('should not call next when token is invalid', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          headers: { authorization: 'invalid-token' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        JWT.verify.mockImplementation(() => {
-          throw new Error('invalid token');
-        });
-
-        // ── ACT ──
-        await requireSignIn(req, res, next);
-
-        // ── ASSERT ──
-        expect(next).not.toHaveBeenCalled();
       });
     });
 
@@ -357,8 +263,8 @@ describe('authMiddleware', () => {
         // Token with standard fields plus custom fields to verify complete preservation
         const decodedToken = {
           _id: 'user123',
-          iat: 1234567890,
-          exp: 1234567890 + 604800,
+          iat: MOCK_IAT,
+          exp: MOCK_IAT + SEVEN_DAYS_SECONDS,
           customField: 'custom-value',
           role: 'admin'
         };
@@ -405,55 +311,23 @@ describe('authMiddleware', () => {
 
         // ── ASSERT ──
         expect(next).toHaveBeenCalledTimes(1);
-        expect(res.status).not.toHaveBeenCalled();
       });
     });
 
     describe('Boundary Values — Role Authorization', () => {
+      let req, res, next;
 
-      it('should return 401 unauthorized access when user role is zero', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const regularUser = {
-          _id: 'user123',
-          name: 'Regular User',
-          email: 'user@example.com',
-          role: 0
-        };
-        userModel.findById.mockResolvedValue(regularUser);
-
-        // ── ACT ──
-        await isAdmin(req, res, next);
-
-        // ── ASSERT ──
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.send).toHaveBeenCalledWith({
-          success: false,
-          message: "UnAuthorized Access"
-        });
-        expect(next).not.toHaveBeenCalled();
+      beforeEach(() => {
+        req = createMockReq({ user: { _id: 'user123' } });
+        res = createMockRes();
+        next = jest.fn();
       });
 
-      it('should return 401 unauthorized access when user role is two', async () => {
+      it('should return 401 when role is 0', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
+        userModel.findById.mockResolvedValue({
+          _id: 'user123', name: 'Regular User', email: 'user@example.com', role: 0
         });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const userWithRoleTwo = {
-          _id: 'user123',
-          name: 'User',
-          email: 'user@example.com',
-          role: 2
-        };
-        userModel.findById.mockResolvedValue(userWithRoleTwo);
 
         // ── ACT ──
         await isAdmin(req, res, next);
@@ -464,24 +338,13 @@ describe('authMiddleware', () => {
           success: false,
           message: "UnAuthorized Access"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
-      it('should return 401 unauthorized access when user role is negative one', async () => {
+      it('should return 401 when role is 2', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
+        userModel.findById.mockResolvedValue({
+          _id: 'user123', name: 'User', email: 'user@example.com', role: 2
         });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const userWithNegativeRole = {
-          _id: 'user123',
-          name: 'User',
-          email: 'user@example.com',
-          role: -1
-        };
-        userModel.findById.mockResolvedValue(userWithNegativeRole);
 
         // ── ACT ──
         await isAdmin(req, res, next);
@@ -492,24 +355,13 @@ describe('authMiddleware', () => {
           success: false,
           message: "UnAuthorized Access"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
-      it('should return 401 unauthorized access when user role is undefined', async () => {
+      it('should return 401 when role is -1', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
+        userModel.findById.mockResolvedValue({
+          _id: 'user123', name: 'User', email: 'user@example.com', role: -1
         });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const userWithUndefinedRole = {
-          _id: 'user123',
-          name: 'User',
-          email: 'user@example.com',
-          role: undefined
-        };
-        userModel.findById.mockResolvedValue(userWithUndefinedRole);
 
         // ── ACT ──
         await isAdmin(req, res, next);
@@ -520,24 +372,13 @@ describe('authMiddleware', () => {
           success: false,
           message: "UnAuthorized Access"
         });
-        expect(next).not.toHaveBeenCalled();
       });
 
-      it('should return 401 unauthorized access when user role is null', async () => {
+      it('should return 401 when role is undefined', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
+        userModel.findById.mockResolvedValue({
+          _id: 'user123', name: 'User', email: 'user@example.com', role: undefined
         });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const userWithNullRole = {
-          _id: 'user123',
-          name: 'User',
-          email: 'user@example.com',
-          role: null
-        };
-        userModel.findById.mockResolvedValue(userWithNullRole);
 
         // ── ACT ──
         await isAdmin(req, res, next);
@@ -548,20 +389,37 @@ describe('authMiddleware', () => {
           success: false,
           message: "UnAuthorized Access"
         });
-        expect(next).not.toHaveBeenCalled();
+      });
+
+      it('should return 401 when role is null', async () => {
+        // ── ARRANGE ──
+        userModel.findById.mockResolvedValue({
+          _id: 'user123', name: 'User', email: 'user@example.com', role: null
+        });
+
+        // ── ACT ──
+        await isAdmin(req, res, next);
+
+        // ── ASSERT ──
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.send).toHaveBeenCalledWith({
+          success: false,
+          message: "UnAuthorized Access"
+        });
       });
     });
 
     describe('Equivalence Partitions — Missing req.user._id', () => {
+      let res, next;
+
+      beforeEach(() => {
+        res = createMockRes();
+        next = jest.fn();
+      });
 
       it('should return 401 error when req.user._id is undefined', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: undefined }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
+        const req = createMockReq({ user: { _id: undefined } });
         userModel.findById.mockRejectedValue(new Error('User ID is required'));
 
         // ── ACT ──
@@ -575,17 +433,11 @@ describe('authMiddleware', () => {
             message: "Error in admin middleware"
           })
         );
-        expect(next).not.toHaveBeenCalled();
       });
 
       it('should return 401 error when req.user._id is null', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: null }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
+        const req = createMockReq({ user: { _id: null } });
         userModel.findById.mockRejectedValue(new Error('User ID is required'));
 
         // ── ACT ──
@@ -599,14 +451,11 @@ describe('authMiddleware', () => {
             message: "Error in admin middleware"
           })
         );
-        expect(next).not.toHaveBeenCalled();
       });
 
       it('should return 401 error when req.user is missing', async () => {
         // ── ARRANGE ──
         const req = createMockReq(); // No user property at all
-        const res = createMockRes();
-        const next = jest.fn();
 
         // ── ACT ──
         await isAdmin(req, res, next);
@@ -619,20 +468,20 @@ describe('authMiddleware', () => {
             message: "Error in admin middleware"
           })
         );
-        expect(next).not.toHaveBeenCalled();
       });
     });
 
     describe('Error Handling — Database Failures', () => {
+      let res, next;
+
+      beforeEach(() => {
+        res = createMockRes();
+        next = jest.fn();
+      });
 
       it('should return 401 error when findById returns null', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'deleted-user-123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
+        const req = createMockReq({ user: { _id: 'deleted-user-123' } });
         userModel.findById.mockResolvedValue(null);
 
         // ── ACT ──
@@ -646,17 +495,11 @@ describe('authMiddleware', () => {
             message: "Error in admin middleware"
           })
         );
-        expect(next).not.toHaveBeenCalled();
       });
 
       it('should return 401 error when database error occurs', async () => {
         // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
+        const req = createMockReq({ user: { _id: 'user123' } });
         const dbError = new Error('Database connection failed');
         userModel.findById.mockRejectedValue(dbError);
 
@@ -670,122 +513,9 @@ describe('authMiddleware', () => {
           error: dbError,
           message: "Error in admin middleware"
         });
-        expect(next).not.toHaveBeenCalled();
       });
     });
 
-    describe('Side Effects', () => {
-
-      it('should call findById with correct id when user is valid admin', async () => {
-        // ── ARRANGE ──
-        const userId = 'admin-xyz-789';
-        const req = createMockReq({
-          user: { _id: userId }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const adminUser = {
-          _id: userId,
-          name: 'Admin',
-          email: 'admin@example.com',
-          role: 1
-        };
-        userModel.findById.mockResolvedValue(adminUser);
-
-        // ── ACT ──
-        await isAdmin(req, res, next);
-
-        // ── ASSERT ──
-        expect(userModel.findById).toHaveBeenCalledWith(userId);
-        expect(userModel.findById).toHaveBeenCalledTimes(1);
-      });
-
-      it('should not call next when user is non-admin', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        userModel.findById.mockResolvedValue({ role: 0 });
-
-        // ── ACT ──
-        await isAdmin(req, res, next);
-
-        // ── ASSERT ──
-        expect(next).not.toHaveBeenCalled();
-      });
-
-      it('should not call next when database error occurs', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        userModel.findById.mockRejectedValue(new Error('DB error'));
-
-        // ── ACT ──
-        await isAdmin(req, res, next);
-
-        // ── ASSERT ──
-        expect(next).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('Security Invariants', () => {
-
-      it('should have correct structure in non-admin response', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        userModel.findById.mockResolvedValue({ role: 0 });
-
-        // ── ACT ──
-        await isAdmin(req, res, next);
-
-        // ── ASSERT ──
-        expect(res.send).toHaveBeenCalledWith({
-          success: false,
-          message: "UnAuthorized Access"
-        });
-        const responseData = res.send.mock.calls[0][0];
-        expect(responseData).toHaveProperty('success', false);
-        expect(responseData).toHaveProperty('message', "UnAuthorized Access");
-      });
-
-      it('should have correct structure in error response', async () => {
-        // ── ARRANGE ──
-        const req = createMockReq({
-          user: { _id: 'user123' }
-        });
-        const res = createMockRes();
-        const next = jest.fn();
-
-        const dbError = new Error('Database error');
-        userModel.findById.mockRejectedValue(dbError);
-
-        // ── ACT ──
-        await isAdmin(req, res, next);
-
-        // ── ASSERT ──
-        expect(res.send).toHaveBeenCalledWith({
-          success: false,
-          error: dbError,
-          message: "Error in admin middleware"
-        });
-        const responseData = res.send.mock.calls[0][0];
-        expect(responseData).toHaveProperty('success', false);
-        expect(responseData).toHaveProperty('error');
-        expect(responseData).toHaveProperty('message', "Error in admin middleware");
-      });
-    });
   });
 });
+

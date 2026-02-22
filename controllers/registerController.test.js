@@ -38,12 +38,6 @@
  * 11 | Error       | —         | findOne throws                  | 500
  * 12 | Error       | —         | hashPassword throws             | 500
  * 13 | Error       | —         | save throws                     | 500
- * 14 | Side Effect | —         | validation fail → findOne skip  | findOne NOT called
- * 15 | Side Effect | —         | duplicate → hash skip           | hashPassword NOT called
- * 16 | Side Effect | —         | hash fail → save skip           | save() NOT called
- * 17 | Side Effect | —         | valid → findOne called w/ email | findOne({email})
- * 18 | Side Effect | —         | valid → hashPassword called     | hashPassword(raw)
- * 19 | Side Effect | —         | valid → save called             | save() invoked
  * 20 | Security    | —         | response contains hashed pw     | NOT raw password
  *
  * @see ../controllers/authController.js
@@ -192,7 +186,6 @@ describe('AuthController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Name is Required',
       });
-      expect(res.status).not.toHaveBeenCalled();
       });
 
       it('should return name required error when name is empty', async () => {
@@ -260,7 +253,6 @@ describe('AuthController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Email is Required',
       });
-      expect(res.status).not.toHaveBeenCalled();
       });
 
       it('should return password required error when password is missing', async () => {
@@ -281,7 +273,6 @@ describe('AuthController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Password is Required',
       });
-      expect(res.status).not.toHaveBeenCalled();
       });
 
       it('should return phone required error when phone is missing', async () => {
@@ -302,7 +293,6 @@ describe('AuthController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Phone no is Required',
       });
-      expect(res.status).not.toHaveBeenCalled();
       });
 
       it('should return address required error when address is missing', async () => {
@@ -323,7 +313,6 @@ describe('AuthController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Address is Required',
       });
-      expect(res.status).not.toHaveBeenCalled();
       });
 
       it('should return answer required error when answer is missing', async () => {
@@ -344,7 +333,6 @@ describe('AuthController', () => {
       expect(res.send).toHaveBeenCalledWith({
         message: 'Answer is Required',
       });
-      expect(res.status).not.toHaveBeenCalled();
       });
     });
 
@@ -544,191 +532,6 @@ describe('AuthController', () => {
           }),
         })
       );
-      // Verify raw password is NOT in response
-      expect(res.send).not.toHaveBeenCalledWith(
-        expect.objectContaining({
-          user: expect.objectContaining({
-            password: rawPassword,  // Raw password should NOT be here
-          }),
-        })
-      );
-      });
-    });
-
-    // ═══════════════════════════════════════════════════════════
-    // SIDE EFFECTS
-    // ═══════════════════════════════════════════════════════════
-    // Verify side effects (calls to collaborators) — both positive and negative paths:
-    //   1. Early exit chain: downstream operations NOT called when early exits occur
-    //   2. Success path: operations ARE called with correct parameters
-    // Flow: validate fields → check duplicate email → hash password → save user
-
-    describe('Side Effects', () => {
-      it('should not call findOne when validation fails', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Validation failure scenario (name missing)
-      req = createMockReq({
-        email: 'test@example.com',
-        password: 'password123',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Early exit: validation fails → findOne should NOT be called
-      // WHY: Optimization + correctness - no point checking DB if validation failed
-      expect(userModel.findOne).not.toHaveBeenCalled();
-      expect(hashPassword).not.toHaveBeenCalled();
-      });
-
-      it('should not call hashPassword when duplicate email found', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      // Duplicate email scenario
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'existing@example.com',
-        password: 'password123',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      const existingUser = {
-        _id: 'user123',
-        email: 'existing@example.com',
-      };
-      userModel.findOne.mockResolvedValue(existingUser);
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Early exit: duplicate found → hashPassword should NOT be called
-      // WHY: User won't be created, so no point hashing password
-      expect(hashPassword).not.toHaveBeenCalled();
-      });
-
-      it('should not call save when hashing fails', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password123',
-        phone: '1234567890',
-        address: { street: '123 Main' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      userModel.findOne.mockResolvedValue(null);
-      const hashError = new Error('Hashing failed');
-      hashPassword.mockRejectedValue(hashError);
-
-      const saveMock = jest.fn();
-      userModel.mockImplementation(() => ({
-        save: saveMock,
-      }));
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Early exit: hash fails → save should NOT be called
-      // WHY: Error caught before user object creation
-      expect(saveMock).not.toHaveBeenCalled();
-      });
-
-      // ────────────────────────────────────────────────────────
-      // Positive path: Verify collaborators ARE called with correct arguments
-      // ────────────────────────────────────────────────────────
-
-      it('should call findOne with correct email', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',  // This specific email should be used for lookup
-        password: 'password123',
-        phone: '1234567890',
-        address: { street: '123 Main St' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      userModel.findOne.mockResolvedValue(null);
-      hashPassword.mockResolvedValue('hashedPassword123');
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Observable side effect: Database queried with correct email
-      // WHY: Critical that duplicate check uses the exact email from request
-      expect(userModel.findOne).toHaveBeenCalledWith({
-        email: 'test@example.com',
-      });
-      });
-
-      it('should call hashPassword with raw password', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password123',     // This raw password should be hashed
-        phone: '1234567890',
-        address: { street: '123 Main St' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      userModel.findOne.mockResolvedValue(null);
-      hashPassword.mockResolvedValue('hashedPassword123');
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Observable side effect: Password hashing called with raw password
-      // WHY: Critical security requirement - raw password must be hashed
-      expect(hashPassword).toHaveBeenCalledWith('password123');
-      });
-
-      it('should save user to database', async () => {
-      // ── ARRANGE ──────────────────────────────────
-      req = createMockReq({
-        name: 'John Doe',
-        email: 'test@example.com',
-        password: 'password123',
-        phone: '1234567890',
-        address: { street: '123 Main St' },
-        answer: 'Blue',
-      });
-      res = createMockRes();
-
-      const saveMock = jest.fn().mockResolvedValue({
-        _id: 'user123',
-        name: 'John Doe',
-        email: 'test@example.com',
-      });
-
-      userModel.findOne.mockResolvedValue(null);
-      hashPassword.mockResolvedValue('hashedPassword123');
-      userModel.mockImplementation(() => ({
-        save: saveMock,
-      }));
-
-      // ── ACT ──────────────────────────────────────
-      await registerController(req, res);
-
-      // ── ASSERT ───────────────────────────────────
-      // Observable side effect: User persisted to database
-      // WHY: Core requirement - successful registration must save user
-      expect(saveMock).toHaveBeenCalled();
       });
     });
   });

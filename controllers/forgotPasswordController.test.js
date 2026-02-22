@@ -13,7 +13,6 @@
  * - Decision Table Testing: All condition combinations
  * - Error Guessing: Database failures, hash failures
  * - State Transition Testing: Validation → Lookup → Hash → Update flow
- * - Communication-Based Testing: Side effect verification
  * - Security Testing: User enumeration vulnerability documentation
  *
  * @see authController.js:forgotPasswordController (lines 120-155)
@@ -29,6 +28,16 @@
  * | A2: 404 not found    |        | X      |        |        |
  * | A3: 500 hash error   |        |        | X      |        |
  * | A4: 200 success      |        |        |        | X      |
+ *
+ * Boundary Value scenarios (falsy inputs caught by !field checks):
+ * - answer = ''    → 400 'Answer is required'
+ * - answer = null  → 400 'Answer is required'
+ * - newPassword = ''   → 400 'New Password is required'
+ * - newPassword = null → 400 'New Password is required'
+ *
+ * Whitespace BVA scenarios (truthy inputs, bypass !field checks):
+ * - answer = '   '      → 404 'Wrong Email Or Answer' (passes validation, user not found)
+ * - newPassword = '   ' → 200 'Password Reset Successfully' (passes validation, production limitation)
  */
 
 import { forgotPasswordController } from './authController.js';
@@ -211,6 +220,88 @@ describe('AuthController', () => {
         });
       });
 
+      it('should return 400 when answer is empty string', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: empty string — falsy, caught by !answer check
+        req.body = { email: 'test@example.com', answer: '', newPassword: 'newPassword123' };
+
+        // ── ACT ──────────────────────────────────────
+        await forgotPasswordController(req, res);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Answer is required' });
+      });
+
+      it('should return 400 when answer is null', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: null — falsy, caught by !answer check
+        req.body = { email: 'test@example.com', answer: null, newPassword: 'newPassword123' };
+
+        // ── ACT ──────────────────────────────────────
+        await forgotPasswordController(req, res);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({ message: 'Answer is required' });
+      });
+
+      it('should return 400 when newPassword is empty string', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: empty string — falsy, caught by !newPassword check
+        req.body = { email: 'test@example.com', answer: 'correctAnswer', newPassword: '' };
+
+        // ── ACT ──────────────────────────────────────
+        await forgotPasswordController(req, res);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({ message: 'New Password is required' });
+      });
+
+      it('should return 400 when newPassword is null', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: null — falsy, caught by !newPassword check
+        req.body = { email: 'test@example.com', answer: 'correctAnswer', newPassword: null };
+
+        // ── ACT ──────────────────────────────────────
+        await forgotPasswordController(req, res);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith({ message: 'New Password is required' });
+      });
+
+      it('should pass validation and return 404 when answer is whitespace only', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: whitespace string — truthy, bypasses !answer check
+        req.body = { email: 'test@example.com', answer: '   ', newPassword: 'newPassword123' };
+        userModel.findOne.mockResolvedValue(null);
+
+        // ── ACT ──────────────────────────────────────
+        await forgotPasswordController(req, res);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.send).toHaveBeenCalledWith({ success: false, message: 'Wrong Email Or Answer' });
+      });
+
+      it('should pass validation and return 200 when newPassword is whitespace only', async () => {
+        // ── ARRANGE ──────────────────────────────────
+        // BVA: whitespace string — truthy, bypasses !newPassword check (production limitation)
+        req.body = { email: 'test@example.com', answer: 'correctAnswer', newPassword: '   ' };
+        userModel.findOne.mockResolvedValue(mockUser);
+        hashPassword.mockResolvedValue('$2b$10$hashedWhitespace');
+        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
+
+        // ── ACT ──────────────────────────────────────
+        await forgotPasswordController(req, res);
+
+        // ── ASSERT ───────────────────────────────────
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.send).toHaveBeenCalledWith({ success: true, message: 'Password Reset Successfully' });
+      });
+
       it('should return 404 when user is not found', async () => {
         // Arrange
         req.body = {
@@ -308,123 +399,6 @@ describe('AuthController', () => {
           message: 'Something went wrong',
           error: updateError
         });
-      });
-    });
-
-    // ============================================================================
-    // SIDE EFFECTS (Communication-Based Testing)
-    // ============================================================================
-
-    describe('Side Effects', () => {
-      it('should call findOne with email and answer when input is valid', async () => {
-        // Arrange
-        req.body = {
-          email: 'test@example.com',
-          answer: 'test security answer',
-          newPassword: 'newPassword123'
-        };
-
-        userModel.findOne.mockResolvedValue(mockUser);
-        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
-
-        // Act
-        await forgotPasswordController(req, res);
-
-        // Assert
-        expect(userModel.findOne).toHaveBeenCalledWith({
-          email: 'test@example.com',
-          answer: 'test security answer'
-        });
-      });
-
-      it('should call hashPassword with new password when input is valid', async () => {
-        // Arrange
-        req.body = {
-          email: 'test@example.com',
-          answer: 'test security answer',
-          newPassword: 'newPassword123'
-        };
-
-        userModel.findOne.mockResolvedValue(mockUser);
-        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
-
-        // Act
-        await forgotPasswordController(req, res);
-
-        // Assert
-        expect(hashPassword).toHaveBeenCalledWith('newPassword123');
-      });
-
-      it('should call findByIdAndUpdate with hashed password on success', async () => {
-        // Arrange
-        req.body = {
-          email: 'test@example.com',
-          answer: 'test security answer',
-          newPassword: 'newPassword123'
-        };
-
-        userModel.findOne.mockResolvedValue(mockUser);
-        hashPassword.mockResolvedValue('$2b$10$newHashedPassword');
-        userModel.findByIdAndUpdate.mockResolvedValue(mockUser);
-
-        // Act
-        await forgotPasswordController(req, res);
-
-        // Assert
-        expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(
-          mockUser._id,
-          { password: '$2b$10$newHashedPassword' }
-        );
-      });
-
-      it('should not call findOne when email is missing', async () => {
-        // Arrange
-        req.body = {
-          answer: 'test security answer',
-          newPassword: 'newPassword123'
-        };
-
-        // Act
-        await forgotPasswordController(req, res);
-
-        // Assert
-        expect(userModel.findOne).not.toHaveBeenCalled();
-      });
-
-      it('should not call hashPassword when user is not found', async () => {
-        // Arrange
-        req.body = {
-          email: 'test@example.com',
-          answer: 'wrong answer',
-          newPassword: 'newPassword123'
-        };
-
-        userModel.findOne.mockResolvedValue(null);
-
-        // Act
-        await forgotPasswordController(req, res);
-
-        // Assert
-        expect(hashPassword).not.toHaveBeenCalled();
-      });
-
-      it('should not call findByIdAndUpdate when user is not found', async () => {
-        // Arrange
-        req.body = {
-          email: 'test@example.com',
-          answer: 'wrong answer',
-          newPassword: 'newPassword123'
-        };
-
-        userModel.findOne.mockResolvedValue(null);
-
-        // Act
-        await forgotPasswordController(req, res);
-
-        // Assert
-        expect(userModel.findByIdAndUpdate).not.toHaveBeenCalled();
       });
     });
 

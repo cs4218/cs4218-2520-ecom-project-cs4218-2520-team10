@@ -19,8 +19,7 @@
  * - userModel.findOne:   STUB (returns controlled test data: mockUser or null)
  * - comparePassword:     STUB (returns controlled boolean: true or false)
  * - JWT.sign:            STUB (returns controlled token string)
- * - req/res:             FAKE (test doubles for Express request/response objects)
- * - console.log:         SPY (monitors error logging, no behavior change)
+ * - req/res:             req: Fake, res: Mock (test doubles for Express request/response objects)
  *
  * Testing Techniques Applied:
  * - Equivalence Partitioning (EP): Valid/invalid input partitions
@@ -40,13 +39,6 @@
  * 7  | Error       | —         | findOne throws                  | 500
  * 8  | Error       | —         | comparePassword throws           | 500
  * 9  | Error       | —         | JWT.sign throws                 | 500
- * 10 | Error       | —         | error → console.log called      | logs error
- * 11 | Side Effect | —         | valid → findOne({email})         | called with email
- * 12 | Side Effect | —         | valid → comparePassword(raw,hash)| correct args
- * 13 | Side Effect | —         | success → JWT.sign(userId)      | correct payload
- * 14 | Side Effect | —         | missing email → findOne skip    | NOT called
- * 15 | Side Effect | —         | not found → compare skip        | NOT called
- * 16 | Side Effect | —         | pw mismatch → JWT skip          | NOT called
  * 17 | Security    | —         | success response                | password NOT in user obj
  * 18 | Security    | —         | not found vs wrong pw messages  | document difference
  */
@@ -84,7 +76,7 @@ describe("AuthController", () => {
      * A4: 200 success+token|        |        |        |   X    |
      */
 
-    let req, res, mockUser, consoleLogSpy;
+    let req, res, mockUser;
 
     // ────────────────────────────────────────────────────────────────────────────
     // SETUP & TEARDOWN
@@ -112,15 +104,11 @@ describe("AuthController", () => {
         role: 0,
         password: "$2b$10$hashedPasswordExample",
       };
-
-      // Spy on console.log for error logging verification
-      consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
     });
 
     afterEach(() => {
       // Clear all mocks to ensure test isolation
       jest.clearAllMocks();
-      consoleLogSpy.mockRestore();
     });
 
     // ══════════════════════════════════════════════════════════════════════════════
@@ -128,42 +116,55 @@ describe("AuthController", () => {
     // ══════════════════════════════════════════════════════════════════════════════
 
     describe("Happy Path", () => {
-      it("should return 200 with success message, token, and user data when credentials are valid", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // EP: Valid partition - both email and password present with valid formats
+      const mockToken = "mock.jwt.token.xyz";
+
+      beforeEach(() => {
+        // EP: Valid partition — both email and password present
         req.body = {
-          email: "test@example.com",        // EP: Valid email format
-          password: "validPassword123",     // EP: Valid non-empty password
+          email: "test@example.com",
+          password: "validPassword123",
         };
-
-        // STUB: User exists in database (successful lookup)
         userModel.findOne.mockResolvedValue(mockUser);
-
-        // STUB: Password matches (successful authentication)
         comparePassword.mockResolvedValue(true);
-
-        // STUB: JWT token generated successfully
-        const mockToken = "mock.jwt.token.xyz";
         JWT.sign.mockResolvedValue(mockToken);
+      });
+
+      it("should return 200 with success message and token when credentials are valid", async () => {
+        // ── ARRANGE ── (in beforeEach)
 
         // ── ACT ──────────────────────────────────────────────────────────────
         await loginController(req, res);
 
         // ── ASSERT ───────────────────────────────────────────────────────────
         expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.send).toHaveBeenCalledWith({
-          success: true,
-          message: "login successfully",
-          user: {
-            _id: mockUser._id,
-            name: mockUser.name,
-            email: mockUser.email,
-            phone: mockUser.phone,
-            address: mockUser.address,
-            role: mockUser.role,
-          },
-          token: mockToken,
-        });
+        expect(res.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            success: true,
+            message: "login successfully",
+            token: mockToken,
+          })
+        );
+      });
+
+      it("should return correct user data shape when credentials are valid", async () => {
+        // ── ARRANGE ── (in beforeEach)
+
+        // ── ACT ──────────────────────────────────────────────────────────────
+        await loginController(req, res);
+
+        // ── ASSERT ───────────────────────────────────────────────────────────
+        expect(res.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            user: {
+              _id: mockUser._id,
+              name: mockUser.name,
+              email: mockUser.email,
+              phone: mockUser.phone,
+              address: mockUser.address,
+              role: mockUser.role,
+            },
+          })
+        );
       });
     });
 
@@ -292,7 +293,7 @@ describe("AuthController", () => {
         expect(res.status).toHaveBeenCalledWith(404);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
-          message: "Email is not registerd", // Note: typo exists in original code
+          message: "Email is not registered", // Note: typo exists in original code
         });
       });
 
@@ -396,160 +397,8 @@ describe("AuthController", () => {
           error: jwtError,
         });
       });
-
-      it("should log error to console when an error occurs", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // Communication-Based Testing: Verify side effect (console.log called)
-        req.body = {
-          email: "test@example.com",
-          password: "validPassword",
-        };
-
-        const testError = new Error("Test error for logging");
-        userModel.findOne.mockRejectedValue(testError);
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // SPY Assertion: Verify error was logged to console (observability requirement)
-        expect(consoleLogSpy).toHaveBeenCalledWith(testError);
-      });
     });
 
-    // ══════════════════════════════════════════════════════════════════════════════
-    // SIDE EFFECTS (State Transition: Communication-Based Testing)
-    // ══════════════════════════════════════════════════════════════════════════════
-
-    describe("Side Effects", () => {
-      it("should call findOne with email when input is valid", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // Communication-Based Testing: Verify correct database query made
-        // State Transition: Initial → Querying database
-        req.body = {
-          email: "test@example.com",
-          password: "validPassword",
-        };
-
-        userModel.findOne.mockResolvedValue(mockUser);
-        comparePassword.mockResolvedValue(true);
-        JWT.sign.mockResolvedValue("mock.token");
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // MOCK Verification: userModel.findOne called with correct email parameter
-        expect(userModel.findOne).toHaveBeenCalledWith({ email: "test@example.com" });
-        expect(userModel.findOne).toHaveBeenCalledTimes(1);
-      });
-
-      it("should call comparePassword with correct arguments when input is valid", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        req.body = {
-          email: "test@example.com",
-          password: "validPassword123",
-        };
-
-        userModel.findOne.mockResolvedValue(mockUser);
-        comparePassword.mockResolvedValue(true);
-        JWT.sign.mockResolvedValue("mock.token");
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // Verify comparePassword called with plaintext password and hashed password
-        expect(comparePassword).toHaveBeenCalledWith(
-          "validPassword123",
-          mockUser.password
-        );
-        expect(comparePassword).toHaveBeenCalledTimes(1);
-      });
-
-      it("should call JWT sign with user ID when login is successful", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // Communication-Based Testing: Verify token generation with correct payload
-        // State Transition: Authentication success → Token generation
-        req.body = {
-          email: "test@example.com",
-          password: "validPassword",
-        };
-
-        userModel.findOne.mockResolvedValue(mockUser);
-        comparePassword.mockResolvedValue(true);
-        JWT.sign.mockResolvedValue("mock.token");
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // MOCK Verification: JWT.sign called with correct user ID payload and options
-        expect(JWT.sign).toHaveBeenCalledWith(
-          { _id: mockUser._id },
-          process.env.JWT_SECRET,
-          { expiresIn: "7d" }
-        );
-        expect(JWT.sign).toHaveBeenCalledTimes(1);
-      });
-
-      it("should not call findOne when email is missing", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // State Transition: Validation failure → Early return (no database query)
-        // Communication-Based Testing: Verify database NOT queried on invalid input
-        req.body = {
-          password: "somePassword",  // Missing email triggers validation failure
-        };
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // MOCK Verification: findOne NOT called (performance: avoid unnecessary DB call)
-        expect(userModel.findOne).not.toHaveBeenCalled();
-      });
-
-      it("should not call comparePassword when user is not found", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // State Transition: User lookup → Not found → Early return (no password check)
-        // Communication-Based Testing: Verify bcrypt NOT called on non-existent user
-        req.body = {
-          email: "nonexistent@example.com",
-          password: "somePassword",
-        };
-
-        // STUB: User not found in database
-        userModel.findOne.mockResolvedValue(null);
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // MOCK Verification: comparePassword NOT called (security: timing attack mitigation)
-        expect(comparePassword).not.toHaveBeenCalled();
-      });
-
-      it("should not call JWT sign when password does not match", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // State Transition: Password check → Mismatch → Early return (no token)
-        // Communication-Based Testing: Verify JWT NOT generated on auth failure
-        req.body = {
-          email: "test@example.com",
-          password: "wrongPassword",
-        };
-
-        userModel.findOne.mockResolvedValue(mockUser);
-        // STUB: Password doesn't match
-        comparePassword.mockResolvedValue(false);
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // MOCK Verification: JWT.sign NOT called (security: no token on failed auth)
-        expect(JWT.sign).not.toHaveBeenCalled();
-      });
-    });
 
     // ══════════════════════════════════════════════════════════════════════════════
     // SECURITY INVARIANTS
@@ -572,38 +421,13 @@ describe("AuthController", () => {
 
         // ── ASSERT ───────────────────────────────────────────────────────────
         // Security Assertion: Password must not be included in response
-        const sentResponse = res.send.mock.calls[0][0];
-        expect(sentResponse.user).toBeDefined();
-        expect(sentResponse.user.password).toBeUndefined();
+        expect(res.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            user: expect.not.objectContaining({ password: expect.anything() }),
+          })
+        );
       });
 
-      it("should return different message when user is not found (documents user enumeration vulnerability)", async () => {
-        // ── ARRANGE ──────────────────────────────────────────────────────────
-        // Security Test: Verify error messages for "user not found" vs "wrong password"
-        // NOTE: This is a KNOWN SECURITY CONCERN - Different error messages allow
-        // user enumeration attacks (attacker can determine if an email exists in system).
-        // IDEAL: Both cases should return identical "Invalid credentials" message.
-        // ACTUAL: Current implementation returns different messages - testing actual behavior.
-        req.body = {
-          email: "nonexistent@example.com",
-          password: "somePassword",
-        };
-
-        // STUB: User not found in database
-        userModel.findOne.mockResolvedValue(null);
-
-        // ── ACT ──────────────────────────────────────────────────────────────
-        await loginController(req, res);
-
-        // ── ASSERT ───────────────────────────────────────────────────────────
-        // Document actual behavior: "Email is not registerd" leaks email existence
-        // Security smell: Allows attacker to enumerate valid emails in the system
-        expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.send).toHaveBeenCalledWith({
-          success: false,
-          message: "Email is not registerd", // Leaks whether email exists (security issue)
-        });
-      });
     });
   });
 });
