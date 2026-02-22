@@ -16,10 +16,11 @@ jest.mock('slugify');
   *   a. status 201 for valid new category
   *   b. status 200 for existing category
   *   c. returned category structure for valid new category
-  * 2. Input validation: 3 tests
-  *   a. status 422 for missing name (name === null)
-  *   b. status 422 for empty string name
-  *   c. status 422 for only whitespace string name
+  * 2. Input validation: 4 tests
+  *   a. status 422 for name is null
+  *   b. status 422 for name is undefined
+  *   c. status 422 for empty string name
+  *   d. status 422 for only whitespace string name
   * 3. Error handling: 1 tests
   *   a. status 500 if database error occurs
   */
@@ -103,8 +104,22 @@ describe("createCategoryController", () => {
   });
 
   describe("Input Validation", () => {
-    it("should return 422 if missing name", async () => {
+    it("should return 422 if name is null", async () => {
       req.body.name = null;
+
+      await createCategoryController(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          message: expect.any(String)
+        })
+      );
+    });
+
+    it("should return 422 if name is undefined", async () => {
+      req.body.name = undefined;
 
       await createCategoryController(req, res);
 
