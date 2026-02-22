@@ -30,7 +30,7 @@ export default {
   // Fix: Added context folder to coverage collection - KIM SHI TONG A0265858J
   collectCoverage: true,
   collectCoverageFrom: [
-    "client/src/pages/Auth/**",
+    "client/src/pages/**",
     "client/src/context/**"
   ],
   coverageThreshold: {
