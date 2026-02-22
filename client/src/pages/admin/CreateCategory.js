@@ -15,7 +15,7 @@ const CreateCategory = () => {
   // handle Form
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Fix: Add validation for empty name - Shaun Lee Xuan Wei A0252626E
+    // Fix: Add validation for empty name and whitespace only name - Shaun Lee Xuan Wei A0252626E
     if (!name.trim()) {
       toast.error("Name is required");
       return;
@@ -58,7 +58,7 @@ const CreateCategory = () => {
   // update category
   const handleUpdate = async (e) => {
     e.preventDefault();
-    // Fix: Add validation for empty name - Shaun Lee Xuan Wei A0252626E
+    // Fix: Add validation for empty name and whitespace only name- Shaun Lee Xuan Wei A0252626E
     if (!updatedName.trim()) {
       toast.error("Name is required");
       return;

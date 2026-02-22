@@ -37,7 +37,7 @@ jest.mock('antd', () => ({
   *
   * 1. 5 rendering unit tests
   * 2. 3 happy path unit tests
-  * 3. 19 error handling unit tests
+  * 3. 21 error handling unit tests
   */
 describe("CreateCategory", () => {
   beforeEach(() => {
@@ -450,6 +450,34 @@ describe("CreateCategory", () => {
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Name is required"));
     });
 
+    it("should display error on whitespace only name in create category", async () => {
+      const user = userEvent.setup();
+      const newName = " ";
+      axios.get.mockResolvedValue({
+        data: {
+          success: true,
+          message: "Response message",
+          category: []
+        },
+      });
+      const errorResponse = {
+        success: false,
+        message: "Response message"
+      };
+      axios.post.mockResolvedValue({ data: errorResponse });
+      render(<CreateCategory />);
+
+      const createButton = screen.getByTestId("submit-button");
+      const createInput = screen.getByTestId("form-input");
+      fireEvent.change(createInput, { target: { value: newName } });
+      await waitFor(async () => {
+        await user.click(createButton);
+      });
+
+      await waitFor(() => expect(axios.post).not.toHaveBeenCalled());
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Name is required"));
+    });
+
     it("should display error on fail create category", async () => {
       const user = userEvent.setup();
       const newName = "Book";
@@ -590,6 +618,42 @@ describe("CreateCategory", () => {
     it("should display error on empty name in update category", async () => {
       const user = userEvent.setup();
       const updatedName = "";
+      axios.get.mockResolvedValue({
+        data: {
+          success: true,
+          message: "Response message",
+          category: [{
+            _id: "validId",
+            name: "Book",
+            slug: "book"
+          }]
+        },
+      });
+      const errorResponse = {
+        success: false,
+        message: "Response message"
+      };
+      axios.put.mockResolvedValue({ data: errorResponse });
+      render(<CreateCategory />);
+
+      await waitFor(async () => {
+        const editButton = screen.getByRole("button", {name: "Edit"});
+        await user.click(editButton);
+      });
+      const formInput = within(screen.getByTestId("update-modal")).getByTestId("form-input");
+      fireEvent.change(formInput, { target: { value: updatedName } });
+      const submitButton = within(screen.getByTestId("update-modal")).getByTestId("submit-button");
+      await waitFor(async () => {
+        await user.click(submitButton);
+      });
+
+      await waitFor(() => expect(axios.put).not.toHaveBeenCalled());
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Name is required"));
+    });
+
+    it("should display error on whitespace only name in update category", async () => {
+      const user = userEvent.setup();
+      const updatedName = " ";
       axios.get.mockResolvedValue({
         data: {
           success: true,
