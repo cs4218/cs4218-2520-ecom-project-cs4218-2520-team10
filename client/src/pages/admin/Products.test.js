@@ -58,6 +58,7 @@ describe("Products Admin Page", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, "log").mockImplementation();
   });
 
   // ============ HAPPY PATH ============
@@ -142,7 +143,9 @@ describe("Products Admin Page", () => {
         </MemoryRouter>
       );
 
-      expect(axios.get).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledTimes(1);
+      });
     });
   });
 

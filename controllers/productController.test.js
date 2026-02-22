@@ -31,12 +31,17 @@ describe('ProductController', () => {
     let req, res;
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.spyOn(console, "log").mockImplementation();
       req = {};
       res = {
         status: jest.fn().mockReturnThis(),
         send: jest.fn().mockReturnThis(),
       };
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
     });
 
     // ============ HAPPY PATH ============
@@ -176,7 +181,7 @@ describe('ProductController', () => {
 		let req, res;
 
 		beforeEach(() => {
-			jest.clearAllMocks();
+      jest.spyOn(console, "log").mockImplementation();
 			req = {
 				params: {},
 			};
@@ -185,6 +190,11 @@ describe('ProductController', () => {
 				send: jest.fn().mockReturnThis(),
 			};
 		});
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+    });
 
     // ============ HAPPY PATH ============
     describe('Happy Path', () => {
@@ -382,7 +392,7 @@ describe('ProductController', () => {
     };
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.spyOn(console, "log").mockImplementation();
       req = {
         fields: {},
         files: {},
@@ -397,6 +407,11 @@ describe('ProductController', () => {
       mockProductData.photo.data = null;
       mockProductData.photo.contentType = null;
       mockProductData.save.mockClear();
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
     });
 
     // ============ HAPPY PATH ============
@@ -1025,7 +1040,7 @@ describe('ProductController', () => {
 		let req, res;
 
 		beforeEach(() => {
-			jest.clearAllMocks();
+      jest.spyOn(console, "log").mockImplementation();
 			req = {
 				params: {},
 			};
@@ -1034,6 +1049,11 @@ describe('ProductController', () => {
 				send: jest.fn().mockReturnThis(),
 			};
 		});
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+    });
 
 		// ============ HAPPY PATH ============
 		describe('Happy Path', () => {
@@ -1212,7 +1232,7 @@ describe('ProductController', () => {
     };
 
 		beforeEach(() => {
-			jest.clearAllMocks();
+      jest.spyOn(console, "log").mockImplementation();
 			req = {
 				params: {},
 				fields: {},
@@ -1229,6 +1249,11 @@ describe('ProductController', () => {
       mockUpdatedProductData.photo.contentType = null;
       mockUpdatedProductData.save.mockClear();
 		});
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      jest.restoreAllMocks();
+    });
 
 		// ============ HAPPY PATH ============
 		describe('Happy Path', () => {

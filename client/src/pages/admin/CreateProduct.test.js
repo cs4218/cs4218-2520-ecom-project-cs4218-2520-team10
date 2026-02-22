@@ -41,7 +41,7 @@ jest.mock("react-hot-toast", () => ({
 
 // Mock antd Select
 jest.mock("antd", () => {
-  const Select = ({ children, onChange, placeholder, ...props }) => (
+  const Select = ({ children, onChange, placeholder, bordered, showSearch, size, ...props }) => (
     <select
 			{...props}
       onChange={(e) => onChange(e.target.value)}
@@ -91,6 +91,7 @@ describe("CreateProduct Page", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+	jest.spyOn(console, "log").mockImplementation();
     // Default: categories fetch succeeds
     axios.get.mockResolvedValueOnce({
       data: { success: true, category: mockCategories },
@@ -321,8 +322,10 @@ describe("CreateProduct Page", () => {
 				</MemoryRouter>
 			);
 
-			expect(screen.getByTestId("layout")).toBeInTheDocument();
-			expect(screen.getByTestId("admin-menu")).toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.getByTestId("layout")).toBeInTheDocument();
+				expect(screen.getByTestId("admin-menu")).toBeInTheDocument();
+			});
 		});
 
 		it("should render form fields and buttons", async () => {
@@ -332,13 +335,15 @@ describe("CreateProduct Page", () => {
 				</MemoryRouter>
 			);
 
-			expect(screen.getByTestId("category-select")).toBeInTheDocument();
-			expect(screen.getByTestId("shipping-select")).toBeInTheDocument();
-			expect(screen.getByTestId("name-input")).toBeInTheDocument();
-			expect(screen.getByTestId("description-input")).toBeInTheDocument();
-			expect(screen.getByTestId("price-input")).toBeInTheDocument();
-			expect(screen.getByTestId("quantity-input")).toBeInTheDocument();
-			expect(screen.getByTestId("upload-photo-input")).toBeInTheDocument();
+			await waitFor(() => {
+				expect(screen.getByTestId("category-select")).toBeInTheDocument();
+				expect(screen.getByTestId("shipping-select")).toBeInTheDocument();
+				expect(screen.getByTestId("name-input")).toBeInTheDocument();
+				expect(screen.getByTestId("description-input")).toBeInTheDocument();
+				expect(screen.getByTestId("price-input")).toBeInTheDocument();
+				expect(screen.getByTestId("quantity-input")).toBeInTheDocument();
+				expect(screen.getByTestId("upload-photo-input")).toBeInTheDocument();
+			});
 		});
 
 		it("should change category on select", async () => {
@@ -361,9 +366,11 @@ describe("CreateProduct Page", () => {
 				</MemoryRouter>
 			);
 
-			const shippingSelect = screen.getByTestId("shipping-select");
-			fireEvent.change(shippingSelect, { target: { value: "1" } });
-			expect(shippingSelect.value).toBe("1");
+			await waitFor(() => {
+				const shippingSelect = screen.getByTestId("shipping-select");
+				fireEvent.change(shippingSelect, { target: { value: "1" } });
+				expect(shippingSelect.value).toBe("1");
+			});
 		});
 
 		it("should render category and shipping as dropdowns", async () => {
@@ -373,8 +380,10 @@ describe("CreateProduct Page", () => {
 				</MemoryRouter>
 			);
 
-			expect(screen.getByTestId("category-select").tagName).toBe("SELECT");
-			expect(screen.getByTestId("shipping-select").tagName).toBe("SELECT");
+			await waitFor(() => {
+				expect(screen.getByTestId("category-select").tagName).toBe("SELECT");
+				expect(screen.getByTestId("shipping-select").tagName).toBe("SELECT");
+			});
 		});
 
 		 it("should render name and description as text inputs", async () => {
@@ -384,14 +393,15 @@ describe("CreateProduct Page", () => {
 				</MemoryRouter>
 			);
 
-			const priceInput = screen.getByTestId("price-input");
-			expect(priceInput).toHaveAttribute("type", "number");
-			expect(priceInput.tagName).toBe("INPUT");
+			await waitFor(() => {
+				const priceInput = screen.getByTestId("price-input");
+				expect(priceInput).toHaveAttribute("type", "number");
+				expect(priceInput.tagName).toBe("INPUT");
 
-			const quantityInput = screen.getByTestId("quantity-input");
-			expect(quantityInput).toHaveAttribute("type", "number");
-			expect(quantityInput.tagName).toBe("INPUT");
-
+				const quantityInput = screen.getByTestId("quantity-input");
+				expect(quantityInput).toHaveAttribute("type", "number");
+				expect(quantityInput.tagName).toBe("INPUT");
+			});
 		});
 
 		 it("should render price and quantity as number inputs", async () => {
@@ -401,13 +411,15 @@ describe("CreateProduct Page", () => {
 				</MemoryRouter>
 			);
 
-			const nameInput = screen.getByTestId("name-input");
-			expect(nameInput).toHaveAttribute("type", "text");
-			expect(nameInput.tagName).toBe("INPUT");
+			await waitFor(() => {
+				const nameInput = screen.getByTestId("name-input");
+				expect(nameInput).toHaveAttribute("type", "text");
+				expect(nameInput.tagName).toBe("INPUT");
 
-			const descInput = screen.getByTestId("description-input");
-			expect(descInput).toHaveAttribute("type", "text");
-			expect(descInput.tagName).toBe("TEXTAREA");
+				const descInput = screen.getByTestId("description-input");
+				expect(descInput).toHaveAttribute("type", "text");
+				expect(descInput.tagName).toBe("TEXTAREA");
+			});
 		});
 
 		it("should render create product button", async () => {
@@ -417,9 +429,11 @@ describe("CreateProduct Page", () => {
 				</MemoryRouter>
 			);
 
-			const button = screen.getByText("CREATE PRODUCT");
-			expect(button).toBeInTheDocument();
-			expect(button.tagName).toBe("BUTTON");
+			await waitFor(() => {
+				const button = screen.getByText("CREATE PRODUCT");
+				expect(button).toBeInTheDocument();
+				expect(button.tagName).toBe("BUTTON");
+			});
 		});
 
 		it("should render photo name and image preview after image upload", async () => {
@@ -434,10 +448,12 @@ describe("CreateProduct Page", () => {
 			const fileInput = document.querySelector('input[type="file"]');
 			fireEvent.change(fileInput, { target: { files: [file] } });
 
-			const preview = screen.getByAltText("product_photo");
-			expect(preview).toBeInTheDocument();
-			expect(preview).toHaveAttribute("src", "mocked-url");
-			expect(screen.getByText("test-photo.png")).toBeInTheDocument();
+			await waitFor(() => {
+				const preview = screen.getByAltText("product_photo");
+				expect(preview).toBeInTheDocument();
+				expect(preview).toHaveAttribute("src", "mocked-url");
+				expect(screen.getByText("test-photo.png")).toBeInTheDocument();
+			});
 		});
 	});
 });

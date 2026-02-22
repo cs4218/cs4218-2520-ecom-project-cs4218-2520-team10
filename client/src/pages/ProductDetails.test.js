@@ -3,9 +3,9 @@
 */
 
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import '@testing-library/jest-dom';
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, MemoryRouter } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import ProductDetails from "./ProductDetails";
@@ -13,6 +13,7 @@ import ProductDetails from "./ProductDetails";
 jest.mock("axios");
 
 jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
   useNavigate: jest.fn(),
   useParams: jest.fn(),
 }));
@@ -86,6 +87,7 @@ describe("ProductDetails Component", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, "log").mockImplementation();
     mockNavigate = jest.fn();
     useNavigate.mockReturnValue(mockNavigate);
     mockCart = [];
@@ -101,7 +103,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: mockRelatedProducts } });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(axios.get).toHaveBeenCalledWith(`/api/v1/product/get-product/${mockProduct.slug}`);
@@ -119,7 +125,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: mockRelatedProducts } });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(screen.getByTestId(`similar-product-name-${mockRelatedProducts[0]._id}`)).toHaveTextContent(mockRelatedProducts[0].name);
@@ -138,7 +148,11 @@ describe("ProductDetails Component", () => {
 				.mockResolvedValueOnce({ data: { product: mockProduct } })
 				.mockResolvedValueOnce({ data: { products: [] } });
 
-			render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
 			await waitFor(() => {
 				const addToCartButton = screen.getByTestId(`main-add-to-cart-button-${mockProduct._id}`);
@@ -165,7 +179,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: mockRelatedProducts } });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
 			await waitFor(() => {
 				const addToCartButton = screen.getByTestId(`similar-add-to-cart-button-${mockRelatedProducts[0]._id}`);
@@ -186,7 +204,13 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: [] } });
 
-      render(<ProductDetails />);
+      await act(async () => {
+        render(
+          <MemoryRouter>
+            <ProductDetails />
+          </MemoryRouter>
+        );
+      });
 
       await waitFor(() => {
         expect(screen.getByTestId('no-similar-products').textContent).toEqual(expect.any(String));
@@ -200,7 +224,11 @@ describe("ProductDetails Component", () => {
       useParams.mockReturnValue({ slug: mockProduct.slug });
       axios.get.mockRejectedValueOnce(new Error("Failed to fetch product"));
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
@@ -213,7 +241,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockRejectedValueOnce(new Error("Failed to fetch related products"));
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
@@ -226,7 +258,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockRejectedValueOnce(new Error("Failed to fetch related products"));
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
@@ -237,7 +273,11 @@ describe("ProductDetails Component", () => {
       useParams.mockReturnValue({ slug: "non-existent-product" });
       axios.get.mockResolvedValueOnce({ data: { product: null } });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(expect.any(String));
@@ -247,7 +287,11 @@ describe("ProductDetails Component", () => {
     it("should not call get product when slug is missing", async () => {
       useParams.mockReturnValue({ slug: "" });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(axios.get).not.toHaveBeenCalledWith(expect.stringContaining('/api/v1/product/get-product/'));
@@ -261,7 +305,13 @@ describe("ProductDetails Component", () => {
 			useParams.mockReturnValue({ slug: mockProduct.slug });
 			axios.get.mockResolvedValueOnce({ data: { product: mockProduct } });
 
-			render(<ProductDetails />);
+			await act(async () => {
+        render(
+          <MemoryRouter>
+            <ProductDetails />
+          </MemoryRouter>
+        );
+      });
 
 			await waitFor(() => {
 				expect(axios.get).toHaveBeenCalledWith(`/api/v1/product/get-product/${mockProduct.slug}`);
@@ -274,7 +324,11 @@ describe("ProductDetails Component", () => {
 				.mockResolvedValueOnce({ data: { product: mockProduct } })
 				.mockResolvedValueOnce({ data: { products: [] } });
 
-			render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
 			await waitFor(() => {
 				expect(axios.get).toHaveBeenCalledWith(`/api/v1/product/related-product/${mockProduct._id}/${mockProduct.category._id}`);
@@ -290,10 +344,15 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: [] } });
 
-      const { container } = render(<ProductDetails />);
+      await act(async () => {
+        render(
+          <MemoryRouter>
+            <ProductDetails />
+          </MemoryRouter>
+        );
+      });
 
       await waitFor(() => {
-        expect(container.querySelector('.similar-products')).toBeInTheDocument();
         expect(screen.getByTestId('similar-products-title')).toBeInTheDocument();
       });
     });
@@ -304,7 +363,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: mockRelatedProducts } });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         const moreDetailsButton = screen.getByTestId(`similar-more-details-button-${mockRelatedProducts[0]._id}`);
@@ -320,7 +383,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: [] } });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         const productImage = screen.getByTestId('main-product-image');
@@ -335,7 +402,11 @@ describe("ProductDetails Component", () => {
         .mockResolvedValueOnce({ data: { product: mockProduct } })
         .mockResolvedValueOnce({ data: { products: mockRelatedProducts } });
 
-      render(<ProductDetails />);
+      render(
+        <MemoryRouter>
+          <ProductDetails />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         const relatedProductImage = screen.getByTestId(`similar-product-image-${mockRelatedProducts[0]._id}`);

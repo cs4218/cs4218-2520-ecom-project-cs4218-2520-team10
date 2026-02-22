@@ -80,6 +80,7 @@ describe("CategoryProduct Component", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(console, "log").mockImplementation();
     mockNavigate = jest.fn();
     useNavigate.mockReturnValue(mockNavigate);
     mockCart = [];

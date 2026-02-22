@@ -46,7 +46,7 @@ jest.mock("react-hot-toast", () => ({
 
 // Mock antd Select
 jest.mock("antd", () => {
-  const Select = ({ children, onChange, placeholder, value, ...props }) => (
+  const Select = ({ children, onChange, placeholder, value, bordered, showSearch, size, ...props }) => (
     <select
       {...props}
       onChange={(e) => onChange(e.target.value)}
@@ -121,7 +121,7 @@ describe("UpdateProduct page", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-
+    jest.spyOn(console, "log").mockImplementation();
     // Mock get single product
     axios.get.mockImplementation((url) => {
       if (url.includes("/api/v1/product/get-product/")) {
@@ -516,23 +516,27 @@ describe("UpdateProduct page", () => {
         expect(screen.getByDisplayValue("Test Product")).toBeInTheDocument();
       });
 
-      const categorySelect = screen.getByTestId("category-select");
-      expect(within(categorySelect).queryByText("Electronics")).not.toBeInTheDocument();
-      expect(within(categorySelect).queryByText("Clothing")).not.toBeInTheDocument();
+      await waitFor(() => {
+        const categorySelect = screen.getByTestId("category-select");
+        expect(within(categorySelect).queryByText("Electronics")).not.toBeInTheDocument();
+        expect(within(categorySelect).queryByText("Clothing")).not.toBeInTheDocument();
+      });
     });
   });
 
   // ============ RENDERING / UI STRUCTURE ============
   describe("Rendering / UI Structure", () => {
-    it("should render Layout and AdminMenu components", () => {
+    it("should render Layout and AdminMenu components", async () => {
       render(
         <MemoryRouter>
           <UpdateProduct />
         </MemoryRouter>
       );
 
-      expect(screen.getByTestId("layout")).toBeInTheDocument();
-      expect(screen.getByTestId("admin-menu")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("layout")).toBeInTheDocument();
+        expect(screen.getByTestId("admin-menu")).toBeInTheDocument();
+      });
     });
 
     it("should render form fields with correct initial values", async () => {
