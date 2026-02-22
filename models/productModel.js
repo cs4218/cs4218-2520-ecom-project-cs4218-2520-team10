@@ -33,6 +33,8 @@ const productSchema = new mongoose.Schema(
     },
     shipping: {
       type: Boolean,
+      // Bug fix: Made shipping field required for consistency - Ong Chang Heng Bertrand A0253013X
+      required: true,
     },
   },
   { timestamps: true }
