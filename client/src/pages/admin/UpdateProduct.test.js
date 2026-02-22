@@ -78,7 +78,7 @@ global.prompt = jest.fn();
     c. Should update product successfully and navigate
     d. Should delete product when confirmed
     e. Should not delete product when cancelled
-  2. Error Handling: 6 tests
+  2. Error Handling: 8 tests
     a. Should show error toast if fetching product fails
     b. Should show error toast if fetching categories fails
     c. Should show error toast with specific message if updating product fails
@@ -87,21 +87,20 @@ global.prompt = jest.fn();
     f. Should show error toast if deleting product fails
     g. Should show error toast when update returns success: false
     h. Should not populate categories when get categories returns success: false
-  3. Rendering / UI: 11 tests
+  3. Rendering / UI: 10 tests
     a. Should render Layout and AdminMenu components
     b. Should render form fields with correct initial values
-    c. Should show uploaded photo preview
-    d. Should change category on select
-    e. Should change shipping on select
-    f. Should render category and shipping as dropdowns
-    g. Should render name and description as text inputs
-    h. Should render price and quantity as number inputs
-    i. Should render update and delete buttons
-    j. Should render existing photo and upload photo button
-    k. Should update photo preview when a new photo is uploaded
+    c. Should change category on select
+    d. Should change shipping on select
+    e. Should render category and shipping as dropdowns
+    f. Should render name and description as text inputs
+    g. Should render price and quantity as number inputs
+    h. Should render update and delete buttons
+    i. Should render existing photo and upload photo button
+    j. Should update photo preview when a new photo is uploaded
 */
 
-describe("UpdateProduct pageg", () => {
+describe("UpdateProduct page", () => {
   const mockCategories = [
     { _id: "66db427fdb0119d9234b27ee", name: "Electronics" },
     { _id: "66db427fdb0119d9234b27ef", name: "Clothing" },

@@ -61,7 +61,7 @@ global.URL.createObjectURL = jest.fn(() => "mocked-url");
 
 /*
 	Test cases for CreateProduct component:
-	1. Happy Path: 2 tests
+	1. Happy Path: 3 tests
 		a. Should submit form data and navigate on successful creation
 		b. Should fetch categories on mount
 		c. Should fetch zero categories on mount
