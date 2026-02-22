@@ -170,7 +170,7 @@ export const updateProductController = async (req, res) => {
     const products = await productModel.findByIdAndUpdate(
       req.params.pid,
       { ...req.fields, slug: slugify(name) },
-      { new: true }
+      { new: true },
     );
     if (photo) {
       products.photo.data = fs.readFileSync(photo.path);
@@ -331,47 +331,89 @@ export const productCategoryController = async (req, res) => {
 export const braintreeTokenController = async (req, res) => {
   try {
     gateway.clientToken.generate({}, function (err, response) {
+      // Refactor: Delegate error handling to outer try-catch
+      // for better readability and maintainability - YAN WEIDONG A0258151H
       if (err) {
-        res.status(500).send(err);
-      } else {
-        res.send(response);
+        throw err;
       }
+
+      res.send(response);
     });
   } catch (error) {
     console.log(error);
+    // Fix: Add error details to response for better debugging - YAN WEIDONG A0258151H
+    res.status(500).send({
+      success: false,
+      message: "Error generating payment token",
+      error,
+    });
   }
 };
 
 //payment
-export const brainTreePaymentController = async (req, res) => {
+// Refactor: Update function name to match with module naming convention - YAN WEIDONG A0258151H
+export const braintreePaymentController = async (req, res) => {
   try {
     const { nonce, cart } = req.body;
-    let total = 0;
-    cart.map((i) => {
-      total += i.price;
-    });
-    let newTransaction = gateway.transaction.sale(
-      {
-        amount: total,
-        paymentMethodNonce: nonce,
-        options: {
-          submitForSettlement: true,
-        },
-      },
-      function (error, result) {
-        if (result) {
-          const order = new orderModel({
-            products: cart,
-            payment: result,
-            buyer: req.user._id,
-          }).save();
-          res.json({ ok: true });
-        } else {
-          res.status(500).send(error);
-        }
+
+    // Fix: Add validation for nonce and cart to input validation - YAN WEIDONG A0258151H
+    if (!nonce) {
+      return res.status(400).send({
+        success: false,
+        message: "Payment nonce is required",
+      });
+    }
+
+    if (!cart || !Array.isArray(cart) || cart.length === 0) {
+      return res.status(400).send({
+        success: false,
+        message: "Cart is required and must not be empty",
+      });
+    }
+
+    // Refactor: Use reduce for calculating total and add validation for price - YAN WEIDONG A0258151H
+    let total = cart.reduce((sum, item) => {
+      // Fix: Check for number type and non-negative instead of falsy check
+      // This allows price = 0 (free items) but rejects undefined, null, strings, and negative values
+      if (typeof item.price !== "number" || isNaN(item.price) || item.price < 0) {
+        throw new Error("Invalid price in cart item");
       }
-    );
+      return sum + item.price;
+    }, 0);
+
+    // Refactor: Use Promise-based approach to improve readability - YAN WEIDONG A0258151H
+    const result = await new Promise((resolve, reject) => {
+      gateway.transaction.sale(
+        {
+          amount: total,
+          paymentMethodNonce: nonce,
+          options: {
+            submitForSettlement: true,
+          },
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else if (result.success) resolve(result);
+          else reject(new Error(result.message));
+        },
+      );
+    });
+
+    // Save order with proper await
+    const order = await new orderModel({
+      products: cart,
+      payment: result,
+      buyer: req.user._id,
+    }).save();
+
+    res.json({ ok: true, order });
   } catch (error) {
     console.log(error);
+    // Fix: Add error details to response for better debugging - YAN WEIDONG A0258151H
+    res.status(500).send({
+      success: false,
+      message: "Error Processing Payment",
+      error,
+    });
   }
 };
