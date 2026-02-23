@@ -30,12 +30,15 @@ const UpdateProduct = () => {
       setId(data.product._id);
       setDescription(data.product.description);
       setPrice(data.product.price);
-      setPrice(data.product.price);
+      // Bug fix: Removed duplicate setPrice call - Ong Chang Heng Bertrand A0253013X
       setQuantity(data.product.quantity);
-      setShipping(data.product.shipping);
+      // Bug fix: Updated setShipping to convert boolean to string for Select component - Ong Chang Heng Bertrand A0253013X
+      setShipping(String(Number(data.product.shipping)));
       setCategory(data.product.category._id);
     } catch (error) {
       console.log(error);
+      // Bug fix: Added toast error message - Ong Chang Heng Bertrand A0253013X
+      toast.error("Failed to load product details");
     }
   };
   useEffect(() => {
@@ -47,11 +50,20 @@ const UpdateProduct = () => {
     try {
       const { data } = await axios.get("/api/v1/category/get-category");
       if (data?.success) {
+        // Bug fix: Added check for empty category list and show error message - Ong Chang Heng Bertrand A0253013X
+        if (data.category.length === 0) {
+          toast.error("No categories available. Please create a category first.");
+          setCategories([]);
+          return;
+        }
         setCategories(data?.category);
+      } else {
+        // Bug fix: Added toast error message for unsuccessful response - Ong Chang Heng Bertrand A0253013X
+        toast.error("Failed to fetch categories");
       }
     } catch (error) {
       console.log(error);
-      toast.error("Something wwent wrong in getting catgeory");
+      toast.error("Something went wrong in getting categories");
     }
   };
 
@@ -70,35 +82,41 @@ const UpdateProduct = () => {
       productData.append("quantity", quantity);
       photo && productData.append("photo", photo);
       productData.append("category", category);
-      const { data } = axios.put(
+      // Bug fix: Added 'shipping' to FormData to ensure it is included in the request - Ong Chang Heng Bertrand A0253013X
+      productData.append("shipping", shipping);
+      // Bug fix: Added 'await' to axios.put call - Ong Chang Heng Bertrand A0253013X
+      const { data } = await axios.put(
         `/api/v1/product/update-product/${id}`,
         productData
       );
+      // Bug fix: data?.success logic was inverted, changed to accurately reflect success and failure cases - Ong Chang Heng Bertrand A0253013X
       if (data?.success) {
-        toast.error(data?.message);
-      } else {
-        toast.success("Product Updated Successfully");
+        toast.success(data?.message);
         navigate("/dashboard/admin/products");
+      } else {
+        toast.error(data?.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error("something went wrong");
+      // Bug fix: Added error message from backend in response - Ong Chang Heng Bertrand A0253013X
+      toast.error(error?.response?.data?.message);
     }
   };
 
   //delete a product
   const handleDelete = async () => {
     try {
-      let answer = window.prompt("Are You Sure want to delete this product ? ");
+      // Bug fix: Changed from window.prompt to window.confirm - Ong Chang Heng Bertrand A0253013X
+      let answer = window.confirm("Are you sure want to delete this product?");
       if (!answer) return;
       const { data } = await axios.delete(
         `/api/v1/product/delete-product/${id}`
       );
-      toast.success("Product DEleted Succfully");
+      toast.success("Product Deleted Successfully");
       navigate("/dashboard/admin/products");
     } catch (error) {
       console.log(error);
-      toast.error("Something went wrong");
+      toast.error("Something went wrong while deleting product");
     }
   };
   return (
@@ -111,7 +129,9 @@ const UpdateProduct = () => {
           <div className="col-md-9">
             <h1>Update Product</h1>
             <div className="m-1 w-75">
+              {/* Added data-testid to relevant elements for testing - Ong Chang Heng Bertrand A0253013X */}
               <Select
+                data-testid="category-select"
                 bordered={false}
                 placeholder="Select a category"
                 size="large"
@@ -123,13 +143,13 @@ const UpdateProduct = () => {
                 value={category}
               >
                 {categories?.map((c) => (
-                  <Option key={c._id} value={c._id}>
+                  <Option key={c._id} value={c._id} data-testid={`category-option-${c._id}`}>
                     {c.name}
                   </Option>
                 ))}
               </Select>
               <div className="mb-3">
-                <label className="btn btn-outline-secondary col-md-12">
+                <label className="btn btn-outline-secondary col-md-12" data-testid="upload-photo-button">
                   {photo ? photo.name : "Upload Photo"}
                   <input
                     type="file"
@@ -163,18 +183,20 @@ const UpdateProduct = () => {
               </div>
               <div className="mb-3">
                 <input
+                  data-testid="name-input"
                   type="text"
                   value={name}
-                  placeholder="write a name"
+                  placeholder="Write a name"
                   className="form-control"
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
               <div className="mb-3">
                 <textarea
+                  data-testid="description-input"
                   type="text"
                   value={description}
-                  placeholder="write a description"
+                  placeholder="Write a description"
                   className="form-control"
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -182,45 +204,48 @@ const UpdateProduct = () => {
 
               <div className="mb-3">
                 <input
+                  data-testid="price-input"
                   type="number"
                   value={price}
-                  placeholder="write a Price"
+                  placeholder="Write a price"
                   className="form-control"
                   onChange={(e) => setPrice(e.target.value)}
                 />
               </div>
               <div className="mb-3">
                 <input
+                  data-testid="quantity-input"
                   type="number"
                   value={quantity}
-                  placeholder="write a quantity"
+                  placeholder="Write a quantity"
                   className="form-control"
                   onChange={(e) => setQuantity(e.target.value)}
                 />
               </div>
               <div className="mb-3">
                 <Select
+                  data-testid="shipping-select"
                   bordered={false}
-                  placeholder="Select Shipping "
+                  placeholder="Select shipping"
                   size="large"
                   showSearch
                   className="form-select mb-3"
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping ? "yes" : "No"}
+                  value={shipping}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>
                 </Select>
               </div>
               <div className="mb-3">
-                <button className="btn btn-primary" onClick={handleUpdate}>
+                <button className="btn btn-primary" data-testid="update-button" onClick={handleUpdate}>
                   UPDATE PRODUCT
                 </button>
               </div>
               <div className="mb-3">
-                <button className="btn btn-danger" onClick={handleDelete}>
+                <button className="btn btn-danger" data-testid="delete-button" onClick={handleDelete}>
                   DELETE PRODUCT
                 </button>
               </div>
