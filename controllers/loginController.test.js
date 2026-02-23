@@ -76,7 +76,7 @@ describe("AuthController", () => {
      * A4: 200 success+token|        |        |        |   X    |
      */
 
-    let req, res, mockUser;
+    let req, res, mockUser, consoleLogSpy;
 
     // ────────────────────────────────────────────────────────────────────────────
     // SETUP & TEARDOWN
@@ -104,9 +104,13 @@ describe("AuthController", () => {
         role: 0,
         password: "$2b$10$hashedPasswordExample",
       };
+
+      // Suppress expected console.log output from error handling in source code
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     });
 
     afterEach(() => {
+      consoleLogSpy.mockRestore();
       // Clear all mocks to ensure test isolation
       jest.clearAllMocks();
     });

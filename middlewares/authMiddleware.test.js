@@ -23,6 +23,7 @@ jest.mock('jsonwebtoken');
 jest.mock('../models/userModel.js');
 
 describe('authMiddleware', () => {
+  let consoleLogSpy;
 
   // Helper functions for creating test doubles
   const createMockReq = (overrides = {}) => ({
@@ -41,6 +42,12 @@ describe('authMiddleware', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.JWT_SECRET = 'test-secret-key';
+    // Suppress expected console.log output from error handling in source code
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
   });
 
   // ═══════════════════════════════════════════════════

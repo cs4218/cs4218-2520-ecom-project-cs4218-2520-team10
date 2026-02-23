@@ -55,6 +55,17 @@ import bcrypt from 'bcrypt';
 jest.mock('bcrypt');
 
 describe('authHelper', () => {
+  let consoleLogSpy;
+
+  beforeEach(() => {
+    // Suppress expected console.log output from error handling in source code
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
+  });
+
   // ═══════════════════════════════════════════════════════════
   // hashPassword TESTS
   // ═══════════════════════════════════════════════════════════

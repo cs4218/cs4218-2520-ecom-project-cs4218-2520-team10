@@ -53,6 +53,7 @@ describe('AuthController', () => {
     let req;
     let res;
     let mockUser;
+    let consoleLogSpy;
 
     beforeEach(() => {
       // Setup mock user object
@@ -79,9 +80,13 @@ describe('AuthController', () => {
 
       // Reset all mocks
       jest.clearAllMocks();
+
+      // Suppress expected console.log output from error handling in source code
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     });
 
     afterEach(() => {
+      consoleLogSpy.mockRestore();
       jest.clearAllMocks();
     });
 

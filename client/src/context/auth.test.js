@@ -755,15 +755,19 @@ describe("AuthContext", () => {
 
     describe("useAuth", () => {
         let localStorageGetItemSpy;
+        let consoleErrorSpy;
 
         beforeEach(() => {
             localStorageGetItemSpy = jest.spyOn(Storage.prototype, "getItem");
             axios.defaults.headers.common = {};
+            // Suppress expected console.error from React error boundary when testing useAuth outside provider
+            consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
         });
 
         afterEach(() => {
             jest.clearAllMocks();
             localStorageGetItemSpy.mockRestore();
+            consoleErrorSpy.mockRestore();
         });
 
         // ══════════════════════════════════════════════════════════════════════════════

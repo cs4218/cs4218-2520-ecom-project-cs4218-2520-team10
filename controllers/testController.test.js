@@ -52,6 +52,8 @@ describe('AuthController', () => {
       return res;
     };
 
+    let consoleLogSpy;
+
     beforeEach(() => {
       // Reset all mocks before each test
       jest.clearAllMocks();
@@ -59,6 +61,13 @@ describe('AuthController', () => {
       // Setup default request and response
       req = createMockReq();
       res = createMockRes();
+
+      // Suppress expected console.log output from error handling in source code
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
     });
 
     // ═══════════════════════════════════════════════════════════

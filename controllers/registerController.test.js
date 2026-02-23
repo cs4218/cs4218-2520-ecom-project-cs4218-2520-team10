@@ -53,7 +53,7 @@ jest.mock('../helpers/authHelper.js');
 
 describe('AuthController', () => {
   describe('registerController', () => {
-    let req, res;
+    let req, res, consoleLogSpy;
 
     // Helper function to create mock request
     const createMockReq = (body = {}) => ({ body });
@@ -79,6 +79,13 @@ describe('AuthController', () => {
           ...data,
         }),
       }));
+
+      // Suppress expected console.log output from error handling in source code
+      consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleLogSpy.mockRestore();
     });
 
     // ═══════════════════════════════════════════════════════════
