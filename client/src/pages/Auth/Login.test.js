@@ -109,6 +109,13 @@ jest.mock('../../context/search', () => ({
     useSearch: jest.fn(() => [{ keyword: '' }, jest.fn()]) // Mock useSearch hook to return null state and a mock function
   }));
 
+// Mock useCategory to prevent async state updates in Header causing act() warnings
+jest.mock('../../hooks/useCategory', () => jest.fn(() => ({
+    categories: [],
+    loading: false,
+    error: null,
+  })));
+
   Object.defineProperty(window, 'localStorage', {
     value: {
       setItem: jest.fn(),
@@ -178,13 +185,24 @@ const renderLoginComponent = (options = {}) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('Login Component', () => {
+    let consoleLogSpy;
+    let consoleErrorSpy;
+
     beforeEach(() => {
         jest.clearAllMocks();
         mockNavigate.mockClear();
+        // Suppress expected console output from error handling tests
+        consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         // Fix: Mock axios.get for useCategory hook - KIM SHI TONG A0265858J
         axios.get.mockResolvedValue({
             data: { success: true, category: [] }
         });
+    });
+
+    afterEach(() => {
+        consoleLogSpy.mockRestore();
+        consoleErrorSpy.mockRestore();
     });
 
     // ───────────────────────────────────────────────────────────────────────
