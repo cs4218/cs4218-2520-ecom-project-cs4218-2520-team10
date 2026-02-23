@@ -52,6 +52,11 @@ describe("orderStatusController", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Suppress console output
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     mockValidStatus = ORDER_STATUS.PROCESSING; // "Processing"
     mockUpdatedOrder = {
