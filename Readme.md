@@ -1,5 +1,8 @@
 # CS4218 Project Team 10 - Virtual Vault
 
+## MS1 CI URL
+* https://github.com/cs4218/cs4218-2520-ecom-project-cs4218-2520-team10/actions/runs/22291995972/job/64480972725
+
 ## 0. Contribution Summary
 
 The following table outlines the testing contribution for our 4-member team based on the project architecture.
