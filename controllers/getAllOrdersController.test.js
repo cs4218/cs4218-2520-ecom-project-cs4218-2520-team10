@@ -40,6 +40,11 @@ describe("getAllOrdersController", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Suppress console output
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
 
     req = {}; // No req.user needed for getAllOrdersController
     res = {

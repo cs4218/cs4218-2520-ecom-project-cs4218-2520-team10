@@ -108,7 +108,7 @@ describe('Orders Component', () => {
   });
 
   describe('Component Rendering', () => {
-    it('should render the Orders component with all main elements', () => {
+    it('should render the Orders component with all main elements', async () => {
       axios.get.mockResolvedValue({ data: [] });
 
       render(
@@ -117,12 +117,14 @@ describe('Orders Component', () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByTestId('layout')).toBeInTheDocument();
-      expect(screen.getByTestId('user-menu')).toBeInTheDocument();
-      expect(screen.getByText('All Orders')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('layout')).toBeInTheDocument();
+        expect(screen.getByTestId('user-menu')).toBeInTheDocument();
+        expect(screen.getByText('All Orders')).toBeInTheDocument();
+      });
     });
 
-    it('should pass correct title prop to Layout component', () => {
+    it('should pass correct title prop to Layout component', async () => {
       axios.get.mockResolvedValue({ data: [] });
 
       render(
@@ -131,8 +133,10 @@ describe('Orders Component', () => {
         </MemoryRouter>
       );
 
-      const layoutElement = screen.getByTestId('layout');
-      expect(layoutElement).toHaveAttribute('data-title', 'Your Orders');
+      await waitFor(() => {
+        const layoutElement = screen.getByTestId('layout');
+        expect(layoutElement).toHaveAttribute('data-title', 'Your Orders');
+      });
     });
   });
 
@@ -628,8 +632,10 @@ describe('Orders Component', () => {
         expect(axios.get).toHaveBeenCalled();
       });
 
-      expect(screen.getByText('All Orders')).toBeInTheDocument();
-      expect(screen.queryByText('Processing')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByText('All Orders')).toBeInTheDocument();
+        expect(screen.queryByText('Processing')).not.toBeInTheDocument();
+      });
     });
 
     it('should handle orders with empty products array', async () => {
@@ -665,6 +671,8 @@ describe('Orders Component', () => {
 
   describe('useEffect Hook Behavior', () => {
     it('should refetch orders when auth token changes', async () => {
+      axios.get.mockResolvedValue({ data: [] });
+
       const { rerender } = render(
         <MemoryRouter>
           <Orders />
@@ -702,9 +710,14 @@ describe('Orders Component', () => {
         </MemoryRouter>
       );
 
+      // Wait briefly to ensure useEffect has run and axios call initiated
+      await waitFor(() => {
+        expect(axios.get).toHaveBeenCalledTimes(1);
+      });
+
       unmount();
 
-      // Verify axios was called but component unmounted
+      // Verify axios was called but component unmounted before response
       expect(axios.get).toHaveBeenCalledTimes(1);
     });
   });
