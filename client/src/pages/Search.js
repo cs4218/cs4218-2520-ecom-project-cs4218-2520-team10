@@ -8,7 +8,7 @@ const Search = () => {
       <div className="container">
         <div className="text-center">
           <h1>Search Resuts</h1>
-          <h6>
+          <h6 data-testid="results-count">
             {values?.results.length < 1
               ? "No Products Found"
               : `Found ${values?.results.length}`}
