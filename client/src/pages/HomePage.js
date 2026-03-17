@@ -87,7 +87,8 @@ const HomePage = () => {
     setChecked(all);
   };
   useEffect(() => {
-    if (!checked.length || !radio.length) getAllProducts();
+    // Bug fix: Changed logical operator from OR to AND to ensure both filters are empty before fetching all products - Ong Chang Heng Bertrand A0253013X
+    if (!checked.length && !radio.length) getAllProducts();
   }, [checked.length, radio.length]);
 
   useEffect(() => {
@@ -206,14 +207,8 @@ const HomePage = () => {
                   setPage(page + 1);
                 }}
               >
-                {loading ? (
-                  "Loading ..."
-                ) : (
-                  <>
-                    {" "}
-                    Loadmore <AiOutlineReload />
-                  </>
-                )}
+                {/* Bug fix: Replace buggy AiOutlineReload - Ong Chang Heng Bertrand A0253013X */}
+                {loading ? "Loading ..." : "Loadmore ↻"}
               </button>
             )}
           </div>
