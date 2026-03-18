@@ -4,7 +4,7 @@
 
 import mongoose from "mongoose";
 import request from "supertest";
-import app from "../../server.js";
+import app from "../../app.js";
 import productModel from "../../models/productModel.js";
 import categoryModel from "../../models/categoryModel.js";
 import userModel from "../../models/userModel.js";
