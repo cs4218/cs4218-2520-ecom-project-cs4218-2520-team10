@@ -1,3 +1,7 @@
+/**
+ * All tests written by: Ong Chang Heng Bertrand A0253013X
+ */
+
 import { test, expect } from '@playwright/test';
 
 test.describe('3. Home Page Browsing — home.e2e.js', () => {
