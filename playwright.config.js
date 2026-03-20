@@ -1,4 +1,7 @@
 import { defineConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: './client/.env' });
 
 export default defineConfig({
   // Directory where your tests are
