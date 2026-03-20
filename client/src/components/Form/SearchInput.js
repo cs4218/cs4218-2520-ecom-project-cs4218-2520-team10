@@ -13,7 +13,8 @@ const SearchInput = () => {
         `/api/v1/product/search/${values.keyword}`
       );
       setValues({ ...values, results: data });
-      navigate("/search");
+      // Bug fix: Updated navigate to include search results in query parameters - Ong Chang Heng Bertrand A0253013X
+      navigate("/search?keyword=" + values.keyword);
     } catch (error) {
       console.log(error);
     }
