@@ -2,19 +2,6 @@
 /**
  * NOTE: The following tests and documentation are created with the help of AI based on user defined test scenario plan.
  */
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import connectDB from "../../config/db.js";
-import {
-  getOrdersController,
-  getAllOrdersController,
-  orderStatusController,
-} from "../../controllers/authController.js";
-import orderModel from "../../models/orderModel.js";
-import userModel from "../../models/userModel.js";
-import productModel from "../../models/productModel.js";
-import categoryModel from "../../models/categoryModel.js";
-import { ORDER_STATUS } from "../../constants/orderStatus.js";
 
 /**
  * Integration Tests for Order Flow
@@ -52,6 +39,20 @@ import { ORDER_STATUS } from "../../constants/orderStatus.js";
  * 10 | orderStatusController      | Input Validation | Rejects invalid ObjectId format                   | 400 Bad Request, invalid ID format error
  * 11 | orderStatusController      | Error Handling   | Updates non-existent order                        | 404 Not Found, order not found error
  */
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import connectDB from "../../config/db.js";
+import {
+  getOrdersController,
+  getAllOrdersController,
+  orderStatusController,
+} from "../../controllers/authController.js";
+import orderModel from "../../models/orderModel.js";
+import userModel from "../../models/userModel.js";
+import productModel from "../../models/productModel.js";
+import categoryModel from "../../models/categoryModel.js";
+import { ORDER_STATUS } from "../../constants/orderStatus.js";
+
 // Load environment variables
 dotenv.config();
 
@@ -159,7 +160,7 @@ describe("Order Flow Integration", () => {
     testOrder3 = null;
   });
 
-  describe("getOrdersControllers <-> userModel + orderModel", () => {
+  describe("getOrdersControllers ↔ userModel + orderModel", () => {
     it("should retrieve user orders with populated product, payment, and buyer details", async () => {
       // ── ARRANGE ──────────────────────────────────
       testOrder1 = await orderModel.create({
