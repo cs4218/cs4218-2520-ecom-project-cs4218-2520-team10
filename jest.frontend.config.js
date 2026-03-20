@@ -32,8 +32,8 @@ export default {
   collectCoverage: true,
   collectCoverageFrom: [
     "client/src/context/auth.js",
-    "client/src/pages/Auth/Register.js",
-    "client/src/pages/Auth/Login.js",
+    "client/src/pages/auth/Register.js",
+    "client/src/pages/auth/Login.js",
     "client/src/pages/admin/CreateCategory.js",
     "client/src/pages/admin/CreateProduct.js",
     "client/src/pages/admin/Products.js",
