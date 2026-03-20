@@ -16,11 +16,12 @@ const Profile = () => {
 
   //get user data
   useEffect(() => {
-    const { email, name, phone, address } = auth?.user;
-    setName(name);
-    setPhone(phone);
-    setEmail(email);
-    setAddress(address);
+    // Fix: Add safe destructuring with default empty object - YAN WEIDONG A0258151H
+    const { email, name, phone, address } = auth?.user || {};
+    setName(name || "");
+    setPhone(phone || "");
+    setEmail(email || "");
+    setAddress(address || "");
   }, [auth?.user]);
 
   // form function
@@ -34,14 +35,29 @@ const Profile = () => {
         phone,
         address,
       });
-      if (data?.errro) {
+
+      // Fix: typo for field "errro" to "error" - YAN WEIDONG A0258151H
+      if (data?.error) {
         toast.error(data?.error);
       } else {
         setAuth({ ...auth, user: data?.updatedUser });
+        // Fix: Add error handling for localStorage JSON.parse - YAN WEIDONG A0258151H
         let ls = localStorage.getItem("auth");
-        ls = JSON.parse(ls);
-        ls.user = data.updatedUser;
-        localStorage.setItem("auth", JSON.stringify(ls));
+        try {
+          ls = JSON.parse(ls);
+          ls.user = data.updatedUser;
+          localStorage.setItem("auth", JSON.stringify(ls));
+        } catch (parseError) {
+          // Fallback: recreate auth object if localStorage is corrupted
+          console.log("Error parsing localStorage: ", parseError);
+          localStorage.setItem(
+            "auth",
+            JSON.stringify({
+              user: data.updatedUser,
+              token: auth.token,
+            }),
+          );
+        }
         toast.success("Profile Updated Successfully");
       }
     } catch (error) {
@@ -49,6 +65,8 @@ const Profile = () => {
       toast.error("Something went wrong");
     }
   };
+
+  // Added field names for display - YAN WEIDONG A0258151H
   return (
     <Layout title={"Your Profile"}>
       <div className="container-fluid m-3 p-3">
@@ -60,6 +78,7 @@ const Profile = () => {
             <div className="form-container ">
               <form onSubmit={handleSubmit}>
                 <h4 className="title">USER PROFILE</h4>
+                <b>Username:</b>
                 <div className="mb-3">
                   <input
                     type="text"
@@ -71,6 +90,7 @@ const Profile = () => {
                     autoFocus
                   />
                 </div>
+                <b>Email:</b>
                 <div className="mb-3">
                   <input
                     type="email"
@@ -78,10 +98,11 @@ const Profile = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     className="form-control"
                     id="exampleInputEmail1"
-                    placeholder="Enter Your Email "
+                    placeholder="Enter Your Email"
                     disabled
                   />
                 </div>
+                <b>Password:</b>
                 <div className="mb-3">
                   <input
                     type="password"
@@ -92,6 +113,7 @@ const Profile = () => {
                     placeholder="Enter Your Password"
                   />
                 </div>
+                <b>Phone:</b>
                 <div className="mb-3">
                   <input
                     type="text"
@@ -102,6 +124,7 @@ const Profile = () => {
                     placeholder="Enter Your Phone"
                   />
                 </div>
+                <b>Address:</b>
                 <div className="mb-3">
                   <input
                     type="text"
