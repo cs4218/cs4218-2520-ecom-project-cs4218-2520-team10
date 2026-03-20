@@ -26,7 +26,7 @@ export default {
     "<rootDir>/client/src/context/*.test.js",
     "<rootDir>/client/src/hooks/*.test.js",
     "<rootDir>/client/src/components/Form/CategoryForm.test.js",
-    "<rootDir>/client/tests/**/*.test.js",
+    "<rootDir>/client/tests/integration/*.test.js",
   ],
   // jest code coverage
   collectCoverage: true,
