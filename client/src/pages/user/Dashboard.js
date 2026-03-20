@@ -4,6 +4,8 @@ import UserMenu from "../../components/UserMenu";
 import { useAuth } from "../../context/auth";
 const Dashboard = () => {
   const [auth] = useAuth();
+
+  // Added field names for display - YAN WEIDONG A0258151H
   return (
     <Layout title={"Dashboard - Ecommerce App"}>
       <div className="container-flui m-3 p-3 dashboard">
@@ -13,9 +15,9 @@ const Dashboard = () => {
           </div>
           <div className="col-md-9">
             <div className="card w-75 p-3">
-              <h3>{auth?.user?.name}</h3>
-              <h3>{auth?.user?.email}</h3>
-              <h3>{auth?.user?.address}</h3>
+              <h3><b>Name:</b> {auth?.user?.name}</h3>
+              <h3><b>Email:</b> {auth?.user?.email}</h3>
+              <h3><b>Address:</b> {auth?.user?.address}</h3>
             </div>
           </div>
         </div>

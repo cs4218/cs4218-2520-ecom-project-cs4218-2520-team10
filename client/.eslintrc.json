@@ -1,0 +1,9 @@
+{
+  "extends": [
+    "react-app",
+    "react-app/jest"
+  ],
+  "rules": {
+    "testing-library/no-wait-for-multiple-assertions": "off"
+  }
+}
