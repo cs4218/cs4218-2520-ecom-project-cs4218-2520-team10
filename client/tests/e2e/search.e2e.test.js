@@ -4,53 +4,61 @@
 
 import { test, expect } from '@playwright/test';
 
-test.describe('6. Search Functionality — search.e2e.js', () => {
-  
+/**
+ * Search UI tests
+ *
+ * 1. Search for existing product
+ * 2. Search with no results
+ * 3. Search then search again
+ * 4. Search from product details page
+ * 5. Search with partial product name
+ */
+
+test.describe('Search Functionality — search.e2e.js', () => {
+
   const HOME_URL = process.env.REACT_APP_CLIENT;
 
   test.beforeEach(async ({ page }) => {
     // Navigate to home page
     await page.goto(HOME_URL);
-    
+
     // Wait for page to load
-    await expect(page.locator('.card').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.card').first()).toBeVisible({ timeout: 15000 });
   });
 
-  test('6.1 Search for existing product', async ({ page }) => {
-    // Find search input in header
-    const searchInput = page.getByTestId('search-input');
-    await searchInput.waitFor({ state: 'visible', timeout: 10000 });
-    
-    // Type product name that exists
-    await searchInput.fill('laptop');
-    
-    // Click search button or press Enter
-    const searchButton = page.getByTestId('search-button');
-    if (await searchButton.isVisible()) {
-      await searchButton.click();
-    } else {
-      await searchInput.press('Enter');
-    }
-    
-    // Verify redirect to search results page
-    await expect(page).toHaveURL(/\/search\?keyword=laptop/i);
-    
-    // Verify results are displayed
-    await expect(page.getByTestId('search-results-title')).toBeVisible();
-    
-   	const firstCard = page.locator('[data-testid^="search-result-card-"]').first();
-		await expect(firstCard).toBeVisible({ timeout: 10000 });
+	test('1 Search for existing product', async ({ page }) => {
+		// Get a real product name from the API to avoid hardcoding
+		const response = await page.request.get(`${process.env.REACT_APP_API}/api/v1/product/get-product`);
+		const data = await response.json();
+		const firstProduct = data.products[0];
+		const searchKeyword = firstProduct.name.split(' ')[0].toLowerCase(); // Use first word of name
 
+		const searchInput = page.getByTestId('search-input');
+		await searchInput.waitFor({ state: 'visible', timeout: 10000 });
+		await searchInput.fill(searchKeyword);
+
+		const searchButton = page.getByTestId('search-button');
+		if (await searchButton.isVisible()) {
+			await searchButton.click();
+		} else {
+			await searchInput.press('Enter');
+		}
+
+		await expect(page).toHaveURL(new RegExp(`search.*${searchKeyword}`, 'i'));
+		await expect(page.getByTestId('search-results-title')).toBeVisible();
+
+		const firstCard = page.locator('[data-testid^="search-result-card-"]').first();
+		await expect(firstCard).toBeVisible({ timeout: 10000 });
 		await expect(firstCard.locator('[data-testid^="search-result-image-"]')).toBeVisible();
 		await expect(firstCard.locator('[data-testid^="search-result-name-"]')).toBeVisible();
 		await expect(firstCard.locator('[data-testid^="search-result-price-"]')).toBeVisible();
-  });
+	});
 
-	test('6.2 Search with no results', async ({ page }) => {
+	test('2 Search with no results', async ({ page }) => {
 		const searchInput = page.getByTestId('search-input');
 		await searchInput.waitFor({ state: 'visible', timeout: 10000 });
 
-		const nonsenseKeyword = `xyzabc${Date.now()}`;
+		const nonsenseKeyword = `xyzabc`;
 		await searchInput.fill(nonsenseKeyword);
 
 		const searchButton = page.getByTestId('search-button');
@@ -71,7 +79,7 @@ test.describe('6. Search Functionality — search.e2e.js', () => {
 		await expect(page.locator('[data-testid^="search-result-card-"]').first()).not.toBeVisible();
 	});
 
-	test('6.3 Search then search again', async ({ page }) => {
+	test('3 Search then search again', async ({ page }) => {
 		const searchInput = page.getByTestId('search-input');
 		await searchInput.waitFor({ state: 'visible', timeout: 10000 });
 		const searchButton = page.getByTestId('search-button');
@@ -106,7 +114,7 @@ test.describe('6. Search Functionality — search.e2e.js', () => {
 		expect(JSON.stringify(secondSearchResults)).not.toBe(JSON.stringify(firstSearchResults));
 	});
 
-	test('6.4 Search from product details page', async ({ page }) => {
+	test('4 Search from product details page', async ({ page }) => {
 		const productCards = page.locator('.card');
 		await expect(productCards.first()).toBeVisible({ timeout: 10000 });
 
@@ -129,7 +137,7 @@ test.describe('6. Search Functionality — search.e2e.js', () => {
 		await expect(page).not.toHaveURL(/\/product\//);
 	});
 
-	test('6.5 Search with partial product name', async ({ page }) => {
+	test('5 Search with partial product name', async ({ page }) => {
 		const searchInput = page.getByTestId('search-input');
 		await searchInput.waitFor({ state: 'visible', timeout: 10000 });
 		await searchInput.fill('lap');

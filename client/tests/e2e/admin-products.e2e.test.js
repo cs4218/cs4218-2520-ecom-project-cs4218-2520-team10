@@ -4,16 +4,28 @@
 
 import { test, expect } from '@playwright/test';
 
-test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
+/**
+ * Admin Products UI tests
+ *
+ * 1. View product list
+ * 2. Navigate from product list to update page
+ * 3. Create a new product
+ * 4. Create product with missing fields
+ * 5. Update product name and price
+ * 6. Update product photo
+ * 7. Delete a product
+ * 8. Cancel delete product
+ * 9. Full product lifecycle (create → view → update → view → delete)
+ */
+
+test.describe('Admin — Product CRUD — admin-products.e2e.test.js', () => {
 
   const ADMIN_LOGIN_URL = `${process.env.REACT_APP_CLIENT}/login`;
   const ADMIN_PRODUCTS_URL = `${process.env.REACT_APP_CLIENT}/dashboard/admin/products`;
   const ADMIN_CREATE_PRODUCT_URL = `${process.env.REACT_APP_CLIENT}/dashboard/admin/create-product`;
 
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'test@admin.com';
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'test@admin.com';
-
-  const apiBaseUrl = process.env.REACT_APP_API;
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
   // Helper: Login as admin
   async function loginAsAdmin(page) {
@@ -31,7 +43,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page.getByTestId('name-input')).not.toHaveValue('', { timeout: 10000 });
   }
 
-  test('11.1 View product list', async ({ page }) => {
+  test('1 View product list', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
 
@@ -50,7 +62,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     }
   });
 
-  test('11.2 Navigate from product list to update page', async ({ page }) => {
+  test('2 Navigate from product list to update page', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
 
@@ -65,7 +77,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page.getByTestId('category-select')).not.toBeEmpty();
   });
 
-  test('11.3 Create a new product', async ({ page }) => {
+  test('3 Create a new product', async ({ page }) => {
     let createdProductSlug;
     await loginAsAdmin(page);
     await page.goto(ADMIN_CREATE_PRODUCT_URL);
@@ -101,7 +113,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page.getByText(productName)).toBeVisible();
   });
 
-  test('11.4 Create product with missing fields', async ({ page }) => {
+  test('4 Create product with missing fields', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_CREATE_PRODUCT_URL);
 
@@ -119,7 +131,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page).toHaveURL(ADMIN_CREATE_PRODUCT_URL);
   });
 
-  test('11.5 Update product name and price', async ({ page }) => {
+  test('5 Update product name and price', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
 
@@ -152,7 +164,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page.getByText(newName)).toBeVisible();
   });
 
-  test('11.6 Update product photo', async ({ page }) => {
+  test('6 Update product photo', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
 
@@ -189,7 +201,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page).toHaveURL(ADMIN_PRODUCTS_URL);
   });
 
-  test('11.7 Delete a product', async ({ page }) => {
+  test('7 Delete a product', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
 
@@ -218,7 +230,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page.getByText(productName)).not.toBeVisible();
   });
 
-  test('11.8 Cancel delete product', async ({ page }) => {
+  test('8 Cancel delete product', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
 
@@ -246,7 +258,7 @@ test.describe('11. Admin — Product CRUD — admin-products.e2e.js', () => {
     await expect(page.getByTestId('name-input')).toHaveValue(productName);
   });
 
-  test('11.9 Full product lifecycle', async ({ page }) => {
+  test('9 Full product lifecycle', async ({ page }) => {
     const testProductName = `Lifecycle Test Name`;
 
     // STEP 1: Create product
