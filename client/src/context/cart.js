@@ -1,3 +1,4 @@
+// Bug fix: Add 'React' to import statement - Ong Chang Heng Bertrand A0253013X
 import React, { useState, useContext, createContext, useEffect } from "react";
 
 const CartContext = createContext();
