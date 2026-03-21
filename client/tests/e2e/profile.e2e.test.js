@@ -1,3 +1,5 @@
+// AI Policy: the following file is generated with AI assistance
+// Test cases written by: KIM SHI TONG A0265858J
 // @ts-check
 /**
  * E2E Test: User Profile Management
