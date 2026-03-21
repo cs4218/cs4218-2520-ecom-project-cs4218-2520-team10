@@ -17,6 +17,16 @@ import ProductDetails from "../../src/pages/ProductDetails";
  * 2. Related products rendered and navigable
  */
 
+// Supppress console logs
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
 jest.mock("axios");
 jest.mock("react-hot-toast");
 jest.mock("../../src/components/Header", () => () => <div data-testid="header">Header</div>);

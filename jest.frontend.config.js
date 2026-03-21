@@ -44,7 +44,7 @@ export default {
     "client/src/pages/Categories.js",
     "client/src/hooks/useCategory.js",
     "client/src/components/Form/CategoryForm.js",
-    "client/tests/**",
+    "client/tests/integration/**",
   ],
   coverageThreshold: {
     global: {
