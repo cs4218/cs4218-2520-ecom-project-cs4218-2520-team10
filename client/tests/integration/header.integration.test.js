@@ -59,10 +59,12 @@ describe("FE-INT-7: Header ↔ useCategory ↔ AuthContext ↔ CartContext", () 
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+    jest.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
     localStorage.clear();
+    jest.restoreAllMocks();
   });
 
   const renderHeader = () =>
