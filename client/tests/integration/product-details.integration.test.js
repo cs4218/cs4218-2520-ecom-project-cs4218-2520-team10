@@ -10,6 +10,13 @@ import toast from "react-hot-toast";
 import { CartProvider } from "../../src/context/cart";
 import ProductDetails from "../../src/pages/ProductDetails";
 
+/**
+ * Integration tests for ProductDetails page and CartContext (2 tests)
+ *
+ * 1. Add to cart from ProductDetails page
+ * 2. Related products rendered and navigable
+ */
+
 jest.mock("axios");
 jest.mock("react-hot-toast");
 jest.mock("../../src/components/Header", () => () => <div data-testid="header">Header</div>);
@@ -23,7 +30,7 @@ jest.mock("../../src/components/Layout", () => {
   );
 });
 
-describe("FE-INT-5: ProductDetails ↔ CartContext", () => {
+describe("ProductDetails ↔ CartContext", () => {
   const mockProduct = {
     _id: "p1",
     name: "Main Product",

@@ -12,6 +12,42 @@ import orderModel from "../../models/orderModel.js";
 import JWT from "jsonwebtoken";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
+/**
+ * Integration tests for Product routes, middleware, and controllers (16 tests)
+ *
+ * 1. Admin creates product via multipart form
+ *  - Create product with valid data (201)
+ *  - Reject product creation for non-admin user (401)
+ *  - Reject product creation without auth token (401)
+ *  - Validate required fields on product creation (422)
+ * 2. Public gets product list (no auth required)
+ *  - Return product list to unauthenticated user (200)
+ *  - Return empty array when no products exist (200)
+ *  - Limit returned products to 12 and sort by newest (200)
+ * 3. Public searches products
+ *  - Search products by name (case-insensitive) (200)
+ *  - Search products by description keyword (200)
+ *  - Return empty array for no matching search (200)
+ * 4. Public gets product by category
+ *  - Return category with its products (200)
+ *  - Return empty products array for category with no products (200)
+ *  - Return 404 for non-existent category
+ * 5. Authenticated user makes payment
+ *  - Create order after payment for authenticated user (200)
+ *  - Reject payment without authentication (401)
+ *  - Reduce product quantity after successful payment (200)
+ */
+
+// Supppress console logs
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
 jest.mock("braintree", () => {
   const saleMock = jest.fn();
 
@@ -47,8 +83,6 @@ describe("BE-INT-7: Product Route ↔ Middleware ↔ Controller (Full Pipeline)"
   jest.setTimeout(30000);
 
   beforeAll(async () => {
-    process.env.NODE_ENV = "test";
-
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
     }

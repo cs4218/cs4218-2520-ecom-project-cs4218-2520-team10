@@ -10,6 +10,13 @@ import { SearchProvider } from "../../src/context/search";
 import SearchInput from "../../src/components/Form/SearchInput";
 import Search from "../../src/pages/Search";
 
+/**
+ * Integration tests for SearchInput, SearchContext, and Search page (2 tests)
+ *
+ * 1. Search flow
+ * 2. Empty search flow
+ */
+
 jest.mock("axios");
 
 jest.mock("../../src/components/Layout", () => ({ children, title }) => (
@@ -30,7 +37,6 @@ describe("FE-INT-3: SearchInput ↔ SearchContext ↔ Search Page", () => {
         <MemoryRouter initialEntries={["/"]}>
           {/* Render SearchInput (like it would be in a header) */}
           <SearchInput />
-          
           <Routes>
             <Route path="/" element={<div>Home Page</div>} />
             <Route path="/search" element={<Search />} />
@@ -68,7 +74,7 @@ describe("FE-INT-3: SearchInput ↔ SearchContext ↔ Search Page", () => {
 
       await waitFor(() => {
         expect(axios.get).toHaveBeenCalledWith("/api/v1/product/search/laptop");
-        
+
         expect(screen.getByTestId("results-count")).toHaveTextContent("2");
         expect(screen.getByText(mockProducts[0].name)).toBeInTheDocument();
         expect(screen.getByText(mockProducts[1].name)).toBeInTheDocument();
