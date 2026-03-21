@@ -23,16 +23,19 @@
  * - Fake Express req/res objects (mocked with jest.fn())
  *
  * Scenario Plan:
- * #  | Controller                  | Category         | Scenario                                          | Expected Result
- * ---|----------------------------|------------------|---------------------------------------------------|-----------------------------------------------------
- * 1  | createCategoryController   | Happy Path       | Create category → saved to DB with auto-slug      | 201, DB has category with correct name and slug
- * 2  | createCategoryController   | Duplicate        | Create same name twice                            | 200, "Category already exists"
- * 3  | categoryController         | Happy Path       | Create 3 categories → get all                    | 200, returns array containing all 3
- * 4  | singleCategoryController   | Happy Path       | Create category → get by slug                    | 200, returns correct category
- * 5  | updateCategoryController   | Happy Path       | Create → update name                             | 200, DB reflects new name and slug
- * 6  | updateCategoryController   | Duplicate        | Create "A" and "B" → update "B" to "A"           | 422, "Category name already exists"
- * 7  | deleteCategoryController   | Happy Path       | Create → delete → get all                        | 200, deleted category absent from list
- * 8  | deleteCategoryController   | Not Found        | Delete with random ObjectId                       | 404, "Category id not found"
+ * #  | Controller                  | Category         | Scenario                                                        | Expected Result
+ * ---|----------------------------|-----------------|-----------------------------------------------------------------|-----------------------------------------------------
+ * 1  | createCategoryController   | Happy Path       | Create category → saved to DB with auto-slug                   | 201, DB has category with correct name and slug
+ * 2  | createCategoryController   | Duplicate        | Create same name twice                                          | 200, "Category already exists"
+ * 3  | categoryController         | Happy Path       | Create 3 categories → get all                                  | 200, returns array containing all 3
+ * 4  | categoryController         | Empty DB         | No categories in DB → get all                                  | 200, returns empty array
+ * 5  | singleCategoryController   | Happy Path       | Create category → get by slug                                  | 200, returns correct category
+ * 6  | singleCategoryController   | Not Found        | Query non-existent slug                                        | 404, "Slug not found"
+ * 7  | updateCategoryController   | Happy Path       | Create → update name → new slug queryable, old slug returns 404 | 200, DB reflects new name and slug
+ * 8  | updateCategoryController   | Duplicate        | Create "A" and "B" → update "B" to "A"                        | 422, "Category name already exists"
+ * 9  | updateCategoryController   | Not Found        | Update with non-existent ObjectId                              | 404, "Category id not found"
+ * 10 | deleteCategoryController   | Happy Path       | Create → delete → get all                                      | 200, deleted category absent from list
+ * 11 | deleteCategoryController   | Not Found        | Delete with random ObjectId                                    | 404, "Category id not found"
  */
 
 import mongoose from "mongoose";
@@ -154,11 +157,26 @@ describe("BE-INT-3: Category Controller <-> Category Model", () => {
       expect(names).toContain("Sports");
       expect(names).toContain("Toys");
     });
+
+    it("Test 4: should return empty array when no categories exist in DB", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const req = {};
+      const res = makeRes();
+
+      // ── ACT ──────────────────────────────────────
+      await categoryController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.status).toHaveBeenCalledWith(200);
+      const body = res.send.mock.calls[0][0];
+      expect(body.success).toBe(true);
+      expect(body.category).toEqual([]);
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
   describe("singleCategoryController <-> categoryModel", () => {
-    it("Test 4: should return correct category when queried by slug", async () => {
+    it("Test 5: should return correct category when queried by slug", async () => {
       // ── ARRANGE ──────────────────────────────────
       const created = await categoryModel.create({
         name: "Garden",
@@ -179,11 +197,26 @@ describe("BE-INT-3: Category Controller <-> Category Model", () => {
       expect(body.category.name).toBe("Garden");
       expect(body.category.slug).toBe("garden");
     });
+
+    it("Test 6: should return 404 when slug does not exist in DB", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const req = { params: { slug: "non-existent-slug" } };
+      const res = makeRes();
+
+      // ── ACT ──────────────────────────────────────
+      await singleCategoryController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.status).toHaveBeenCalledWith(404);
+      const body = res.send.mock.calls[0][0];
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Slug not found");
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
   describe("updateCategoryController <-> categoryModel", () => {
-    it("Test 5: should update category name and slug in DB", async () => {
+    it("Test 7: should update category name and slug in DB, new slug queryable, old slug returns 404", async () => {
       // ── ARRANGE ──────────────────────────────────
       const original = await categoryModel.create({
         name: "Old Name",
@@ -199,7 +232,7 @@ describe("BE-INT-3: Category Controller <-> Category Model", () => {
       // ── ACT ──────────────────────────────────────
       await updateCategoryController(req, res);
 
-      // ── ASSERT ───────────────────────────────────
+      // ── ASSERT: update response ───────────────────
       expect(res.status).toHaveBeenCalledWith(200);
       const body = res.send.mock.calls[0][0];
       expect(body.success).toBe(true);
@@ -212,9 +245,23 @@ describe("BE-INT-3: Category Controller <-> Category Model", () => {
       const dbCategory = await categoryModel.findById(original._id);
       expect(dbCategory.name).toBe("New Name");
       expect(dbCategory.slug).toBe("new-name");
+
+      // Verify new slug is queryable via singleCategoryController
+      const newSlugReq = { params: { slug: "new-name" } };
+      const newSlugRes = makeRes();
+      await singleCategoryController(newSlugReq, newSlugRes);
+      expect(newSlugRes.status).toHaveBeenCalledWith(200);
+      const newSlugBody = newSlugRes.send.mock.calls[0][0];
+      expect(newSlugBody.category._id.toString()).toBe(original._id.toString());
+
+      // Verify old slug no longer resolves
+      const oldSlugReq = { params: { slug: "old-name" } };
+      const oldSlugRes = makeRes();
+      await singleCategoryController(oldSlugReq, oldSlugRes);
+      expect(oldSlugRes.status).toHaveBeenCalledWith(404);
     });
 
-    it("Test 6: should reject update when new name already belongs to another category", async () => {
+    it("Test 8: should reject update when new name already belongs to another category", async () => {
       // ── ARRANGE ──────────────────────────────────
       const categoryA = await categoryModel.create({ name: "Category A", slug: "category-a" });
       const categoryB = await categoryModel.create({
@@ -236,6 +283,7 @@ describe("BE-INT-3: Category Controller <-> Category Model", () => {
       const body = res.send.mock.calls[0][0];
       expect(body.success).toBe(false);
       expect(body.message).toBe("Category name already exists");
+
       // Verify Category B was NOT updated
       const dbCategoryB = await categoryModel.findById(categoryB._id);
       expect(dbCategoryB.name).toBe("Category B");
@@ -246,11 +294,31 @@ describe("BE-INT-3: Category Controller <-> Category Model", () => {
       expect(dbCategoryA.name).toBe("Category A");
       expect(dbCategoryA.slug).toBe("category-a");
     });
+
+    it("Test 9: should return 404 when updating a non-existent category", async () => {
+      // ── ARRANGE ──────────────────────────────────
+      const nonExistentId = new mongoose.Types.ObjectId();
+
+      const req = {
+        params: { id: nonExistentId.toString() },
+        body: { name: "Any Name" },
+      };
+      const res = makeRes();
+
+      // ── ACT ──────────────────────────────────────
+      await updateCategoryController(req, res);
+
+      // ── ASSERT ───────────────────────────────────
+      expect(res.status).toHaveBeenCalledWith(404);
+      const body = res.send.mock.calls[0][0];
+      expect(body.success).toBe(false);
+      expect(body.message).toBe("Category id not found");
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
   describe("deleteCategoryController <-> categoryModel", () => {
-    it("Test 7: should remove category from DB and be absent from get-all results", async () => {
+    it("Test 10: should remove category from DB and be absent from get-all results", async () => {
       // ── ARRANGE ──────────────────────────────────
       const toDelete = await categoryModel.create({
         name: "Temporary",
@@ -284,7 +352,7 @@ describe("BE-INT-3: Category Controller <-> Category Model", () => {
       expect(getAllBody.category[0].name).toBe("Keeper");
     });
 
-    it("Test 8: should return 404 when deleting a non-existent category", async () => {
+    it("Test 11: should return 404 when deleting a non-existent category", async () => {
       // ── ARRANGE ──────────────────────────────────
       const nonExistentId = new mongoose.Types.ObjectId();
 
