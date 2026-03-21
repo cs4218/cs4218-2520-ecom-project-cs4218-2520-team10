@@ -1,0 +1,195 @@
+/**
+ * Integration Test: BE-INT-2
+ * Author: Kim Shi Tong, A0265858J
+ *
+ * APPROACH: Bottom-up integration testing (Level 2 — Full Pipeline)
+ *
+ * Level 0 (MS1 — done): Units tested in isolation with full mocking.
+ * Level 1 (BE-INT-1): Controllers integrated with REAL models + REAL DB.
+ * Level 2 (this file): Full HTTP pipeline via supertest
+ *   - HTTP Request → Express Route → Middleware (requireSignIn, isAdmin)
+ *     → Controller → Model → Real DB → HTTP Response
+ *
+ * What was mocked in MS1 that is NOW REAL:
+ *   - Express routes, middleware (requireSignIn, isAdmin), controllers,
+ *     models, helpers — ALL REAL, tested via HTTP requests
+ *   - JWT.sign / JWT.verify — real tokens flowing through the pipeline
+ *
+ * What stays mocked (and why):
+ *   - Braintree gateway: External payment service (not tested here)
+ *
+ * Integration points tested:
+ *   - HTTP POST /register → registerController → userModel → DB
+ *   - HTTP POST /login → loginController → comparePassword → JWT.sign
+ *   - HTTP GET /test → requireSignIn → isAdmin → testController
+ *   - HTTP GET /user-auth → requireSignIn → inline handler
+ *   - HTTP PUT /profile → requireSignIn → updateProfileController → DB
+ *   - Tampered/missing tokens rejected by real JWT.verify in middleware
+ */
+
+// Mock braintree to avoid requiring real API keys at import time
+jest.mock("braintree", () => ({
+  BraintreeGateway: jest.fn(function () {
+    this.transaction = { sale: jest.fn() };
+    this.clientToken = {
+      generate: jest.fn((options, cb) => cb(null, { clientToken: "mock-token" })),
+    };
+    return this;
+  }),
+  Environment: { Sandbox: "sandbox" },
+}));
+
+process.env.JWT_SECRET = "test-secret-key";
+
+import request from "supertest";
+import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
+import app from "../../app.js";
+import userModel from "../../models/userModel.js";
+import { hashPassword } from "../../helpers/authHelper.js";
+
+let mongoServer;
+
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  await mongoose.connect(mongoServer.getUri());
+});
+
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany({});
+  }
+});
+
+afterAll(async () => {
+  await mongoose.connection.dropDatabase();
+  await mongoose.connection.close();
+  await mongoServer.stop();
+});
+
+/**
+ * Helper to register and login a user via the actual HTTP endpoints.
+ * Returns the JWT token for use in subsequent authenticated requests.
+ */
+const registerAndLogin = async (userData = {}) => {
+  const defaultUser = {
+    name: "Test User",
+    email: "test@test.com",
+    password: "password123",
+    phone: "12345678",
+    address: "123 Test St",
+    answer: "testanswer",
+    ...userData,
+  };
+
+  await request(app).post("/api/v1/auth/register").send(defaultUser);
+
+  const loginRes = await request(app)
+    .post("/api/v1/auth/login")
+    .send({ email: defaultUser.email, password: defaultUser.password });
+
+  return loginRes.body.token;
+};
+
+/**
+ * Helper to create an admin user directly in the DB and login via API.
+ */
+const registerAndLoginAdmin = async () => {
+  await new userModel({
+    name: "Admin",
+    email: "admin@test.com",
+    password: await hashPassword("adminpass"),
+    phone: "999",
+    address: "Admin St",
+    answer: "adminanswer",
+    role: 1,
+  }).save();
+
+  const loginRes = await request(app)
+    .post("/api/v1/auth/login")
+    .send({ email: "admin@test.com", password: "adminpass" });
+
+  return loginRes.body.token;
+};
+
+describe("BE-INT-2: Auth Route Pipeline (Supertest Full Pipeline)", () => {
+  // // Kim Shi Tong, A0265858J
+  it("should register, login, and access protected admin route (full pipeline)", async () => {
+    // Step 1: Register via HTTP
+    const registerRes = await request(app)
+      .post("/api/v1/auth/register")
+      .send({
+        name: "John",
+        email: "john@test.com",
+        password: "password123",
+        phone: "123",
+        address: "addr",
+        answer: "ans",
+      });
+    expect(registerRes.status).toBe(201);
+
+    // Step 2: Login via HTTP
+    const loginRes = await request(app)
+      .post("/api/v1/auth/login")
+      .send({ email: "john@test.com", password: "password123" });
+    expect(loginRes.status).toBe(200);
+    expect(loginRes.body.token).toBeDefined();
+    expect(loginRes.body.token.split(".")).toHaveLength(3); // valid JWT
+
+    // Step 3: Access admin-only route (GET /api/v1/auth/test requires requireSignIn + isAdmin)
+    const adminToken = await registerAndLoginAdmin();
+    const testRes = await request(app)
+      .get("/api/v1/auth/test")
+      .set("Authorization", adminToken);
+    expect(testRes.status).toBe(200);
+    expect(testRes.body.message).toContain("Protected");
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should reject request without Authorization header", async () => {
+    const res = await request(app).get("/api/v1/auth/user-auth");
+
+    expect(res.status).toBe(401);
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should reject regular user from admin route", async () => {
+    // Register and login as regular user (role: 0)
+    const token = await registerAndLogin();
+
+    const res = await request(app)
+      .get("/api/v1/auth/test") // requireSignIn + isAdmin
+      .set("Authorization", token);
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toContain("UnAuthorized");
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should update profile through full pipeline", async () => {
+    const token = await registerAndLogin();
+
+    const res = await request(app)
+      .put("/api/v1/auth/profile")
+      .set("Authorization", token)
+      .send({ name: "Updated Name", phone: "99999999" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.updatedUser.name).toBe("Updated Name");
+
+    // Verify in DB
+    const userInDB = await userModel.findOne({ email: "test@test.com" });
+    expect(userInDB.name).toBe("Updated Name");
+    expect(userInDB.phone).toBe("99999999");
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should reject tampered/invalid token", async () => {
+    const res = await request(app)
+      .get("/api/v1/auth/user-auth")
+      .set("Authorization", "this.is.not.a.valid.jwt");
+
+    expect(res.status).toBe(401);
+  });
+});

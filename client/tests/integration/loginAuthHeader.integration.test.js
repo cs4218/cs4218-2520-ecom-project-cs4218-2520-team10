@@ -1,0 +1,280 @@
+/**
+ * Integration Test: FE-INT-1
+ * Author: Kim Shi Tong, A0265858J
+ *
+ * APPROACH: Bottom-up integration testing (Level 1)
+ *
+ * Level 0 (MS1 — done): Units tested in isolation with full mocking.
+ * Level 1 (this file): Pages integrated with REAL context providers + REAL hooks
+ *   - Login.js integrated with REAL AuthProvider (context/auth.js)
+ *   - Header.js integrated with REAL AuthProvider, REAL useCategory hook, REAL CartProvider
+ *   - Login + Header rendered together to test shared auth state
+ *
+ * What was mocked in MS1 that is NOW REAL:
+ *   - useAuth context → now real AuthProvider wrapping components
+ *   - useCart context → now real CartProvider
+ *   - useCategory hook → now real hook (calls mocked axios)
+ *   - localStorage → real browser storage (jsdom)
+ *
+ * What stays mocked (and why):
+ *   - axios: Frontend tests don't run a real backend server
+ *   - react-hot-toast: External UI notification library, not an integration point
+ *   - Layout: Simplified to avoid Helmet/Footer complexity — Header rendered directly
+ *
+ * Integration points tested:
+ *   - Login.js writes to AuthProvider after successful API call (via setAuth)
+ *   - AuthProvider persists auth to localStorage
+ *   - Header.js reads from AuthProvider and updates nav dynamically
+ *   - AuthProvider sets axios.defaults.headers.common["Authorization"]
+ *   - Header logout clears AuthProvider state and localStorage
+ */
+
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { AuthProvider } from "../../src/context/auth";
+import { CartProvider } from "../../src/context/cart";
+import { SearchProvider } from "../../src/context/search";
+import Login from "../../src/pages/auth/Login";
+import Header from "../../src/components/Header";
+import axios from "axios";
+
+// ONLY mock the network layer — everything else is REAL
+jest.mock("axios");
+
+// Mock toast (external UI library, not an integration point)
+jest.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+  Toaster: () => null,
+}));
+
+// Mock Layout to render children directly with Header
+// This avoids react-helmet complexity while keeping Header REAL
+jest.mock("../../src/components/Layout", () => {
+  return function MockLayout({ children }) {
+    return <div data-testid="layout">{children}</div>;
+  };
+});
+
+/**
+ * Renders components wrapped in ALL real providers.
+ * Key difference from MS1: context providers are REAL, not mocked.
+ */
+const renderWithProviders = (ui, { initialRoute = "/" } = {}) => {
+  return render(
+    <AuthProvider>
+      <CartProvider>
+        <SearchProvider>
+          <MemoryRouter initialEntries={[initialRoute]}>{ui}</MemoryRouter>
+        </SearchProvider>
+      </CartProvider>
+    </AuthProvider>
+  );
+};
+
+beforeEach(() => {
+  localStorage.clear();
+  jest.clearAllMocks();
+
+  // Default axios mock for useCategory hook (Header calls this on mount)
+  axios.get.mockResolvedValue({
+    data: { success: true, category: [] },
+  });
+
+  // Set up axios.defaults for Authorization header tracking
+  axios.defaults = { headers: { common: {} } };
+});
+
+afterEach(() => {
+  localStorage.clear();
+  jest.restoreAllMocks();
+});
+
+describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
+  // // Kim Shi Tong, A0265858J
+  it("should update Header to show user name after successful login", async () => {
+    // Mock the login API response
+    axios.post.mockResolvedValueOnce({
+      data: {
+        success: true,
+        message: "Login Successfully",
+        user: { name: "John", email: "john@test.com", phone: "12345", role: 0 },
+        token: "fake-jwt-token-xyz",
+      },
+    });
+
+    // Render Login + Header together inside REAL providers
+    renderWithProviders(
+      <>
+        <Header />
+        <Login />
+      </>,
+      { initialRoute: "/login" }
+    );
+
+    // Before login: Header should show Login/Register links
+    expect(screen.getByText("Login")).toBeInTheDocument();
+    expect(screen.getByText("Register")).toBeInTheDocument();
+
+    // Fill form and submit
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "john@test.com");
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "password123");
+    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+
+    // After login: Header should show user's name
+    await waitFor(() => {
+      expect(screen.getByText("John")).toBeInTheDocument();
+    });
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should store auth in localStorage after login (Login → AuthProvider → localStorage)", async () => {
+    axios.post.mockResolvedValueOnce({
+      data: {
+        success: true,
+        message: "Login Successfully",
+        user: { name: "John", email: "john@test.com", phone: "12345", role: 0 },
+        token: "fake-jwt-token-xyz",
+      },
+    });
+
+    renderWithProviders(
+      <>
+        <Header />
+        <Login />
+      </>,
+      { initialRoute: "/login" }
+    );
+
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "john@test.com");
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "password123");
+    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+
+    await waitFor(() => {
+      const stored = JSON.parse(localStorage.getItem("auth"));
+      expect(stored).not.toBeNull();
+      expect(stored.user.name).toBe("John");
+      expect(stored.token).toBe("fake-jwt-token-xyz");
+    });
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should set axios default Authorization header after login", async () => {
+    axios.post.mockResolvedValueOnce({
+      data: {
+        success: true,
+        message: "Login Successfully",
+        user: { name: "John", email: "john@test.com", phone: "12345", role: 0 },
+        token: "fake-jwt-token-xyz",
+      },
+    });
+
+    renderWithProviders(
+      <>
+        <Header />
+        <Login />
+      </>,
+      { initialRoute: "/login" }
+    );
+
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "john@test.com");
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "password123");
+    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+
+    await waitFor(() => {
+      expect(axios.defaults.headers.common["Authorization"]).toBe("fake-jwt-token-xyz");
+    });
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should show logout option and clear auth when logout is clicked", async () => {
+    // Pre-seed localStorage with auth data (simulate already logged in)
+    localStorage.setItem(
+      "auth",
+      JSON.stringify({
+        user: { name: "John", role: 0 },
+        token: "fake-jwt-token-xyz",
+      })
+    );
+
+    renderWithProviders(<Header />, { initialRoute: "/" });
+
+    // Header should show user's name (read from real AuthProvider → localStorage)
+    await waitFor(() => {
+      expect(screen.getByText("John")).toBeInTheDocument();
+    });
+
+    // Click the user dropdown to reveal logout
+    await userEvent.click(screen.getByText("John"));
+
+    // Click logout
+    await userEvent.click(screen.getByText("Logout"));
+
+    // After logout: auth should be cleared
+    await waitFor(() => {
+      expect(localStorage.getItem("auth")).toBeNull();
+    });
+
+    // Nav should revert to showing Login/Register
+    expect(screen.getByText("Login")).toBeInTheDocument();
+    expect(screen.getByText("Register")).toBeInTheDocument();
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should show admin dashboard link for admin user login", async () => {
+    axios.post.mockResolvedValueOnce({
+      data: {
+        success: true,
+        message: "Login Successfully",
+        user: { name: "Admin", email: "admin@test.com", role: 1 },
+        token: "admin-token",
+      },
+    });
+
+    renderWithProviders(
+      <>
+        <Header />
+        <Login />
+      </>,
+      { initialRoute: "/login" }
+    );
+
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "admin@test.com");
+    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "adminpass");
+    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+
+    await waitFor(() => {
+      const dashboardLink = screen.getByText("Dashboard").closest("a");
+      expect(dashboardLink).toHaveAttribute("href", "/dashboard/admin");
+    });
+  });
+
+  // // Kim Shi Tong, A0265858J
+  it("should show user dashboard link for regular user (role-based Header rendering)", async () => {
+    // Pre-seed as regular user
+    localStorage.setItem(
+      "auth",
+      JSON.stringify({
+        user: { name: "Jane", role: 0 },
+        token: "user-token",
+      })
+    );
+
+    renderWithProviders(<Header />, { initialRoute: "/" });
+
+    await waitFor(() => {
+      expect(screen.getByText("Jane")).toBeInTheDocument();
+    });
+
+    // Click the user dropdown
+    await userEvent.click(screen.getByText("Jane"));
+
+    const dashboardLink = screen.getByText("Dashboard").closest("a");
+    expect(dashboardLink).toHaveAttribute("href", "/dashboard/user");
+  });
+});
