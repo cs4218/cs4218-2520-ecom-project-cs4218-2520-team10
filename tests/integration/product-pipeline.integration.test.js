@@ -71,7 +71,7 @@ jest.mock("braintree", () => {
   };
 });
 
-describe("BE-INT-7: Product Route ↔ Middleware ↔ Controller (Full Pipeline)", () => {
+describe("Product Route ↔ Middleware ↔ Controller (Full Pipeline)", () => {
   let mongoServer;
   let adminToken;
   let userToken;
