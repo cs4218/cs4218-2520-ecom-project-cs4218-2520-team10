@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Search UI tests
+ * Search UI tests (5 tests)
  *
  * 1. Search for existing product
  * 2. Search with no results

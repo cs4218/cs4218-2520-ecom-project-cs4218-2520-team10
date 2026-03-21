@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Home page UI tests
+ * Home page UI tests (9 tests)
  *
  * 1. Home page loads products
  * 2. Filter by category

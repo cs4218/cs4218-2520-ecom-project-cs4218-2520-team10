@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Product details page UI tests
+ * Product details page UI tests (6 tests)
  *
  * 1. View product details
  * 2. Add to cart from product detail page

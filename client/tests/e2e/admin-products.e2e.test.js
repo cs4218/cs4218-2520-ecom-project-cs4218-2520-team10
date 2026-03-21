@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * Admin Products UI tests
+ * Admin Products UI tests (9 tests)
  *
  * 1. View product list
  * 2. Navigate from product list to update page
