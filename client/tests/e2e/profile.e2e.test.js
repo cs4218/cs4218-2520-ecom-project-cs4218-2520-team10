@@ -122,8 +122,6 @@ test.describe('User Profile Management', () => {
       const nameField = page.getByPlaceholder('Enter Your Name');
       await nameField.clear();
       await nameField.fill('Updated Kim');
-      // Must include a valid password (>=6 chars) to pass backend validation
-      await page.getByPlaceholder('Enter Your Password').fill(PROFILE_USER.password);
       await page.getByRole('button', { name: 'UPDATE', exact: true }).click();
 
       await expect(page.getByText('Profile Updated Successfully')).toBeVisible({ timeout: 5000 });
@@ -140,8 +138,6 @@ test.describe('User Profile Management', () => {
       await phoneField.fill('88889999');
       await addressField.clear();
       await addressField.fill('200 Updated Avenue');
-      // Must include a valid password (>=6 chars) to pass backend validation
-      await page.getByPlaceholder('Enter Your Password').fill(PROFILE_USER.password);
       await page.getByRole('button', { name: 'UPDATE', exact: true }).click();
 
       await expect(page.getByText('Profile Updated Successfully')).toBeVisible({ timeout: 5000 });
@@ -159,7 +155,6 @@ test.describe('User Profile Management', () => {
       await phoneFieldReset.fill(PROFILE_USER.phone);
       await addressFieldReset.clear();
       await addressFieldReset.fill(PROFILE_USER.address);
-      await page.getByPlaceholder('Enter Your Password').fill(PROFILE_USER.password);
       await page.getByRole('button', { name: 'UPDATE', exact: true }).click();
       await expect(page.getByText('Profile Updated Successfully')).toBeVisible({ timeout: 5000 });
     });

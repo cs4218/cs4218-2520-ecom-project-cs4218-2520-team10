@@ -168,21 +168,21 @@ test.describe('Route Protection', () => {
     // Kim Shi Tong, A0265858J
     test('should allow access to all public pages without login', async ({ page }) => {
       const publicPages = [
-        '/',
-        '/categories',
-        '/about',
-        '/contact',
-        '/policy',
-        '/cart',
+        { url: '/', text: /All Products/i },
+        { url: '/categories', text: /categor/i },
+        { url: '/about', text: /about/i },
+        { url: '/contact', text: /CONTACT US/i },
+        { url: '/policy', text: /policy/i },
+        { url: '/cart', text: /cart/i },
       ];
 
-      for (const url of publicPages) {
+      for (const { url, text } of publicPages) {
         await page.goto(url);
 
         // Page should load without redirecting to login
         await expect(page).not.toHaveURL(/\/login/);
-        // Verify the page stays on the intended URL (not redirected)
-        await expect(page).toHaveURL(new RegExp(url.replace('/', '\\/')));
+        // Page content is visible
+        await expect(page.getByText(text).first()).toBeVisible({ timeout: 10000 });
       }
     });
   });

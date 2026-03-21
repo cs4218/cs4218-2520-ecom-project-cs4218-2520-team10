@@ -193,9 +193,15 @@ export const updateProfileController = async (req, res) => {
       });
     }
     
-    // Password validation
     // Fix: Complete Password Length Validation with Status Code - YAN WEIDONG A0258151H
-    if (password !== undefined && password.length < 6) {
+    // Fix2: Changed `password !== undefined` to `password` because the frontend
+    // always sends password: "" (empty string) even when the user doesn't touch the
+    // field. The original check treated "" as a real password attempt and rejected it
+    // with 400, preventing users from updating name/phone/address without also
+    // providing a password. This is expected since the backend never returns the
+    // password field to the frontend (see loginController response, line 103-109),
+    // so Profile.js always initialises password state as "". - KIM SHI TONG A0265858J
+    if (password && password.length < 6) {
       return res.status(400).json({ error: "Password is required and 6 character long" });
     }
     
