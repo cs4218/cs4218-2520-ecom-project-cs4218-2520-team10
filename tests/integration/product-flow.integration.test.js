@@ -12,34 +12,62 @@ import JWT from "jsonwebtoken";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
 /**
- * Integration Tests: Product Controller ↔ Product Model ↔ Category Model
+ * Integration Tests: Product Controller ↔ Product Model ↔ Category Model (20 tests)
  *
  * Test Cases:
  * 1.  Create product with valid category reference
+ *  - Create product with category ID and verify category ObjectId stored in DB
  * 2.  Get all products with populated category
+ *  - Create products with categories, get all products, and verify category names populated
  * 3.  Get single product by slug
+ *  - Create product, get by slug, and verify correct product returned with populated category
+ *  - Get non-existent slug returns 404
  * 4.  Delete product removes from DB
+ *  - Create product, delete it, verify deletion in DB, and verify 404 on subsequent get
+ *  - Deleting non-existent product returns 404
  * 5.  Update product changes DB record
+ *  - Create product, update name and price, verify changes in DB, and verify get by new slug works
+ *  - Updating non-existent product returns 404
  * 6.  Duplicate product name rejected on create
+ *  - Create product, attempt to create another with same name, verify 409 response and only one product in DB
  * 7.  Filter by category
+ *  - Create products in different categories, filter by one category, and verify only products from that category returned
  * 8.  Filter by price range
+ *  - Create products with different prices, filter by price range, and verify only products in that range returned
+ *  - Filter by category + price range together and verify correct products returned
  * 9.  Search by keyword in name
+ *  - Create products with different names, search by keyword, and verify matching products returned (case-insensitive)
  * 10. Search by keyword in description
+ *  - Create products with different descriptions, search by keyword, and verify matching products returned
  * 11. Related products (same category, exclude self)
+ *  - Create multiple products in same category, get related products for one, and verify up to 3 other products from same category returned
+ *  - Related products for product with no others in category returns empty array
  * 12. Products by category slug
+ *  - Create products in category, get products by category slug, and verify correct products returned
  * 13. Pagination (6 per page)
+ *  - Create more than 6 products, get first page and verify 6 returned, get second page and verify remaining returned
+ *  - Requesting page beyond total pages returns empty array
  * 14. Product count
+ *  - Create products, get product count, and verify correct total returned
  */
 
-describe("Product Controller Integration Tests (Real DB)", () => {
+// Suppress console logs
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
+describe("Product Controller Integration Tests", () => {
   let testCategory1;
   let testCategory2;
   let authToken;
   let mongoServer;
 
   beforeAll(async () => {
-    process.env.NODE_ENV = "test";
-
     // Close any connection that server.js may have already opened
     if (mongoose.connection.readyState !== 0) {
       await mongoose.connection.close();
@@ -400,7 +428,7 @@ describe("Product Controller Integration Tests (Real DB)", () => {
   });
 
   describe("Test 8: Filter by price range", () => {
-    it("should return only products in price range [20, 60]", async () => {
+    it("should return only products in price range [20, 60] on select", async () => {
       await productModel.create({
         name: "Cheap Item",
         slug: "cheap-item",
