@@ -255,9 +255,11 @@ describe("updateProfileController", () => {
   });
 
   describe("EP & BVA for Password", () => {
-    // Boundary Value: password.length = 6
-    // EP: Outside Interval - Invalid password length
-    it("should reject empty string password", async () => {
+    // Fix2: Empty string password means "don't change password" — frontend always
+    // sends password: "" when the user doesn't touch the field (backend never returns
+    // password to frontend). This should succeed and leave the password unchanged.
+    // Updated by KIM SHI TONG A0265858J to match authController.js fix.
+    it("should treat empty string password as no password change", async () => {
       // ── ARRANGE ──────────────────────────────────
       req.body = { password: "" };
 
@@ -265,11 +267,13 @@ describe("updateProfileController", () => {
       await updateProfileController(req, res);
 
       // ── ASSERT ───────────────────────────────────
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        error: expect.any(String),
-        updatedUser: undefined, // Ensure no update is performed when password is invalid
-      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: expect.any(String),
+        }),
+      );
     });
 
     it("should reject password with less than 6 characters", async () => {
