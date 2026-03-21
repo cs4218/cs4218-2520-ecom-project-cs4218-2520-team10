@@ -9,30 +9,31 @@ export const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, address, answer } = req.body;
     //validations
-    // Fix: Changed from "error" to "message" for consistency - KIM SHI TONG A0265858J
+    // Fix: Added 400 status code to validation errors - KIM SHI TONG A0265858J
     if (!name) {
-      return res.send({ message: "Name is Required" });
+      return res.status(400).send({ message: "Name is Required" });
     }
     if (!email) {
-      return res.send({ message: "Email is Required" });
+      return res.status(400).send({ message: "Email is Required" });
     }
     if (!password) {
-      return res.send({ message: "Password is Required" });
+      return res.status(400).send({ message: "Password is Required" });
     }
     if (!phone) {
-      return res.send({ message: "Phone no is Required" });
+      return res.status(400).send({ message: "Phone no is Required" });
     }
     if (!address) {
-      return res.send({ message: "Address is Required" });
+      return res.status(400).send({ message: "Address is Required" });
     }
     if (!answer) {
-      return res.send({ message: "Answer is Required" });
+      return res.status(400).send({ message: "Answer is Required" });
     }
     //check user
     const exisitingUser = await userModel.findOne({ email });
     //exisiting user
+    // Fix: Changed from 200 to 409 Conflict for duplicate email - KIM SHI TONG A0265858J
     if (exisitingUser) {
-      return res.status(200).send({
+      return res.status(409).send({
         success: false,
         message: "Already Registered. Please Login",
       });
@@ -69,8 +70,9 @@ export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
     //validation
+    // Fix: Changed from 404 to 400 for missing fields - KIM SHI TONG A0265858J
     if (!email || !password) {
-      return res.status(404).send({
+      return res.status(400).send({
         success: false,
         message: "Invalid email or password",
       });
@@ -84,8 +86,9 @@ export const loginController = async (req, res) => {
       });
     }
     const match = await comparePassword(password, user.password);
+    // Fix: Changed from 200 to 401 for invalid password - KIM SHI TONG A0265858J
     if (!match) {
-      return res.status(200).send({
+      return res.status(401).send({
         success: false,
         message: "Invalid Password",
       });
