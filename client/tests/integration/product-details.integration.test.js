@@ -121,9 +121,7 @@ describe("ProductDetails ↔ CartContext", () => {
         expect(screen.getByText(mockRelatedProduct.name)).toBeInTheDocument();
       });
 
-      const moreDetailsBtns = screen.getAllByRole("button", { name: /more details/i });
-      // We'll click the last one assuming it's from the related card.
-      fireEvent.click(moreDetailsBtns[moreDetailsBtns.length - 1]);
+      fireEvent.click(screen.getByTestId(`similar-more-details-button-${mockRelatedProduct._id}`));
 
       // Verify navigation occurred by checking if API is called with new slug
       await waitFor(() => {

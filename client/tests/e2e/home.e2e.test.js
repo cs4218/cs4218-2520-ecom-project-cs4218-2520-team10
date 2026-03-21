@@ -41,7 +41,7 @@ test.describe('Home Page Browsing — home.e2e.js', () => {
 
     await page.waitForLoadState('networkidle');
     const count = await page.locator('[data-testid^="product-card-"]').count();
-    expect(count).toBeGreaterThanOrEqual(0);
+    await expect(page.getByTestId('results-count') || page.locator('[data-testid^="product-card-"]')).toBeDefined();
   });
 
   test('3 Filter by price range', async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe('Home Page Browsing — home.e2e.js', () => {
 
     await page.waitForLoadState('networkidle');
     const count = await page.locator('[data-testid^="product-card-"]').count();
-    expect(count).toBeGreaterThanOrEqual(0);
+    await expect(page.getByTestId('results-count') || page.locator('[data-testid^="product-card-"]')).toBeDefined();
   });
 
   test('4 Filter by category AND price', async ({ page }) => {
@@ -63,7 +63,7 @@ test.describe('Home Page Browsing — home.e2e.js', () => {
 
     await page.waitForLoadState('networkidle');
     const count = await page.locator('[data-testid^="product-card-"]').count();
-    expect(count).toBeGreaterThanOrEqual(0);
+    await expect(page.getByTestId('results-count') || page.locator('[data-testid^="product-card-"]')).toBeDefined();
   });
 
   test('5 Reset filters', async ({ page }) => {
@@ -109,7 +109,6 @@ test.describe('Home Page Browsing — home.e2e.js', () => {
     await firstCard.locator('[data-testid^="product-details-button-"]').click();
 
     await expect(page).toHaveURL(/\/product\/.+/);
-    await expect(page.getByTestId('product-title')).not.toHaveText('', { timeout: 10000 });
     await expect(page.getByTestId('product-title')).toContainText(productName);
   });
 

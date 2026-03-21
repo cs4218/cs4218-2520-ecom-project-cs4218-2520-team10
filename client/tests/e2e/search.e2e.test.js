@@ -80,19 +80,26 @@ test.describe('Search Functionality — search.e2e.js', () => {
 	});
 
 	test('3 Search then search again', async ({ page }) => {
+		const response = await page.request.get(`${process.env.REACT_APP_API}/api/v1/product/get-product`);
+		const data = await response.json();
+		const firstProduct = data.products[0];
+		const firstSearchKeyword = firstProduct.name.split(' ')[0].toLowerCase();
+		const secondProduct = data.products[1];
+		const secondSearchKeyword = secondProduct.name.split(' ')[0].toLowerCase();
+
 		const searchInput = page.getByTestId('search-input');
 		await searchInput.waitFor({ state: 'visible', timeout: 10000 });
 		const searchButton = page.getByTestId('search-button');
 
 		// FIRST SEARCH
-		await searchInput.fill('shirt');
+		await searchInput.fill(firstSearchKeyword);
 		if (await searchButton.isVisible()) {
 			await searchButton.click();
 		} else {
 			await searchInput.press('Enter');
 		}
 
-		await expect(page).toHaveURL(/search.*shirt/i);
+		await expect(page).toHaveURL(new RegExp(`search.*${firstSearchKeyword}`, 'i'));
 		const firstCard = page.locator('[data-testid^="search-result-card-"]').first();
 		await expect(firstCard).toBeVisible({ timeout: 10000 });
 		const firstSearchResults = await page.locator('[data-testid^="search-result-name-"]').allTextContents();
@@ -100,14 +107,14 @@ test.describe('Search Functionality — search.e2e.js', () => {
 
 		// SECOND SEARCH
 		await searchInput.clear();
-		await searchInput.fill('phone');
+		await searchInput.fill(secondSearchKeyword);
 		if (await searchButton.isVisible()) {
 			await searchButton.click();
 		} else {
 			await searchInput.press('Enter');
 		}
 
-		await expect(page).toHaveURL(/search.*phone/i);
+		await expect(page).toHaveURL(new RegExp(`search.*${secondSearchKeyword}`, 'i'));
 		await expect(page.locator('[data-testid^="search-result-card-"]').first()).toBeVisible({ timeout: 10000 });
 		const secondSearchResults = await page.locator('[data-testid^="search-result-name-"]').allTextContents();
 
@@ -115,6 +122,11 @@ test.describe('Search Functionality — search.e2e.js', () => {
 	});
 
 	test('4 Search from product details page', async ({ page }) => {
+		const response = await page.request.get(`${process.env.REACT_APP_API}/api/v1/product/get-product`);
+		const data = await response.json();
+		const secondProduct = data.products[1];
+		const searchKeyword = secondProduct.name.split(' ')[0].toLowerCase();
+
 		const productCards = page.locator('.card');
 		await expect(productCards.first()).toBeVisible({ timeout: 10000 });
 
@@ -123,7 +135,7 @@ test.describe('Search Functionality — search.e2e.js', () => {
 
 		const searchInput = page.getByTestId('search-input');
 		await searchInput.waitFor({ state: 'visible', timeout: 10000 });
-		await searchInput.fill('tablet');
+		await searchInput.fill(searchKeyword);
 
 		const searchButton = page.getByTestId('search-button');
 		if (await searchButton.isVisible()) {
@@ -132,15 +144,20 @@ test.describe('Search Functionality — search.e2e.js', () => {
 			await searchInput.press('Enter');
 		}
 
-		await expect(page).toHaveURL(/search.*tablet/i);
+		await expect(page).toHaveURL(new RegExp(`search.*${searchKeyword}`, 'i'));
 		await expect(page.getByTestId('search-results-title')).toBeVisible();
 		await expect(page).not.toHaveURL(/\/product\//);
 	});
 
 	test('5 Search with partial product name', async ({ page }) => {
+		const response = await page.request.get(`${process.env.REACT_APP_API}/api/v1/product/get-product`);
+		const data = await response.json();
+		const firstProduct = data.products[0];
+		const searchPartialKeyword = firstProduct.name.split(' ')[0].toLowerCase().substring(0, 3); 
+
 		const searchInput = page.getByTestId('search-input');
 		await searchInput.waitFor({ state: 'visible', timeout: 10000 });
-		await searchInput.fill('lap');
+		await searchInput.fill(searchPartialKeyword);
 
 		const searchButton = page.getByTestId('search-button');
 		if (await searchButton.isVisible()) {
@@ -149,7 +166,7 @@ test.describe('Search Functionality — search.e2e.js', () => {
 			await searchInput.press('Enter');
 		}
 
-		await expect(page).toHaveURL(/search.*lap/i);
+		await expect(page).toHaveURL(new RegExp(`search.*${searchPartialKeyword}`, 'i'));
 		await expect(page.getByTestId('search-results-title')).toBeVisible();
 
 		// Partial match should return results
