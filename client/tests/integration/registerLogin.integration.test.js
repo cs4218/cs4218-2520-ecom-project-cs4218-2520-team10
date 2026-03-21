@@ -38,8 +38,8 @@
  * VARIETY (Rubric 0.5%): Multiple component files tested
  * ============================================================================
  * This file tests across 2 different source files:
- *   - pages/auth/Register.js (form submission, navigates to /login on success)
- *   - pages/auth/Login.js (destination page rendered after navigation)
+ *   - pages/Auth/Register.js (form submission, navigates to /login on success)
+ *   - pages/Auth/Login.js (destination page rendered after navigation)
  *
  * Integration points tested:
  *   - Register.js calls API → on success, calls navigate("/login")
@@ -54,8 +54,8 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../../src/context/auth";
 import { CartProvider } from "../../src/context/cart";
 import { SearchProvider } from "../../src/context/search";
-import Register from "../../src/pages/auth/Register";
-import Login from "../../src/pages/auth/Login";
+import Register from "../../src/pages/Auth/Register";
+import Login from "../../src/pages/Auth/Login";
 import axios from "axios";
 
 // ONLY mock the network layer

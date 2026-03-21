@@ -45,7 +45,7 @@
  * VARIETY (Rubric 0.5%): Multiple component files tested
  * ============================================================================
  * This file tests across 5 different source files:
- *   - pages/auth/Login.js (form submission, sets auth context)
+ *   - pages/Auth/Login.js (form submission, sets auth context)
  *   - context/auth.js (AuthProvider stores {user, token}, persists to localStorage)
  *   - components/Header.js (reads auth context, shows dynamic nav)
  *   - context/cart.js (CartProvider, real provider in tree)
@@ -66,7 +66,7 @@ import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../../src/context/auth";
 import { CartProvider } from "../../src/context/cart";
 import { SearchProvider } from "../../src/context/search";
-import Login from "../../src/pages/auth/Login";
+import Login from "../../src/pages/Auth/Login";
 import Header from "../../src/components/Header";
 import axios from "axios";
 
