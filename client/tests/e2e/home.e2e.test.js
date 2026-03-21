@@ -109,6 +109,9 @@ test.describe('Home Page Browsing — home.e2e.js', () => {
     await firstCard.locator('[data-testid^="product-details-button-"]').click();
 
     await expect(page).toHaveURL(/\/product\/.+/);
+    
+    // Wait for product data to load before asserting content
+    await expect(page.getByTestId('product-title')).not.toHaveText('', { timeout: 10000 });
     await expect(page.getByTestId('product-title')).toContainText(productName);
   });
 

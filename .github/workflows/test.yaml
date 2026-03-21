@@ -26,6 +26,28 @@ jobs:
         run: npm install
         working-directory: ./client
 
+      - name: Start server
+        run: npm run server > server.log 2>&1 &
+          sleep 3
+        env:
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+          DEV_MODE: ${{ secrets.DEV_MODE }}
+          PORT: 6060
+
+      - name: Start client
+        run: npm start > client.log 2>&1 &
+          sleep 5
+        env:
+          REACT_APP_API: http://localhost:6060
+          REACT_APP_CLIENT: http://localhost:3000
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
       - name: Run tests
         run: npm run test
         env:
@@ -34,3 +56,5 @@ jobs:
           BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
           BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
           BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
