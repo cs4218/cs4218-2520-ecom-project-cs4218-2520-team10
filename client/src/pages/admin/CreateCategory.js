@@ -159,6 +159,7 @@ const CreateCategory = () => {
               </table>
             </div>
             <Modal
+              title="Edit Category" // Fix: Added title so modal header separates close button from form input - Shaun Lee Xuan Wei A0252626E
               onCancel={() => setVisible(false)}
               footer={null}
               open={visible} // Fix: change deprecated visible field to open - Shaun Lee Xuan Wei A0252626E
