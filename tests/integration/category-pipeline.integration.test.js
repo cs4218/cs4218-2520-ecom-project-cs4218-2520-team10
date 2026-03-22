@@ -43,6 +43,16 @@ import userModel from "../../models/userModel.js";
 import JWT from "jsonwebtoken";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
+// Suppress console logs
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
+
 describe("BE-INT-6: Category Route <-> Middleware <-> Controller (Full Pipeline)", () => {
   let mongoServer;
   let adminToken;

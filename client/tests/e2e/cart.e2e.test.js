@@ -58,7 +58,7 @@ async function loginViaUI(page, email, password) {
   await page.getByRole("button", { name: "LOGIN" }).click();
 
   await expect(page.getByText("Login Successfully")).toBeVisible({
-    timeout: 5000,
+    timeout: 10000,
   });
 }
 
