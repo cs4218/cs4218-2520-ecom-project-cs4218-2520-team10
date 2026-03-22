@@ -230,7 +230,8 @@ export const getOrdersController = async (req, res) => {
       .find({ buyer: req.user._id })
       .populate("products", "-photo")
       .populate("buyer", "name");
-    res.json(orders);
+    // Fix: Added explicit 200 status code for consistency with error responses - EVAN YAN A0000000X
+    res.status(200).json(orders);
   } catch (error) {
     console.log(error);
     res.status(500).send({
