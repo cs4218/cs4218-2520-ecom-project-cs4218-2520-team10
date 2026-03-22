@@ -48,7 +48,7 @@
  */
 
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "../../src/context/auth";
@@ -94,6 +94,12 @@ afterEach(() => {
 });
 
 describe("FE-INT-2: Register → Login Navigation Integration", () => {
+  let user;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+  });
+
   // // Kim Shi Tong, A0265858J
   it("should navigate from Register to Login page after successful registration", async () => {
     // Mock register API success
@@ -101,36 +107,40 @@ describe("FE-INT-2: Register → Login Navigation Integration", () => {
       data: { success: true, message: "User registered successfully" },
     });
 
-    render(
-      <AuthProvider>
-        <CartProvider>
-          <SearchProvider>
-            <MemoryRouter initialEntries={["/register"]}>
-              <Routes>
-                <Route path="/register" element={<Register />} />
-                <Route path="/login" element={<Login />} />
-              </Routes>
-            </MemoryRouter>
-          </SearchProvider>
-        </CartProvider>
-      </AuthProvider>
-    );
+    await act(async () => {
+      render(
+        <AuthProvider>
+          <CartProvider>
+            <SearchProvider>
+              <MemoryRouter initialEntries={["/register"]}>
+                <Routes>
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/login" element={<Login />} />
+                </Routes>
+              </MemoryRouter>
+            </SearchProvider>
+          </CartProvider>
+        </AuthProvider>
+      );
+    });
 
     // Verify we start on Register page
     expect(screen.getByText("REGISTER FORM")).toBeInTheDocument();
 
     // Fill in registration form
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Name/i), "John");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "john@test.com");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "password123");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Phone/i), "12345678");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Address/i), "123 Street");
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Name/i), { target: { value: "John" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Email/i), { target: { value: "john@test.com" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Password/i), { target: { value: "password123" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Phone/i), { target: { value: "12345678" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Address/i), { target: { value: "123 Street" } });
     // DOB field
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your DOB/i), "2000-01-01");
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your DOB/i), { target: { value: "2000-01-01" } });
     // Answer field
-    await userEvent.type(screen.getByPlaceholderText(/What is Your Favorite sports/i), "fluffy");
+    fireEvent.change(screen.getByPlaceholderText(/What is Your Favorite sports/i), { target: { value: "fluffy" } });
 
-    await userEvent.click(screen.getByRole("button", { name: /REGISTER/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /REGISTER/i }));
+    });
 
     // After navigation, the Login page should render
     await waitFor(() => {

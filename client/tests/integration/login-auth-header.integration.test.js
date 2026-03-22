@@ -60,7 +60,7 @@
  */
 
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../../src/context/auth";
@@ -91,20 +91,31 @@ jest.mock("../../src/components/Layout", () => {
   };
 });
 
+// Mock SearchInput to avoid additional async side effects
+jest.mock("../../src/components/Form/SearchInput", () => {
+  return function MockSearchInput() {
+    return <input data-testid="search-input" />;
+  };
+});
+
 /**
  * Renders components wrapped in ALL real providers.
  * Key difference from MS1: context providers are REAL, not mocked.
  */
-const renderWithProviders = (ui, { initialRoute = "/" } = {}) => {
-  return render(
-    <AuthProvider>
-      <CartProvider>
-        <SearchProvider>
-          <MemoryRouter initialEntries={[initialRoute]}>{ui}</MemoryRouter>
-        </SearchProvider>
-      </CartProvider>
-    </AuthProvider>
-  );
+const renderWithProviders = async (ui, { initialRoute = "/" } = {}) => {
+  let result;
+  await act(async () => {
+    result = render(
+      <AuthProvider>
+        <CartProvider>
+          <SearchProvider>
+            <MemoryRouter initialEntries={[initialRoute]}>{ui}</MemoryRouter>
+          </SearchProvider>
+        </CartProvider>
+      </AuthProvider>
+    );
+  });
+  return result;
 };
 
 beforeEach(() => {
@@ -126,6 +137,12 @@ afterEach(() => {
 });
 
 describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
+  let user;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+  });
+
   // // Kim Shi Tong, A0265858J
   it("should update Header to show user name after successful login", async () => {
     // Mock the login API response
@@ -139,7 +156,7 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
     });
 
     // Render Login + Header together inside REAL providers
-    renderWithProviders(
+    await renderWithProviders(
       <>
         <Header />
         <Login />
@@ -152,9 +169,11 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
     expect(screen.getByText("Register")).toBeInTheDocument();
 
     // Fill form and submit
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "john@test.com");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "password123");
-    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Email/i), { target: { value: "john@test.com" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Password/i), { target: { value: "password123" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    });
 
     // After login: Header should show user's name
     await waitFor(() => {
@@ -173,7 +192,7 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       },
     });
 
-    renderWithProviders(
+    await renderWithProviders(
       <>
         <Header />
         <Login />
@@ -181,9 +200,11 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       { initialRoute: "/login" }
     );
 
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "john@test.com");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "password123");
-    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Email/i), { target: { value: "john@test.com" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Password/i), { target: { value: "password123" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    });
 
     await waitFor(() => {
       const stored = JSON.parse(localStorage.getItem("auth"));
@@ -204,7 +225,7 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       },
     });
 
-    renderWithProviders(
+    await renderWithProviders(
       <>
         <Header />
         <Login />
@@ -212,9 +233,11 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       { initialRoute: "/login" }
     );
 
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "john@test.com");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "password123");
-    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Email/i), { target: { value: "john@test.com" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Password/i), { target: { value: "password123" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    });
 
     await waitFor(() => {
       expect(axios.defaults.headers.common["Authorization"]).toBe("fake-jwt-token-xyz");
@@ -232,7 +255,7 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       })
     );
 
-    renderWithProviders(<Header />, { initialRoute: "/" });
+    await renderWithProviders(<Header />, { initialRoute: "/" });
 
     // Header should show user's name (read from real AuthProvider → localStorage)
     await waitFor(() => {
@@ -240,10 +263,14 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
     });
 
     // Click the user dropdown to reveal logout
-    await userEvent.click(screen.getByText("John"));
+    await act(async () => {
+      await user.click(screen.getByText("John"));
+    });
 
     // Click logout
-    await userEvent.click(screen.getByText("Logout"));
+    await act(async () => {
+      await user.click(screen.getByText("Logout"));
+    });
 
     // After logout: auth should be cleared
     await waitFor(() => {
@@ -266,7 +293,7 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       },
     });
 
-    renderWithProviders(
+    await renderWithProviders(
       <>
         <Header />
         <Login />
@@ -274,9 +301,11 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       { initialRoute: "/login" }
     );
 
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Email/i), "admin@test.com");
-    await userEvent.type(screen.getByPlaceholderText(/Enter Your Password/i), "adminpass");
-    await userEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Email/i), { target: { value: "admin@test.com" } });
+    fireEvent.change(screen.getByPlaceholderText(/Enter Your Password/i), { target: { value: "adminpass" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /LOGIN/i }));
+    });
 
     await waitFor(() => {
       const dashboardLink = screen.getByText("Dashboard").closest("a");
@@ -295,14 +324,16 @@ describe("FE-INT-1: Login ↔ AuthContext ↔ Header Integration", () => {
       })
     );
 
-    renderWithProviders(<Header />, { initialRoute: "/" });
+    await renderWithProviders(<Header />, { initialRoute: "/" });
 
     await waitFor(() => {
       expect(screen.getByText("Jane")).toBeInTheDocument();
     });
 
     // Click the user dropdown
-    await userEvent.click(screen.getByText("Jane"));
+    await act(async () => {
+      await user.click(screen.getByText("Jane"));
+    });
 
     const dashboardLink = screen.getByText("Dashboard").closest("a");
     expect(dashboardLink).toHaveAttribute("href", "/dashboard/user");
