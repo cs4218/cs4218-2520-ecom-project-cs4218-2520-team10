@@ -10,6 +10,9 @@ export default defineConfig({
   // Run tests in parallel
   fullyParallel: false, // Keep false if tests share DB state
 
+  // Single worker — E2E tests share a real MongoDB, parallel workers cause seed races
+  workers: 1,
+
   // Retry failed tests once
   retries: 1,
 

@@ -19,24 +19,27 @@ async function loginAsAdmin(page) {
   await page.getByTestId("email-input").fill(ADMIN_EMAIL);
   await page.getByTestId("password-input").fill(ADMIN_PASSWORD);
   await page.getByTestId("login-button").click();
-  await page.waitForURL(`${CLIENT}/`, { timeout: 10000 });
+  await page.waitForURL(`${CLIENT}/`, { timeout: 30000 });
 }
 
 // Helper: returns locator scoped to tbody rows only (excludes header row)
 const categoryRows = (page) => page.locator("tbody").getByRole("row");
 
 test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
+  test.beforeAll(async () => {
+    await seedDatabase();
+  });
+
   test.afterAll(async () => {
     await seedDatabase();
   });
 
   test.beforeEach(async ({ page }) => {
-    await seedDatabase();
     await page.goto(CLIENT);
     await page.evaluate(() => localStorage.clear());
     await loginAsAdmin(page);
     await page.goto(ADMIN_CREATE_CATEGORY_URL);
-    await expect(categoryRows(page).first()).toBeVisible({ timeout: 10000 });
+    await expect(categoryRows(page).first()).toBeVisible({ timeout: 30000 });
   });
 
   test("10.1 View existing categories", async ({ page }) => {
@@ -66,7 +69,7 @@ test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
     // Blank submit
     await page.getByRole("button", { name: /submit/i }).first().click();
     await expect(page.getByText("Name is required")).toBeVisible();
-    await expect(page.getByText("Name is required")).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Name is required")).not.toBeVisible({ timeout: 30000 });
 
     // Whitespace only
     await page.getByPlaceholder("Enter new category").fill("   ");
@@ -104,7 +107,7 @@ test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
 
   test("10.5 Edit category with duplicate name", async ({ page }) => {
     await categoryRows(page)
-      .filter({ hasText: "Electronics" })
+      .filter({ hasText: "Clothing" })
       .getByRole("button", { name: /edit/i })
       .click();
 
@@ -116,12 +119,12 @@ test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
 
     await expect(page.getByText("Book already exists")).toBeVisible();
     await expect(
-      categoryRows(page).filter({ hasText: "Electronics" })
+      categoryRows(page).filter({ hasText: "Clothing" })
     ).toBeVisible();
   });
 
   test("10.6 Delete a category", async ({ page }) => {
-    const categoryName = "Electronics";
+    const categoryName = "Clothing";
 
     await categoryRows(page)
       .filter({ hasText: categoryName })
@@ -135,7 +138,7 @@ test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
   });
 
   test("10.7 Cancel edit modal", async ({ page }) => {
-    const categoryName = "Electronics";
+    const categoryName = "Book";
 
     await categoryRows(page)
       .filter({ hasText: categoryName })

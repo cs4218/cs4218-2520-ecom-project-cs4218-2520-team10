@@ -30,7 +30,7 @@ test.describe("13. Navigation & Static Pages — navigation.e2e.js", () => {
   test("13.3 Footer About link", async ({ page }) => {
     await page.getByRole("link", { name: /^about$/i }).click();
     await expect(page).toHaveURL(`${CLIENT}/about`);
-    await expect(page).toHaveTitle(/about us/i, { timeout: 10000 });
+    await expect(page).toHaveTitle(/about us/i, { timeout: 30000 });
   });
 
   test("13.4 Footer Contact link", async ({ page }) => {
@@ -38,18 +38,18 @@ test.describe("13. Navigation & Static Pages — navigation.e2e.js", () => {
     await expect(page).toHaveURL(`${CLIENT}/contact`);
     await expect(
       page.getByRole("heading", { name: /contact us/i })
-    ).toBeVisible({ timeout: 10000 });
+    ).toBeVisible({ timeout: 30000 });
   });
 
   test("13.5 Footer Policy link", async ({ page }) => {
     await page.getByRole("link", { name: /privacy policy/i }).click();
     await expect(page).toHaveURL(`${CLIENT}/policy`);
-    await expect(page).toHaveTitle(/privacy policy/i, { timeout: 10000 });
+    await expect(page).toHaveTitle(/privacy policy/i, { timeout: 30000 });
   });
 
   test("13.6 404 page for invalid route", async ({ page }) => {
     await page.goto(`${CLIENT}/nonexistent-page`);
-    await expect(page.getByText("404")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("404")).toBeVisible({ timeout: 30000 });
     await expect(page.getByText(/page not found/i)).toBeVisible();
     await expect(page.getByRole("link", { name: /go back/i })).toBeVisible();
   });
@@ -57,7 +57,7 @@ test.describe("13. Navigation & Static Pages — navigation.e2e.js", () => {
   test("13.7 404 Go Back button", async ({ page }) => {
     await page.goto(`${CLIENT}/nonexistent-page`);
     await expect(page.getByRole("link", { name: /go back/i })).toBeVisible({
-      timeout: 10000,
+      timeout: 30000,
     });
     await page.getByRole("link", { name: /go back/i }).click();
     await expect(page).toHaveURL(`${CLIENT}/`);

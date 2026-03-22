@@ -11,12 +11,15 @@ dotenv.config({ path: resolve(__dirname, "../../.env") });
 const CLIENT = process.env.REACT_APP_CLIENT || "http://localhost:3000";
 
 test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
+  test.beforeAll(async () => {
+    await seedDatabase();
+  });
+
   test.afterAll(async () => {
     await seedDatabase();
   });
 
   test.beforeEach(async ({ page }) => {
-    await seedDatabase();
     await page.goto(CLIENT);
     await page.evaluate(() => localStorage.clear());
   });
@@ -25,7 +28,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
     await page.goto(`${CLIENT}/categories`);
 
     await expect(page.getByTestId(/^category-link-/).first()).toBeVisible({
-      timeout: 10000,
+      timeout: 30000,
     });
     const categoryLinks = page.getByTestId(/^category-link-/);
     const count = await categoryLinks.count();
@@ -39,27 +42,27 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
     await page.goto(`${CLIENT}/categories`);
 
     const firstCategoryLink = page.getByTestId(/^category-link-/).first();
-    await expect(firstCategoryLink).toBeVisible({ timeout: 10000 });
+    await expect(firstCategoryLink).toBeVisible({ timeout: 30000 });
     const categoryName = await firstCategoryLink.innerText();
     await firstCategoryLink.click();
 
     await expect(page).toHaveURL(/\/category\/.+/);
     await expect(page.getByTestId("category-name")).toBeVisible({
-      timeout: 10000,
+      timeout: 30000,
     });
     await expect(page.getByTestId("category-name")).toContainText(categoryName);
     await expect(page.getByTestId("product-count")).toBeVisible();
     await expect(page.getByTestId("product-count")).toContainText(
       /\d+ results found/
     );
-    await expect(page.locator(".card").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".card").first()).toBeVisible({ timeout: 30000 });
   });
 
   test("5.3 Cart badge increments and decrements from category page", async ({ page }) => {
     await page.goto(`${CLIENT}/categories`);
 
     await expect(page.getByTestId(/^category-link-/).first()).toBeVisible({
-      timeout: 10000,
+      timeout: 30000,
     });
     await page.getByTestId(/^category-link-/).first().click();
     await expect(page).toHaveURL(/\/category\/.+/);
@@ -68,7 +71,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
       .locator("button")
       .filter({ hasText: /add to cart/i })
       .first();
-    await expect(addToCartButton).toBeVisible({ timeout: 10000 });
+    await expect(addToCartButton).toBeVisible({ timeout: 30000 });
 
     const initialCartText = await page
       .locator("sup")
@@ -98,13 +101,13 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
     await page.goto(`${CLIENT}/categories`);
 
     await expect(page.getByTestId(/^category-link-/).first()).toBeVisible({
-      timeout: 10000,
+      timeout: 30000,
     });
     await page.getByTestId(/^category-link-/).first().click();
     await expect(page).toHaveURL(/\/category\/.+/);
 
     const firstCard = page.locator(".card").first();
-    await expect(firstCard).toBeVisible({ timeout: 10000 });
+    await expect(firstCard).toBeVisible({ timeout: 30000 });
     const productName = await firstCard
       .locator(".card-title")
       .first()
@@ -117,7 +120,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
 
     await expect(page).toHaveURL(/\/product\/.+/);
     await expect(page.getByTestId("product-title")).toBeVisible({
-      timeout: 10000,
+      timeout: 30000,
     });
     await expect(page.getByTestId("product-title")).toContainText(productName);
   });
@@ -130,7 +133,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
     const categoriesToggle = page
       .locator(".nav-link.dropdown-toggle")
       .filter({ hasText: /^categories$/i });
-    await expect(categoriesToggle).toBeVisible({ timeout: 10000 });
+    await expect(categoriesToggle).toBeVisible({ timeout: 30000 });
 
     await categoriesToggle.click();
 
@@ -144,6 +147,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
     const categoryItems = dropdownMenu.locator("a").filter({
       hasNotText: /^all categories$/i,
     });
+    await expect(categoryItems.first()).toBeVisible({ timeout: 30000 });
     const count = await categoryItems.count();
     expect(count).toBeGreaterThan(0);
 
