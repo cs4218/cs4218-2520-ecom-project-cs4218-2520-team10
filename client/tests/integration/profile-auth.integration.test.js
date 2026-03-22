@@ -142,7 +142,7 @@ describe("Profile <-> AuthContext Integration", () => {
     jest.restoreAllMocks();
   });
 
-  describe("Data Flow: Context → Profile", () => {
+  describe("Context → Profile", () => {
     it("should pre-populate form fields from auth context", async () => {
       // ── ARRANGE ──────────────────────────────────
       const initialAuth = {
@@ -231,7 +231,7 @@ describe("Profile <-> AuthContext Integration", () => {
     });
   });
 
-  describe("Data Flow: Profile → Context & Storage", () => {
+  describe("Profile → Context & Storage", () => {
     it("should sync profile update to auth context", async () => {
       // ── ARRANGE ──────────────────────────────────
       const initialAuth = {
