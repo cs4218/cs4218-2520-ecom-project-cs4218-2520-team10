@@ -60,7 +60,7 @@
   "buyer": {
     "$oid": "67a218decf4efddf1e5358ac"
   },
-  "status": "Not Process",
+  "status": "Not Processed",
   "createdAt": {
     "$date": "2025-02-04T13:42:16.741Z"
   },
