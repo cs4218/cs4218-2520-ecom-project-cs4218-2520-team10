@@ -409,7 +409,8 @@ describe('AuthController', () => {
       await registerController(req, res);
 
       // ── ASSERT ───────────────────────────────────
-      expect(res.status).toHaveBeenCalledWith(200);
+      // Fix: Updated to 409 after authController bug fix - KIM SHI TONG A0265858J
+      expect(res.status).toHaveBeenCalledWith(409);
       expect(res.send).toHaveBeenCalledWith({
         success: false,
         message: 'Already Registered. Please Login',

@@ -368,7 +368,19 @@ export const realtedProductController = async (req, res) => {
 export const productCategoryController = async (req, res) => {
   try {
     const category = await categoryModel.findOne({ slug: req.params.slug });
-    const products = await productModel.find({ category }).populate("category");
+
+    // Bug fix: Added check for category existence and return 404 if not found - Ong Chang Heng Bertrand A0253013X
+    if (!category) {
+      return res.status(404).send({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    const products = await productModel
+      .find({ category: category._id })
+      .populate("category");
+
     res.status(200).send({
       success: true,
       category,
@@ -378,8 +390,8 @@ export const productCategoryController = async (req, res) => {
     console.log(error);
     res.status(400).send({
       success: false,
+      message: "Error while getting products",
       error,
-      message: "Error While Getting products",
     });
   }
 };
@@ -456,6 +468,15 @@ export const braintreePaymentController = async (req, res) => {
         },
       );
     });
+
+    // Bug fix: Ensure quantity is decremented properly and handle cases where quantity might be missing - Ong Chang Heng Bertrand A0253013X
+    for (const item of cart) {
+      if (item._id) {
+        await productModel.findByIdAndUpdate(item._id, {
+          $inc: { quantity: -item.quantity || -1 },
+        });
+      }
+    }
 
     // Save order with proper await
     const order = await new orderModel({

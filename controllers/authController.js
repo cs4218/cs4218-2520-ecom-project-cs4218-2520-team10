@@ -9,30 +9,31 @@ export const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, address, answer } = req.body;
     //validations
-    // Fix: Changed from "error" to "message" for consistency - KIM SHI TONG A0265858J
+    // Fix: Added 400 status code to validation errors - KIM SHI TONG A0265858J
     if (!name) {
-      return res.send({ message: "Name is Required" });
+      return res.status(400).send({ message: "Name is Required" });
     }
     if (!email) {
-      return res.send({ message: "Email is Required" });
+      return res.status(400).send({ message: "Email is Required" });
     }
     if (!password) {
-      return res.send({ message: "Password is Required" });
+      return res.status(400).send({ message: "Password is Required" });
     }
     if (!phone) {
-      return res.send({ message: "Phone no is Required" });
+      return res.status(400).send({ message: "Phone no is Required" });
     }
     if (!address) {
-      return res.send({ message: "Address is Required" });
+      return res.status(400).send({ message: "Address is Required" });
     }
     if (!answer) {
-      return res.send({ message: "Answer is Required" });
+      return res.status(400).send({ message: "Answer is Required" });
     }
     //check user
     const exisitingUser = await userModel.findOne({ email });
     //exisiting user
+    // Fix: Changed from 200 to 409 Conflict for duplicate email - KIM SHI TONG A0265858J
     if (exisitingUser) {
-      return res.status(200).send({
+      return res.status(409).send({
         success: false,
         message: "Already Registered. Please Login",
       });
@@ -69,8 +70,9 @@ export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
     //validation
+    // Fix: Changed from 404 to 400 for missing fields - KIM SHI TONG A0265858J
     if (!email || !password) {
-      return res.status(404).send({
+      return res.status(400).send({
         success: false,
         message: "Invalid email or password",
       });
@@ -84,8 +86,9 @@ export const loginController = async (req, res) => {
       });
     }
     const match = await comparePassword(password, user.password);
+    // Fix: Changed from 200 to 401 for invalid password - KIM SHI TONG A0265858J
     if (!match) {
-      return res.status(200).send({
+      return res.status(401).send({
         success: false,
         message: "Invalid Password",
       });
@@ -190,9 +193,15 @@ export const updateProfileController = async (req, res) => {
       });
     }
     
-    // Password validation
     // Fix: Complete Password Length Validation with Status Code - YAN WEIDONG A0258151H
-    if (password !== undefined && password.length < 6) {
+    // Fix2: Changed `password !== undefined` to `password` because the frontend
+    // always sends password: "" (empty string) even when the user doesn't touch the
+    // field. The original check treated "" as a real password attempt and rejected it
+    // with 400, preventing users from updating name/phone/address without also
+    // providing a password. This is expected since the backend never returns the
+    // password field to the frontend (see loginController response, line 103-109),
+    // so Profile.js always initialises password state as "". - KIM SHI TONG A0265858J
+    if (password && password.length < 6) {
       return res.status(400).json({ error: "Password is required and 6 character long" });
     }
     

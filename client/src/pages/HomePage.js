@@ -87,7 +87,8 @@ const HomePage = () => {
     setChecked(all);
   };
   useEffect(() => {
-    if (!checked.length || !radio.length) getAllProducts();
+    // Bug fix: Changed logical operator from OR to AND to ensure both filters are empty before fetching all products - Ong Chang Heng Bertrand A0253013X
+    if (!checked.length && !radio.length) getAllProducts();
   }, [checked.length, radio.length]);
 
   useEffect(() => {
@@ -123,6 +124,7 @@ const HomePage = () => {
             {categories?.map((c) => (
               <Checkbox
                 key={c._id}
+                data-testid={`category-checkbox-${c._id}`}
                 onChange={(e) => handleFilter(e.target.checked, c._id)}
               >
                 {c.name}
@@ -135,7 +137,7 @@ const HomePage = () => {
             <Radio.Group onChange={(e) => setRadio(e.target.value)}>
               {Prices?.map((p) => (
                 <div key={p._id}>
-                  <Radio value={p.array}>{p.name}</Radio>
+                  <Radio value={p.array} data-testid={`price-radio-${p._id}`}>{p.name}</Radio>
                 </div>
               ))}
             </Radio.Group>
@@ -143,6 +145,7 @@ const HomePage = () => {
           <div className="d-flex flex-column">
             <button
               className="btn btn-danger"
+              data-testid="reset-filters-button"
               onClick={() => window.location.reload()}
             >
               RESET FILTERS
@@ -153,40 +156,37 @@ const HomePage = () => {
           <h1 className="text-center">All Products</h1>
           <div className="d-flex flex-wrap">
             {products?.map((p) => (
-              <div className="card m-2" key={p._id}>
+              <div className="card m-2" key={p._id} data-testid={`product-card-${p._id}`}>
                 <img
                   src={`/api/v1/product/product-photo/${p._id}`}
                   className="card-img-top"
                   alt={p.name}
+                  data-testid={`product-image-${p._id}`}
                 />
                 <div className="card-body">
                   <div className="card-name-price">
-                    <h5 className="card-title">{p.name}</h5>
-                    <h5 className="card-title card-price">
-                      {p.price.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}
+                    <h5 className="card-title" data-testid={`product-name-${p._id}`}>{p.name}</h5>
+                    <h5 className="card-title card-price" data-testid={`product-price-${p._id}`}>
+                      {p.price.toLocaleString("en-US", { style: "currency", currency: "USD" })}
                     </h5>
                   </div>
-                  <p className="card-text ">
+                  <p className="card-text" data-testid={`product-description-${p._id}`}>
                     {p.description.substring(0, 60)}...
                   </p>
                   <div className="card-name-price">
                     <button
                       className="btn btn-info ms-1"
+                      data-testid={`product-details-button-${p._id}`}
                       onClick={() => navigate(`/product/${p.slug}`)}
                     >
                       More Details
                     </button>
                     <button
                       className="btn btn-dark ms-1"
+                      data-testid={`product-cart-button-${p._id}`}
                       onClick={() => {
                         setCart([...cart, p]);
-                        localStorage.setItem(
-                          "cart",
-                          JSON.stringify([...cart, p])
-                        );
+                        localStorage.setItem("cart", JSON.stringify([...cart, p]));
                         toast.success("Item Added to cart");
                       }}
                     >
@@ -201,19 +201,13 @@ const HomePage = () => {
             {products && products.length < total && (
               <button
                 className="btn loadmore"
+                data-testid="load-more-button"
                 onClick={(e) => {
                   e.preventDefault();
                   setPage(page + 1);
                 }}
               >
-                {loading ? (
-                  "Loading ..."
-                ) : (
-                  <>
-                    {" "}
-                    Loadmore <AiOutlineReload />
-                  </>
-                )}
+                {loading ? "Loading ..." : "Loadmore ↻"}
               </button>
             )}
           </div>

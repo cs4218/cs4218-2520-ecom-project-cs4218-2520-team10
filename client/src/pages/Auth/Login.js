@@ -64,6 +64,7 @@ const Login = () => {
               id="exampleInputEmail1"
               placeholder="Enter Your Email "
               required
+              data-testid="email-input"
             />
           </div>
           <div className="mb-3">
@@ -75,6 +76,7 @@ const Login = () => {
               id="exampleInputPassword1"
               placeholder="Enter Your Password"
               required
+              data-testid="password-input"
             />
           </div>
           <div className="mb-3">
@@ -89,7 +91,7 @@ const Login = () => {
             </button>
           </div>
 
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary" data-testid="login-button">
             LOGIN
           </button>
         </form>
