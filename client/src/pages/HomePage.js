@@ -196,9 +196,13 @@ const HomePage = () => {
                 </div>
               </div>
             ))}
+            {/* Bug fix: Show message when no products match filters instead of loadmore button - Ong Chang Heng Bertrand A0253013X */}
+            {products?.length === 0 && (checked.length || radio.length) && (
+              <p className="text-center w-100 mt-3" data-testid="no-products-filter-message">No products found for the selected filters.</p>
+            )}
           </div>
           <div className="m-2 p-3">
-            {products && products.length < total && (
+            {products && products.length < total && !checked.length && !radio.length && (
               <button
                 className="btn loadmore"
                 data-testid="load-more-button"
