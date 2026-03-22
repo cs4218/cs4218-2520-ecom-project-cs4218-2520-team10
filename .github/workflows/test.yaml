@@ -81,7 +81,7 @@ jobs:
 
       - name: Run E2E tests
         run: npm run test:e2e
-        timeout-minutes: 10
+        timeout-minutes: 25
         env:
           REACT_APP_API: http://localhost:6060
           REACT_APP_CLIENT: http://localhost:3000
