@@ -213,7 +213,7 @@ describe("Orders <-> AuthContext Integration", () => {
     jest.restoreAllMocks();
   });
 
-  describe("Context → Orders (Happy Path)", () => {
+  describe("AuthContext → Orders (Happy Path)", () => {
     it("should receive token from auth context and set axios Authorization header", async () => {
       // ── ARRANGE ──────────────────────────────────
       const initialAuth = {
@@ -332,7 +332,7 @@ describe("Orders <-> AuthContext Integration", () => {
     });
   });
 
-  describe("Context → Orders (Data Integrity)", () => {
+  describe("AuthContext → Orders (Data Integrity)", () => {
     it("should display multiple orders with correct indexing", async () => {
       // ── ARRANGE ──────────────────────────────────
       const initialAuth = {
@@ -392,7 +392,7 @@ describe("Orders <-> AuthContext Integration", () => {
     });
   });
 
-  describe("Context → Orders (Error Handling)", () => {
+  describe("AuthContext → Orders (Error Handling)", () => {
     it("should not make API call when token is missing from auth context", async () => {
       // ── ARRANGE ──────────────────────────────────
       const initialAuth = {
