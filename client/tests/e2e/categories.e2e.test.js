@@ -51,7 +51,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
     await expect(page.locator(".card").first()).toBeVisible({ timeout: 10000 });
   });
 
-  test("5.3 Add to cart from category page", async ({ page }) => {
+  test("5.3 Cart badge increments and decrements from category page", async ({ page }) => {
     await page.goto(`${CLIENT}/categories`);
 
     await expect(page.getByTestId(/^category-link-/).first()).toBeVisible({
@@ -78,6 +78,13 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
     await expect(page.getByText("Item Added to cart")).toBeVisible();
     await expect(page.locator("sup").first()).toContainText(
       (initialCount + 1).toString()
+    );
+
+    // Remove item from cart — badge decrements
+    await page.evaluate(() => localStorage.removeItem("cart"));
+    await page.reload();
+    await expect(page.locator("sup").first()).toContainText(
+      initialCount.toString()
     );
   });
 
