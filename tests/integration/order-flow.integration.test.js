@@ -6,7 +6,7 @@
 /**
  * Integration Tests for Order Flow
  *
- * Test Strategy: Integration-based testing with real database interactions
+ * Test Strategy: Integration-based testing with in-memory database interactions
  *
  * Components Under Test:
  * - controllers/authController.js:
@@ -20,7 +20,7 @@
  * - Database interactions: create, read, update, populate operations
  *
  * Test Doubles Used:
- * - Real MongoDB database connection (no mocks for models/database)
+ * - In-memory MongoDB database (MongoMemoryServer)
  * - Fake Express req/res objects (mocked with jest.fn())
  * - Test data for models
  *
@@ -40,8 +40,7 @@
  * 11 | orderStatusController      | Error Handling   | Updates non-existent order                        | 404 Not Found, order not found error
  */
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-import connectDB from "../../config/db.js";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import {
   getOrdersController,
   getAllOrdersController,
@@ -53,12 +52,20 @@ import productModel from "../../models/productModel.js";
 import categoryModel from "../../models/categoryModel.js";
 import { ORDER_STATUS } from "../../constants/orderStatus.js";
 
-// Load environment variables
-dotenv.config();
+// Suppress console logs
+global.console = {
+  ...console,
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
 
 describe("Order Flow Integration", () => {
   let testUser1, testUser2, testCategory, testProduct1, testProduct2;
   let testOrder1, testOrder2, testOrder3;
+  let mongoServer;
 
   const testPaymentDetails = {
       transactionId: "txn_abc123xyz",
@@ -71,15 +78,13 @@ describe("Order Flow Integration", () => {
 
   // Setup test data before all tests
   beforeAll(async () => {
-    // Connect to MongoDB
-    if (mongoose.connection.readyState === 0) {
-      await connectDB();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
     }
 
-    // Suppress console output
-    jest.spyOn(console, "log").mockImplementation(() => {});
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(console, "warn").mockImplementation(() => {});
+    mongoServer = await MongoMemoryServer.create();
+    const mongoUri = mongoServer.getUri();
+    await mongoose.connect(mongoUri);
 
     // Create test users
     testUser1 = await userModel.create({
@@ -146,8 +151,9 @@ describe("Order Flow Integration", () => {
 
     jest.restoreAllMocks();
 
-    // Disconnect from MongoDB
+    // Disconnect from MongoDB and stop the in-memory server
     await mongoose.connection.close();
+    await mongoServer.stop();
   });
 
   // Clean up orders before each test
