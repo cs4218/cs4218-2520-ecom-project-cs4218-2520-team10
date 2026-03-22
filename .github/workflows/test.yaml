@@ -1,5 +1,4 @@
 name: Run FE & BE Tests
-
 on:
   push:
     branches: [main]
@@ -9,15 +8,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "20"
 
       - name: Install root dependencies
         run: npm install
@@ -26,13 +24,75 @@ jobs:
         run: npm install
         working-directory: ./client
 
-      - name: Run tests
-        run: npm run test
+      # ── Unit + Integration tests (no server needed) ──
+      - name: Run backend tests
+        run: npm run test:backend
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MONGODB_URL: ${{ secrets.MONGODB_URL }}
           BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
           BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
           BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+
+      - name: Run frontend tests
+        run: npm run test:frontend
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      # ── E2E tests (servers required) ──
+      - name: Start backend server
+        run: npm run server > server.log 2>&1 &
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+          PORT: 6060
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:6060 && echo "Backend ready" && break
+            echo "Attempt $i: waiting..."
+            sleep 2
+          done
+
+      - name: Start frontend client
+        run: npm start > client.log 2>&1 &
+        working-directory: ./client
+        env:
+          REACT_APP_API: http://localhost:6060
+          REACT_APP_CLIENT: http://localhost:3000
+
+      - name: Wait for frontend
+        run: |
+          for i in $(seq 1 60); do
+            if curl -s http://localhost:3000 | grep -q "<!DOCTYPE html>"; then
+              echo "Frontend ready"
+              break
+            fi
+            echo "Attempt $i: waiting..."
+            sleep 3
+          done
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        timeout-minutes: 10
+        env:
+          REACT_APP_API: http://localhost:6060
+          REACT_APP_CLIENT: http://localhost:3000
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
+      # ── Debug logs on failure ──
+      - name: Print server log
+        run: cat server.log || echo "No server log"
+        if: failure()
+
+      - name: Print client log
+        run: cat client.log || echo "No client log"
+        if: failure()
