@@ -53,7 +53,7 @@ jest.mock("../../src/components/Layout", () => ({ children }) => (
 
 jest.mock("../../src/components/AdminMenu", () => () => <div />);
 
-describe("FE-INT-9: CreateCategory ↔ CategoryForm", () => {
+describe("FE-INT-10: CreateCategory ↔ CategoryForm (Real Child Component)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
