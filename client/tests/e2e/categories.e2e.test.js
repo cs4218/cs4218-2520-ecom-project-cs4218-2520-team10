@@ -3,19 +3,22 @@
 
 import { test, expect } from "@playwright/test";
 import { seedDatabase } from "./db-seed.js";
+import dotenv from "dotenv";
+import { resolve } from "path";
 
-test.beforeAll(async () => {
-  await seedDatabase();
-});
+dotenv.config({ path: resolve(__dirname, "../../.env") });
+
+const CLIENT = process.env.REACT_APP_CLIENT || "http://localhost:3000";
 
 test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("http://localhost:3000");
+    await seedDatabase();
+    await page.goto(CLIENT);
     await page.evaluate(() => localStorage.clear());
   });
 
   test("5.1 View all categories page", async ({ page }) => {
-    await page.goto("http://localhost:3000/categories");
+    await page.goto(`${CLIENT}/categories`);
 
     await expect(page.getByTestId(/^category-link-/).first()).toBeVisible({
       timeout: 10000,
@@ -29,7 +32,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
   });
 
   test("5.2 Click a category to see its products", async ({ page }) => {
-    await page.goto("http://localhost:3000/categories");
+    await page.goto(`${CLIENT}/categories`);
 
     const firstCategoryLink = page.getByTestId(/^category-link-/).first();
     await expect(firstCategoryLink).toBeVisible({ timeout: 10000 });
@@ -49,7 +52,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
   });
 
   test("5.3 Add to cart from category page", async ({ page }) => {
-    await page.goto("http://localhost:3000/categories");
+    await page.goto(`${CLIENT}/categories`);
 
     await expect(page.getByTestId(/^category-link-/).first()).toBeVisible({
       timeout: 10000,
@@ -81,7 +84,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
   test("5.4 Navigate to product detail from category page", async ({
     page,
   }) => {
-    await page.goto("http://localhost:3000/categories");
+    await page.goto(`${CLIENT}/categories`);
 
     await expect(page.getByTestId(/^category-link-/).first()).toBeVisible({
       timeout: 10000,
@@ -111,7 +114,7 @@ test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
   test("5.5 Categories dropdown in header shows all categories and navigates", async ({
     page,
   }) => {
-    await page.goto("http://localhost:3000/");
+    await page.goto(`${CLIENT}/`);
 
     const categoriesToggle = page
       .locator(".nav-link.dropdown-toggle")
