@@ -31,7 +31,7 @@ export async function seedDatabase() {
       const raw = readFileSync(resolve(SCHEMA_DIR, file), "utf-8");
       const docs = EJSON.parse(raw);
       const col = db.collection(name);
-      await col.deleteMany({});
+      await col.deleteMany({}, { writeConcern: { w: 'majority' } });
       if (docs.length > 0) {
         await col.insertMany(docs);
       }
