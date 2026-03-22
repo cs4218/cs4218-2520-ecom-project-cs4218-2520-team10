@@ -4,6 +4,7 @@
     "react-app/jest"
   ],
   "rules": {
-    "testing-library/no-wait-for-multiple-assertions": "off"
+    "testing-library/no-wait-for-multiple-assertions": "off",
+    "testing-library/prefer-screen-queries": "off"
   }
 }
