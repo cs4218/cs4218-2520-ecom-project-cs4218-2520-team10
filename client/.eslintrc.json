@@ -4,7 +4,8 @@
     "react-app/jest"
   ],
   "rules": {
-    "testing-library/no-wait-for-multiple-assertions": "off"
+    "testing-library/no-wait-for-multiple-assertions": "off",
+    "testing-library/no-conditional-expect": "off"
   },
   "overrides": [
     {
