@@ -30,6 +30,10 @@ async function logout(page) {
 }
 
 test.describe("12. Admin — Order Management — admin-orders.e2e.js", () => {
+  test.afterAll(async () => {
+    await seedDatabase();
+  });
+
   test.beforeEach(async ({ page }) => {
     await seedDatabase();
     await page.goto(CLIENT);

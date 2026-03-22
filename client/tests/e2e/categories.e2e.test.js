@@ -11,6 +11,10 @@ dotenv.config({ path: resolve(__dirname, "../../.env") });
 const CLIENT = process.env.REACT_APP_CLIENT || "http://localhost:3000";
 
 test.describe("5. Category Browsing (Public) — categories.e2e.js", () => {
+  test.afterAll(async () => {
+    await seedDatabase();
+  });
+
   test.beforeEach(async ({ page }) => {
     await seedDatabase();
     await page.goto(CLIENT);

@@ -26,6 +26,10 @@ async function loginAsAdmin(page) {
 const categoryRows = (page) => page.locator("tbody").getByRole("row");
 
 test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
+  test.afterAll(async () => {
+    await seedDatabase();
+  });
+
   test.beforeEach(async ({ page }) => {
     await seedDatabase();
     await page.goto(CLIENT);
