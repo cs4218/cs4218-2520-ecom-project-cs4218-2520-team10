@@ -65,13 +65,14 @@ const AdminOrders = () => {
                       <td>{i + 1}</td>
                       <td>
                         <Select
-                          bordered={false}
+                          data-testid={`order-status-select-${i}`}
+                          variant="borderless"
                           onChange={(value) => handleChange(o._id, value)}
                           defaultValue={o?.status}
                         >
                           {status.map((s, i) => (
                             <Option key={i} value={s}>
-                              {s}
+                              <span data-testid={`order-status-option-${s.replace(/\s+/g, "-").toLowerCase()}`}>{s}</span>
                             </Option>
                           ))}
                         </Select>
