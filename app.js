@@ -47,7 +47,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('dev'));
+}
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use("/api/v1/auth", authRoutes);

@@ -94,6 +94,7 @@ let mongoServer;
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   await mongoose.connect(mongoServer.getUri());
+  jest.spyOn(console, "log").mockImplementation(() => {});
 });
 
 afterEach(async () => {
@@ -107,6 +108,7 @@ afterAll(async () => {
   await mongoose.connection.dropDatabase();
   await mongoose.connection.close();
   await mongoServer.stop();
+  console.log.mockRestore();
 });
 
 /**
