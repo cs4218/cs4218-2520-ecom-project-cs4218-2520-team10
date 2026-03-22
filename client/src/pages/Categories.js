@@ -17,7 +17,7 @@ const Categories = () => {
         <div className="row">
           {categories?.map((c) => ( // Fix: guard against categories being undefined or null - Shaun Lee Xuan Wei A0252626E
             <div className="col-md-6 mt-5 mb-3 gx-3 gy-3" key={c._id}>
-              <Link to={`/category/${c.slug}`} className="btn btn-primary">
+              <Link to={`/category/${c.slug}`} className="btn btn-primary" data-testid={`category-link-${c.slug}`}>
                 {c.name}
               </Link>
             </div>

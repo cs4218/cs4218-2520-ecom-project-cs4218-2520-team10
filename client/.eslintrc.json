@@ -5,5 +5,14 @@
   ],
   "rules": {
     "testing-library/no-wait-for-multiple-assertions": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["tests/e2e/**/*.js"],
+      "rules": {
+        "testing-library/no-render-result-queries": "off",
+        "testing-library/prefer-screen-queries": "off"
+      }
+    }
+  ]
 }
