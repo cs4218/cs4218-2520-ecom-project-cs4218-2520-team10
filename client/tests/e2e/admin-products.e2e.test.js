@@ -3,6 +3,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { seedDatabase } from './db-seed';
 
 /**
  * Admin Products UI tests (9 tests)
@@ -43,6 +44,14 @@ test.describe('Admin — Product CRUD — admin-products.e2e.test.js', () => {
     await expect(page.getByTestId('name-input')).not.toHaveValue('', { timeout: 10000 });
   }
 
+  test.beforeAll(async () => {
+    await seedDatabase();
+  });
+
+  test.afterAll(async () => {
+    await seedDatabase();
+  });
+
   test('1 View product list', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
@@ -78,7 +87,6 @@ test.describe('Admin — Product CRUD — admin-products.e2e.test.js', () => {
   });
 
   test('3 Create a new product', async ({ page }) => {
-    let createdProductSlug;
     await loginAsAdmin(page);
     await page.goto(ADMIN_CREATE_PRODUCT_URL);
 
@@ -135,17 +143,17 @@ test.describe('Admin — Product CRUD — admin-products.e2e.test.js', () => {
     await loginAsAdmin(page);
     await page.goto(ADMIN_PRODUCTS_URL);
 
-    // Click on test product to open update page and wait for form to load
+    // Click on a selected known seeded product to open update page and wait for form to load
     await gotoProductUpdatePage(
       page,
-      page.locator('[data-testid^="product-link-"]').filter({ hasText: 'Test Product Name' }).first()
+      page.locator('[data-testid^="product-link-"]').filter({ hasText: 'laptop' }).first()
     );
 
     // Get original values
     const originalName = await page.getByTestId('name-input').inputValue();
 
     // Update name and price
-    const newName = `Updated ${originalName} ${Date.now()}`;
+    const newName = `Updated ${originalName}`;
     await page.getByTestId('name-input').clear();
     await page.getByTestId('name-input').fill(newName);
     await page.getByTestId('price-input').clear();
