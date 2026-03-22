@@ -25,25 +25,28 @@ async function loginAsAdmin(page) {
 // Helper: returns locator scoped to tbody rows only (excludes header row)
 const categoryRows = (page) => page.locator("tbody").getByRole("row");
 
+let adminPage;
+
 test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
-  test.beforeAll(async () => {
+  test.beforeAll(async ({ browser }) => {
     await seedDatabase();
+    const context = await browser.newContext();
+    adminPage = await context.newPage();
+    await loginAsAdmin(adminPage);
   });
 
   test.afterAll(async () => {
+    await adminPage.close();
     await seedDatabase();
   });
 
-  test.beforeEach(async ({ page }) => {
-    await page.goto(CLIENT);
-    await page.evaluate(() => localStorage.clear());
-    await loginAsAdmin(page);
-    await page.goto(ADMIN_CREATE_CATEGORY_URL);
-    await expect(categoryRows(page).first()).toBeVisible({ timeout: 30000 });
+  test.beforeEach(async () => {
+    await adminPage.goto(ADMIN_CREATE_CATEGORY_URL);
+    await expect(categoryRows(adminPage).first()).toBeVisible({ timeout: 30000 });
   });
 
-  test("10.1 View existing categories", async ({ page }) => {
-    const rows = categoryRows(page);
+  test("10.1 View existing categories", async () => {
+    const rows = categoryRows(adminPage);
     const count = await rows.count();
     expect(count).toBeGreaterThan(0);
     for (let i = 0; i < count; i++) {
@@ -51,146 +54,146 @@ test.describe("10. Admin — Category CRUD — admin-categories.e2e.js", () => {
     }
   });
 
-  test("10.2 Create a new category", async ({ page }) => {
+  test("10.2 Create a new category", async () => {
     const categoryName = `TestCreate_${Date.now()}`;
 
-    await page.getByPlaceholder("Enter new category").fill(categoryName);
-    await page.getByRole("button", { name: /submit/i }).first().click();
+    await adminPage.getByPlaceholder("Enter new category").fill(categoryName);
+    await adminPage.getByRole("button", { name: /submit/i }).first().click();
 
-    await expect(page.getByText(`${categoryName} is created`)).toBeVisible();
+    await expect(adminPage.getByText(`${categoryName} is created`)).toBeVisible();
     await expect(
-      categoryRows(page).filter({ hasText: categoryName })
+      categoryRows(adminPage).filter({ hasText: categoryName })
     ).toBeVisible();
   });
 
-  test("10.3 Create category with empty name", async ({ page }) => {
-    const initialCount = await categoryRows(page).count();
+  test("10.3 Create category with empty name", async () => {
+    const initialCount = await categoryRows(adminPage).count();
 
     // Blank submit
-    await page.getByRole("button", { name: /submit/i }).first().click();
-    await expect(page.getByText("Name is required")).toBeVisible();
-    await expect(page.getByText("Name is required")).not.toBeVisible({ timeout: 30000 });
+    await adminPage.getByRole("button", { name: /submit/i }).first().click();
+    await expect(adminPage.getByText("Name is required")).toBeVisible();
+    await expect(adminPage.getByText("Name is required")).not.toBeVisible({ timeout: 30000 });
 
     // Whitespace only
-    await page.getByPlaceholder("Enter new category").fill("   ");
-    await page.getByRole("button", { name: /submit/i }).first().click();
-    await expect(page.getByText("Name is required")).toBeVisible();
+    await adminPage.getByPlaceholder("Enter new category").fill("   ");
+    await adminPage.getByRole("button", { name: /submit/i }).first().click();
+    await expect(adminPage.getByText("Name is required")).toBeVisible();
 
     // Verify no new row was added
-    const countAfter = await categoryRows(page).count();
+    const countAfter = await categoryRows(adminPage).count();
     expect(countAfter).toBe(initialCount);
   });
 
-  test("10.4 Edit a category", async ({ page }) => {
+  test("10.4 Edit a category", async () => {
     const originalName = "Electronics";
     const updatedName = "Electronics Updated";
 
-    await categoryRows(page)
+    await categoryRows(adminPage)
       .filter({ hasText: originalName })
       .getByRole("button", { name: /edit/i })
       .click();
 
-    const modal = page.getByRole("dialog");
+    const modal = adminPage.getByRole("dialog");
     await expect(modal).toBeVisible();
     await modal.getByPlaceholder("Enter new category").clear();
     await modal.getByPlaceholder("Enter new category").fill(updatedName);
     await modal.getByRole("button", { name: /submit/i }).click();
 
-    await expect(page.getByText(`${updatedName} is updated`)).toBeVisible();
+    await expect(adminPage.getByText(`${updatedName} is updated`)).toBeVisible();
     await expect(
-      categoryRows(page).filter({ hasText: updatedName })
+      categoryRows(adminPage).filter({ hasText: updatedName })
     ).toBeVisible();
     await expect(
-      page.getByRole("cell", { name: originalName, exact: true })
+      adminPage.getByRole("cell", { name: originalName, exact: true })
     ).not.toBeVisible();
   });
 
-  test("10.5 Edit category with duplicate name", async ({ page }) => {
-    await categoryRows(page)
+  test("10.5 Edit category with duplicate name", async () => {
+    await categoryRows(adminPage)
       .filter({ hasText: "Clothing" })
       .getByRole("button", { name: /edit/i })
       .click();
 
-    const modal = page.getByRole("dialog");
+    const modal = adminPage.getByRole("dialog");
     await expect(modal).toBeVisible();
     await modal.getByPlaceholder("Enter new category").clear();
     await modal.getByPlaceholder("Enter new category").fill("Book");
     await modal.getByRole("button", { name: /submit/i }).click();
 
-    await expect(page.getByText("Book already exists")).toBeVisible();
+    await expect(adminPage.getByText("Book already exists")).toBeVisible();
     await expect(
-      categoryRows(page).filter({ hasText: "Clothing" })
+      categoryRows(adminPage).filter({ hasText: "Clothing" })
     ).toBeVisible();
   });
 
-  test("10.6 Delete a category", async ({ page }) => {
+  test("10.6 Delete a category", async () => {
     const categoryName = "Clothing";
 
-    await categoryRows(page)
+    await categoryRows(adminPage)
       .filter({ hasText: categoryName })
       .getByRole("button", { name: /delete/i })
       .click();
 
-    await expect(page.getByText(`${categoryName} is deleted`)).toBeVisible();
+    await expect(adminPage.getByText(`${categoryName} is deleted`)).toBeVisible();
     await expect(
-      page.getByRole("cell", { name: categoryName, exact: true })
+      adminPage.getByRole("cell", { name: categoryName, exact: true })
     ).not.toBeVisible();
   });
 
-  test("10.7 Cancel edit modal", async ({ page }) => {
+  test("10.7 Cancel edit modal", async () => {
     const categoryName = "Book";
 
-    await categoryRows(page)
+    await categoryRows(adminPage)
       .filter({ hasText: categoryName })
       .getByRole("button", { name: /edit/i })
       .click();
 
-    const modal = page.getByRole("dialog");
+    const modal = adminPage.getByRole("dialog");
     await expect(modal).toBeVisible();
 
     await modal.getByRole("button", { name: /close/i }).click();
 
     await expect(modal).not.toBeVisible();
     await expect(
-      categoryRows(page).filter({ hasText: categoryName })
+      categoryRows(adminPage).filter({ hasText: categoryName })
     ).toBeVisible();
   });
 
-  test("10.8 Full CRUD cycle", async ({ page }) => {
+  test("10.8 Full CRUD cycle", async () => {
     const categoryName = "TestCat";
     const updatedName = "TestCatUpdated";
 
     // Create
-    await page.getByPlaceholder("Enter new category").fill(categoryName);
-    await page.getByRole("button", { name: /submit/i }).first().click();
-    await expect(page.getByText(`${categoryName} is created`)).toBeVisible();
+    await adminPage.getByPlaceholder("Enter new category").fill(categoryName);
+    await adminPage.getByRole("button", { name: /submit/i }).first().click();
+    await expect(adminPage.getByText(`${categoryName} is created`)).toBeVisible();
     await expect(
-      categoryRows(page).filter({ hasText: categoryName })
+      categoryRows(adminPage).filter({ hasText: categoryName })
     ).toBeVisible();
 
     // Edit
-    await categoryRows(page)
+    await categoryRows(adminPage)
       .filter({ hasText: categoryName })
       .getByRole("button", { name: /edit/i })
       .click();
-    const modal = page.getByRole("dialog");
+    const modal = adminPage.getByRole("dialog");
     await expect(modal).toBeVisible();
     await modal.getByPlaceholder("Enter new category").clear();
     await modal.getByPlaceholder("Enter new category").fill(updatedName);
     await modal.getByRole("button", { name: /submit/i }).click();
-    await expect(page.getByText(`${updatedName} is updated`)).toBeVisible();
+    await expect(adminPage.getByText(`${updatedName} is updated`)).toBeVisible();
     await expect(
-      categoryRows(page).filter({ hasText: updatedName })
+      categoryRows(adminPage).filter({ hasText: updatedName })
     ).toBeVisible();
 
     // Delete
-    await categoryRows(page)
+    await categoryRows(adminPage)
       .filter({ hasText: updatedName })
       .getByRole("button", { name: /delete/i })
       .click();
-    await expect(page.getByText(`${updatedName} is deleted`)).toBeVisible();
+    await expect(adminPage.getByText(`${updatedName} is deleted`)).toBeVisible();
     await expect(
-      page.getByRole("cell", { name: updatedName, exact: true })
+      adminPage.getByRole("cell", { name: updatedName, exact: true })
     ).not.toBeVisible();
   });
 });
