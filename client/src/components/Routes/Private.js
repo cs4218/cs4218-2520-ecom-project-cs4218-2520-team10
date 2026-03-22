@@ -1,8 +1,9 @@
-import React, { useState,useEffect } from "react"; // Bug fix: added React import required for JSX transform - Shaun Lee Xuan Wei A0252626E
+import { useState,useEffect } from "react";
 import { useAuth } from "../../context/auth";
 import { Outlet } from "react-router-dom";
 import axios from 'axios';
-import Spinner from "../Spinner"; // Bug fix: removed unused 'import { set } from "mongoose"' — server-side import in client code causes frontend test failures - Shaun Lee Xuan Wei A0252626E
+import { set } from "mongoose";
+import Spinner from "../Spinner";
 
 export default function PrivateRoute(){
     const [ok,setOk] = useState(false)
