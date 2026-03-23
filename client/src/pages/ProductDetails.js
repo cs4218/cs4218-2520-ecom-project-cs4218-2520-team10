@@ -99,12 +99,12 @@ const ProductDetails = () => {
         </div>
       </div>
       <hr />
-      <div className="row container similar-products">
+      <div className="row container similar-products" data-testid="similar-products">
         <h4 data-testid="similar-products-title">Similar Products ➡️</h4>
         {relatedProducts.length < 1 && (
           <p className="text-center" data-testid="no-similar-products">No Similar Products found</p>
         )}
-        <div className="d-flex flex-wrap">
+        <div className="d-flex flex-wrap" data-testid="similar-products-list">
           {relatedProducts?.map((p) => (
             <div className="card m-2" key={p._id}>
               <img

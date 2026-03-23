@@ -25,14 +25,15 @@ export default {
     "<rootDir>/client/src/pages/**/*.test.js",
     "<rootDir>/client/src/context/*.test.js",
     "<rootDir>/client/src/hooks/*.test.js",
-    "<rootDir>/client/src/components/Form/CategoryForm.test.js"
+    "<rootDir>/client/src/components/Form/CategoryForm.test.js",
+    "<rootDir>/client/tests/integration/*.test.js",
   ],
   // jest code coverage
   collectCoverage: true,
   collectCoverageFrom: [
     "client/src/context/auth.js",
-    "client/src/pages/Auth/Register.js",
-    "client/src/pages/Auth/Login.js",
+    "client/src/pages/auth/Register.js",
+    "client/src/pages/auth/Login.js",
     "client/src/pages/admin/CreateCategory.js",
     "client/src/pages/admin/CreateProduct.js",
     "client/src/pages/admin/Products.js",
@@ -42,7 +43,8 @@ export default {
     "client/src/pages/CategoryProduct.js",
     "client/src/pages/Categories.js",
     "client/src/hooks/useCategory.js",
-    "client/src/components/Form/CategoryForm.js"
+    "client/src/components/Form/CategoryForm.js",
+    "client/tests/integration/**",
   ],
   coverageThreshold: {
     global: {

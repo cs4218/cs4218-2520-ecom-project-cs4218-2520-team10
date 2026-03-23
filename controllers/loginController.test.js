@@ -176,8 +176,9 @@ describe("AuthController", () => {
     // INPUT VALIDATION (EP: Invalid Partition + BVA: Null/Empty Boundaries)
     // ══════════════════════════════════════════════════════════════════════════════
 
+    // Fix: Updated from 404 to 400 after authController bug fix - KIM SHI TONG A0265858J
     describe("Boundary Values", () => {
-      it("should return 404 with invalid credentials message when email is missing", async () => {
+      it("should return 400 with invalid credentials message when email is missing", async () => {
         // ── ARRANGE ──────────────────────────────────────────────────────────
         // EP: Invalid partition - missing required field (email)
         // BVA: Undefined value (field not present in object)
@@ -189,14 +190,14 @@ describe("AuthController", () => {
         await loginController(req, res);
 
         // ── ASSERT ───────────────────────────────────────────────────────────
-        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
           message: "Invalid email or password",
         });
       });
 
-      it("should return 404 with invalid credentials message when password is missing", async () => {
+      it("should return 400 with invalid credentials message when password is missing", async () => {
         // ── ARRANGE ──────────────────────────────────────────────────────────
         // EP: Invalid partition - missing required field (password)
         // BVA: Undefined value (field not present in object)
@@ -208,14 +209,14 @@ describe("AuthController", () => {
         await loginController(req, res);
 
         // ── ASSERT ───────────────────────────────────────────────────────────
-        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
           message: "Invalid email or password",
         });
       });
 
-      it("should return 404 with invalid credentials message when both fields are missing", async () => {
+      it("should return 400 with invalid credentials message when both fields are missing", async () => {
         // ── ARRANGE ──────────────────────────────────────────────────────────
         // Decision Table: email=missing AND password=missing → validation error
         // EP: Invalid partition - both required fields missing
@@ -225,14 +226,14 @@ describe("AuthController", () => {
         await loginController(req, res);
 
         // ── ASSERT ───────────────────────────────────────────────────────────
-        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
           message: "Invalid email or password",
         });
       });
 
-      it("should return 404 with invalid credentials message when email is empty string", async () => {
+      it("should return 400 with invalid credentials message when email is empty string", async () => {
         // ── ARRANGE ──────────────────────────────────────────────────────────
         // BVA: On-boundary value - empty string (length = 0, just past valid minimum)
         // EP: Invalid partition - falsy email value
@@ -245,14 +246,14 @@ describe("AuthController", () => {
         await loginController(req, res);
 
         // ── ASSERT ───────────────────────────────────────────────────────────
-        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
           message: "Invalid email or password",
         });
       });
 
-      it("should return 404 with invalid credentials message when email is null", async () => {
+      it("should return 400 with invalid credentials message when email is null", async () => {
         // ── ARRANGE ──────────────────────────────────────────────────────────
         // BVA: Boundary value - null (distinct from undefined and empty string)
         // EP: Invalid partition - falsy email value
@@ -265,7 +266,7 @@ describe("AuthController", () => {
         await loginController(req, res);
 
         // ── ASSERT ───────────────────────────────────────────────────────────
-        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.status).toHaveBeenCalledWith(400);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
           message: "Invalid email or password",
@@ -318,9 +319,8 @@ describe("AuthController", () => {
         await loginController(req, res);
 
         // ── ASSERT ───────────────────────────────────────────────────────────
-        // Note: Original code returns 200 for invalid password (security issue: should be 401)
-        // Test validates actual behavior, not ideal behavior
-        expect(res.status).toHaveBeenCalledWith(200);
+        // Fix: Updated to 401 after authController bug fix - KIM SHI TONG A0265858J
+        expect(res.status).toHaveBeenCalledWith(401);
         expect(res.send).toHaveBeenCalledWith({
           success: false,
           message: "Invalid Password",

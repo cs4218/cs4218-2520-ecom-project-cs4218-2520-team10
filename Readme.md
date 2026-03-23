@@ -3,7 +3,7 @@
 ## MS1 CI URL
 * https://github.com/cs4218/cs4218-2520-ecom-project-cs4218-2520-team10/actions/runs/22291995972/job/64480972725
 
-## 0. Contribution Summary
+# MS1 Contribution Summary (Unit Test)
 
 The following table outlines the testing contribution for our 4-member team based on the project architecture.
 
@@ -13,6 +13,32 @@ The following table outlines the testing contribution for our 4-member team base
 | **Yan Weidong A0258151H** | **Orders & Payments** | <ul><li>`pages/user/Orders.js`</li></ul> | <ul><li>`controllers/authController.js` (updateProfileController, getOrdersController, getAllOrdersController, orderStatusController)</li><li>`models/orderModel.js` <li>`controllers/authController.js` (braintreeTokenController, braintreePaymentController)</li></ul> |
 | **Ong Chang Heng Bertrand A0253013X** | **Products** | <ul><li>`pages/ProductDetails.js`</li><li>`pages/CategoryProduct.js`</li><li>`pages/admin/CreateProduct.js`</li><li>`pages/admin/UpdateProduct.js`</li><li>`pages/admin/Products.js`</li></ul> | <ul><li>`controllers/productController.js` (getProductController, getSingleProductController, createProductController, updateProductController, deleteProductController)</li><li>`models/productModel.js`</li></ul> |
 | **Shaun Lee Xuan Wei A0252626E** | **Categories** | <ul><li>`hooks/useCategory.js`</li><li>`pages/Categories.js`</li><li>`components/Form/CategoryForm.js`</li><li>`pages/admin/CreateCategory.js`</li></ul> | <ul><li>`controllers/categoryController.js` (createCategoryController, updateCategoryController, categoryController, singleCategoryController, deleteCategoryController)</li></ul> |
+
+---
+
+# MS2 Contribution Summary (Integration Test & UI E2E Test)
+
+## Integration Tests
+
+The following table outlines the integration testing contribution for our 4-member team.
+
+| Member | Scope | MS2 Integration Tests | Files Involved |
+| :--- | :--- | :--- | :--- |
+| **Kim Shi Tong (A0265858J)** | **Auth & Registration** | <ul><li>FE-INT-1 (Login↔AuthContext↔Header)</li><li>FE-INT-2 (Register→Login)</li><li>FE-INT-8 (PrivateRoute↔Auth↔Spinner)</li><li>BE-INT-1 (Auth Controller↔Model↔Helper)</li><li>BE-INT-2 (Auth Route full pipeline)</li></ul> | Login.js, Register.js, auth.js context, Header.js, Private.js, Spinner.js, authController.js, authMiddleware.js, authHelper.js, userModel.js |
+| **Yan Weidong (A0258151H)** | **Orders & Payments** | <ul><li>FE-INT-4 (HomePage↔Cart↔CartPage)</li><li>FE-INT-11 (Profile↔AuthContext)</li><li>FE-INT-12 (Orders↔AuthContext)</li><li>BE-INT-5 (Order flow — Controller↔OrderModel↔UserModel↔ProductModel)</li></ul> | HomePage.js, CartPage.js, cart.js context, Profile.js, Orders.js (user), authController.js (order functions), orderModel.js |
+| **Ong Chang Heng Bertrand (A0253013X)** | **Products** | <ul><li>FE-INT-5 (ProductDetails↔Cart)</li><li>FE-INT-3 (SearchInput↔SearchContext↔Search)</li><li>BE-INT-4 (Product Controller↔ProductModel↔CategoryModel)</li><li>BE-INT-7 (Product Route pipeline)</li></ul> | ProductDetails.js, SearchInput.js, Search.js, search.js context, productController.js, productModel.js, categoryModel.js |
+| **Shaun Lee Xuan Wei (A0252626E)** | **Categories** | <ul><li>FE-INT-6 (Categories↔useCategory)</li><li>FE-INT-7 (Header↔useCategory↔Auth↔Cart)</li><li>FE-INT-9 (AdminRoute↔Auth↔Spinner)</li><li>FE-INT-10 (CreateCategory↔CategoryForm)</li><li>BE-INT-3 (Category Controller↔Model)</li><li>BE-INT-6 (Category Route pipeline)</li></ul> | Categories.js, useCategory.js, Header.js, AdminRoute.js, CreateCategory.js, CategoryForm.js, categoryController.js, categoryModel.js |
+
+## UI E2E Tests
+
+The following table outlines the UI E2E testing contribution for our 4-member team.
+
+| Member | Test Files | Features Tested |
+| :--- | :--- | :--- |
+| **Kim Shi Tong (A0265858J)** | auth.spec.js, profile.spec.js, route-protection.spec.js | User authentication (login, register, forgot password), user profile management, route protection and access control |
+| **Yan Weidong (A0258151H)** | cart.spec.js, checkout.spec.js, user-orders.spec.js | Shopping cart functionality, checkout and payment processing, user order management |
+| **Ong Chang Heng Bertrand (A0253013X)** | home.spec.js, product-details.spec.js, admin-products.spec.js, search.spec.js | Home page display, product details and viewing, admin product management (create, update, delete), product search and filtering |
+| **Shaun Lee Xuan Wei (A0252626E)** | categories.spec.js, admin-categories.spec.js, admin-orders.spec.js, navigation.spec.js | Category browsing, admin category management, admin order management, site navigation |
 
 ---
 

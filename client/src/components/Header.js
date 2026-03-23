@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "../context/auth";
 import toast from "react-hot-toast";
@@ -10,7 +10,12 @@ import "../styles/Header.css";
 const Header = () => {
   const [auth, setAuth] = useAuth();
   const [cart] = useCart();
-  const { categories } = useCategory();
+  const { categories, error: categoryError } = useCategory();
+  useEffect(() => {
+    if (categoryError) {
+      toast.error(categoryError.message ?? "Something went wrong while fetching categories"); // Bug fix: show error toast when useCategory fails to fetch - Shaun Lee Xuan Wei A0252626E
+    }
+  }, [categoryError]);
   const handleLogout = () => {
     setAuth({
       ...auth,
@@ -61,7 +66,7 @@ const Header = () => {
                     </Link>
                   </li>
                   {categories?.map((c) => (
-                    <li>
+                    <li key={c._id}>
                       <Link
                         className="dropdown-item"
                         to={`/category/${c.slug}`}

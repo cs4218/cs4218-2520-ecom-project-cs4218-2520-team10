@@ -37,9 +37,13 @@ const CartPage = () => {
     try {
       let myCart = [...cart];
       let index = myCart.findIndex((item) => item._id === pid);
-      myCart.splice(index, 1);
-      setCart(myCart);
-      localStorage.setItem("cart", JSON.stringify(myCart));
+      // Fix: Prevent unexpected behaviour where if index === -1
+      // splice(-1, 1) would remove the last item - YAN WEIDONG A0258151H
+      if (index !== -1) {
+        myCart.splice(index, 1);
+        setCart(myCart);
+        localStorage.setItem("cart", JSON.stringify(myCart));
+      }
     } catch (error) {
       console.log(error);
     }
@@ -175,9 +179,6 @@ const CartPage = () => {
                     <DropIn
                       options={{
                         authorization: clientToken,
-                        paypal: {
-                          flow: "vault",
-                        },
                       }}
                       onInstance={(instance) => setInstance(instance)}
                     />

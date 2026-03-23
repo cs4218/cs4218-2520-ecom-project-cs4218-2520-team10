@@ -3,23 +3,35 @@ import UserMenu from "../../components/UserMenu";
 import Layout from "./../../components/Layout";
 import axios from "axios";
 import { useAuth } from "../../context/auth";
+import toast from "react-hot-toast";
 import moment from "moment";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [auth, setAuth] = useAuth();
+
   const getOrders = async () => {
     try {
       const { data } = await axios.get("/api/v1/auth/orders");
-      setOrders(data);
+      // Fix: Added response validation to ensure data is an array - YAN WEIDONG A0258151H
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        toast.error("Invalid response format from server");
+        setOrders([]);
+      }
     } catch (error) {
       console.log(error);
+      // Fix: Added user-facing error handling instead of just console logging - YAN WEIDONG A0258151H
+      toast.error(error.response?.data?.message || "Failed to fetch orders. Please try again later.");
+      setOrders([]);
     }
   };
 
   useEffect(() => {
     if (auth?.token) getOrders();
   }, [auth?.token]);
+
   return (
     <Layout title={"Your Orders"}>
       <div className="container-flui p-3 m-3 dashboard">
@@ -29,6 +41,7 @@ const Orders = () => {
           </div>
           <div className="col-md-9">
             <h1 className="text-center">All Orders</h1>
+            {orders.length === 0 && <p className="text-center">No orders found. Order something now!</p>}
             {orders?.map((o, i) => {
               return (
                 <div className="border shadow" key={o._id}>
@@ -48,7 +61,8 @@ const Orders = () => {
                         <td>{i + 1}</td>
                         <td>{o?.status}</td>
                         <td>{o?.buyer?.name}</td>
-                        <td>{moment(o?.createAt).fromNow()}</td>
+                        {/* Fix: Changed createAt to createdAt to match MongoDB timestamp field - YAN WEIDONG A0258151H */}
+                        <td>{moment(o?.createdAt).fromNow()}</td>
                         <td>{o?.payment.success ? "Success" : "Failed"}</td>
                         <td>{o?.products?.length}</td>
                       </tr>

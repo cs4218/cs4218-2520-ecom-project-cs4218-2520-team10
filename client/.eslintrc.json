@@ -1,0 +1,19 @@
+{
+  "extends": [
+    "react-app",
+    "react-app/jest"
+  ],
+  "rules": {
+    "testing-library/no-wait-for-multiple-assertions": "off",
+    "testing-library/no-conditional-expect": "off"
+  },
+  "overrides": [
+    {
+      "files": ["tests/e2e/**/*.js"],
+      "rules": {
+        "testing-library/no-render-result-queries": "off",
+        "testing-library/prefer-screen-queries": "off"
+      }
+    }
+  ]
+}
