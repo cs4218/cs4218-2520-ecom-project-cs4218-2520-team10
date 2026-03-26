@@ -1,525 +1,521 @@
 # MS3 TROFOS Stories — Non-Functional Testing
 
-## Final Assignments
+## Assignments
 
 | Member | Student ID | Test Type | Tool |
 |--------|-----------|-----------|------|
 | **Kim Shi Tong** | A0265858J | Load Testing | Grafana k6 |
 | **Yan Weidong** | A0258151H | Spike Testing | Grafana k6 |
-| **Ong Chang Heng Bertrand** | A0253013X | Soak/Endurance Testing | Grafana k6 |
 | **Shaun Lee Xuan Wei** | A0252626E | Stress Testing | Grafana k6 |
+| **Ong Chang Heng Bertrand** | A0253013X | Soak/Endurance Testing | Grafana k6 |
 
 ---
 
 ## Kim Shi Tong (A0265858J) — Load Testing
 
----
-
 ### Story 1
 
-**Title:** [Load Test] k6 Environment Setup & Smoke Test
+**Title:** [Load Test] Product Browsing API Under Expected Traffic
 
 **Description:**
-Set up Grafana k6 load testing infrastructure and validate with a smoke test.
+Proposed k6 Load Test (load-product-browsing.js):
 
-1. Install k6 on local machine
-   - Action: `brew install k6` (macOS), verify with `k6 version`.
-   - Metric: k6 CLI runs successfully.
+1. Load test GET all products at 50 VUs
+   - Test Scenario: Ramp from 0 → 20 → 50 VUs over 3 min, hold at 50 VUs for 5 min, ramp down over 1 min. Each VU sends `GET /api/v1/product/get-product`.
+   - Assertion: p95 response time < 500ms. Error rate < 1%. Response body contains `products` array.
 
-2. Create project test directory structure
-   - Action: Create `tests/nft/` directory and `results/` directory for artifacts.
-   - Metric: Directories exist and are tracked in Git.
+2. Load test paginated product list at 50 VUs
+   - Test Scenario: Same VU profile. Each VU sends `GET /api/v1/product/product-list/:page` with random page (1–3).
+   - Assertion: p95 < 500ms. Status 200 for all requests.
 
-3. Write and run a smoke test against the API
-   - Action: Create `tests/nft/load-test.js` with 1 VU, 10s duration hitting `GET /api/v1/product/get-product`.
-   - Metric: k6 completes with 0 errors and status 200 checks passing.
+3. Load test single product detail at 50 VUs
+   - Test Scenario: Each VU sends `GET /api/v1/product/get-product/:slug` using known product slugs.
+   - Assertion: p95 < 500ms. Response contains product name and description.
 
-4. Configure HTML report generation
-   - Action: Add `handleSummary()` using k6-reporter to export `results/load-test-report.html`.
-   - Metric: HTML report file is generated after test run.
+4. Load test product count at 50 VUs
+   - Test Scenario: Each VU sends `GET /api/v1/product/product-count`.
+   - Assertion: p95 < 300ms. Response contains `total` count.
 
 ---
 
 ### Story 2
 
-**Title:** [Load Test] Product & Category API Endpoints Under Expected Traffic
+**Title:** [Load Test] Search & Filter API Under Expected Traffic
 
 **Description:**
-Write k6 load test scenarios for the core public-facing product and category endpoints, simulating expected user browsing traffic.
+Proposed k6 Load Test (load-search-filter.js):
 
-1. Load test — GET all products
-   - Test Scenario: Ramp from 0 → 20 → 50 VUs over 3 min, hold at 50 VUs for 5 min, ramp down over 1 min. Each VU hits `GET /api/v1/product/get-product`.
-   - Metric: p95 response time < 500ms, error rate < 1%.
+1. Load test product search at 50 VUs
+   - Test Scenario: 50 VUs steady state. Each VU sends `GET /api/v1/product/search/:keyword` with random keywords (laptop, phone, book, shirt, camera). Search uses regex on MongoDB.
+   - Assertion: p95 < 600ms (slower due to regex). Error rate < 1%.
 
-2. Load test — GET categories
-   - Test Scenario: Same VU profile. Each VU also hits `GET /api/v1/category/get-category` (loaded on every page via Header component).
-   - Metric: p95 response time < 400ms, status 200 for all requests.
+2. Load test product filters at 50 VUs
+   - Test Scenario: 50 VUs steady state. Each VU sends `POST /api/v1/product/product-filters` with `{ checked: [], radio: [0, 100] }`.
+   - Assertion: p95 < 500ms. Response contains filtered products array.
 
-3. Load test — Paginated product list
-   - Test Scenario: Each VU hits `GET /api/v1/product/product-list/:page` with random page 1–3.
-   - Metric: p95 response time < 500ms, response contains product data.
+3. Load test category-wise product listing at 50 VUs
+   - Test Scenario: 50 VUs. Each VU sends `GET /api/v1/product/product-category/:slug` using known category slugs.
+   - Assertion: p95 < 500ms. Status 200.
 
-4. Load test — Product search
-   - Test Scenario: Each VU hits `GET /api/v1/product/search/:keyword` with random keywords (laptop, phone, book, shirt, camera).
-   - Metric: p95 response time < 600ms (search uses regex on MongoDB — slower expected).
-
-5. Load test — Product filters
-   - Test Scenario: Each VU sends `POST /api/v1/product/product-filters` with `{ checked: [], radio: [0, 100] }`.
-   - Metric: p95 response time < 500ms.
+4. Load test related products at 50 VUs
+   - Test Scenario: 50 VUs. Each VU sends `GET /api/v1/product/related-product/:pid/:cid` using known product and category IDs.
+   - Assertion: p95 < 500ms. Response returns related products.
 
 ---
 
 ### Story 3
 
-**Title:** [Load Test] Auth API Endpoints Under Expected Traffic
+**Title:** [Load Test] Auth & Category API Under Expected Traffic
 
 **Description:**
-Extend the load test to include authentication endpoints, simulating concurrent user logins under normal traffic patterns.
+Proposed k6 Load Test (load-auth-category.js):
 
-1. Load test — Login endpoint
-   - Test Scenario: At 50 VUs steady state, every 5th iteration sends `POST /api/v1/auth/login` with test credentials. bcrypt hashing is CPU-bound.
-   - Metric: p95 response time < 800ms, no 500 errors.
+1. Load test login endpoint at 50 VUs
+   - Test Scenario: 50 VUs steady state. Each VU sends `POST /api/v1/auth/login` with test credentials. bcrypt hashing is CPU-bound — tests server CPU capacity at expected load.
+   - Assertion: p95 < 800ms (bcrypt is inherently slow). No 500 errors.
 
-2. Load test — Realistic user flow simulation
-   - Test Scenario: Each VU follows a realistic browsing flow: browse categories → view products → search → occasionally login. Add 1s think time (sleep) between requests.
-   - Metric: All endpoints maintain p95 < 500ms under combined load.
+2. Load test get all categories at 50 VUs
+   - Test Scenario: 50 VUs. Each VU sends `GET /api/v1/category/get-category`. This endpoint is called on every page load (Header component).
+   - Assertion: p95 < 400ms (lightweight query). Error rate 0%.
 
-3. Load test — Per-endpoint URL tagging
-   - Test Scenario: Tag each request with `{ tags: { name: 'products' } }`, `{ tags: { name: 'login' } }`, etc. for granular per-endpoint metrics.
-   - Metric: k6 summary shows separate p95/p99 for each endpoint.
+3. Load test single category at 50 VUs
+   - Test Scenario: 50 VUs. Each VU sends `GET /api/v1/category/single-category/:slug` with known slugs.
+   - Assertion: p95 < 400ms. Response contains category data.
+
+4. Load test register endpoint at 50 VUs
+   - Test Scenario: 50 VUs. Each VU sends `POST /api/v1/auth/register` with unique generated emails (using VU id + iteration). Tests write concurrency.
+   - Assertion: p95 < 1000ms. No 500 errors.
 
 ---
 
 ### Story 4
 
-**Title:** [Load Test] Threshold Configuration & Results Analysis
+**Title:** [Load Test] Realistic User Journey Simulation
 
 **Description:**
-Configure k6 thresholds for pass/fail criteria and analyze initial load test results to identify performance bottlenecks.
+Proposed k6 Load Test (load-user-journey.js):
 
-1. Set global thresholds
-   - Action: Configure `http_req_duration: ['p(95)<500', 'p(99)<1000']` and `http_req_failed: ['rate<0.01']`.
-   - Metric: k6 reports PASS or FAIL for each threshold.
+1. Simulate full browsing journey at 50 VUs
+   - Test Scenario: Each VU follows a realistic flow: `GET /api/v1/category/get-category` → `GET /api/v1/product/get-product` → `GET /api/v1/product/search/laptop` → `GET /api/v1/product/get-product/:slug` → `POST /api/v1/auth/login`. 1s think time between requests.
+   - Assertion: Full iteration completes in < 5s. Overall p95 < 500ms.
 
-2. Set per-endpoint thresholds
-   - Action: Configure per-tag thresholds: products < 500ms, categories < 400ms, search < 600ms, login < 800ms.
-   - Metric: Each endpoint has its own pass/fail status.
+2. Simulate returning user journey at 50 VUs
+   - Test Scenario: Each VU: login → browse categories → filter products → view paginated list → view product detail. 1s sleep between requests.
+   - Assertion: End-to-end journey completes. All endpoints return 200.
 
-3. Run full load test and capture results
-   - Action: Run `k6 run tests/nft/load-test.js`, capture terminal summary screenshot, export JSON results.
-   - Metric: HTML report and JSON file generated in `results/`.
+3. Throughput measurement at 50 VUs
+   - Test Scenario: Run the full journey for 5 min at steady 50 VUs. Measure total requests/sec the server can sustain.
+   - Assertion: Throughput ≥ 100 req/s. No throughput degradation over the 5-min window.
 
-4. Analyze performance bottlenecks
-   - Action: Identify which endpoint has the highest p95 latency. Document requests/sec throughput.
-   - Metric: Written analysis of which endpoints are slowest and potential causes (e.g., search regex, bcrypt CPU).
+4. Per-endpoint latency comparison at 50 VUs
+   - Test Scenario: Tag each request with endpoint name (`{ tags: { name: 'products' } }`) for granular reporting. Run full journey test.
+   - Assertion: Each endpoint stays under its individual threshold. Report ranks endpoints from fastest to slowest.
 
 ---
 
 ### Story 5
 
-**Title:** [Load Test] Bug Fixes, Final Reports & README Update
+**Title:** [Load Test] Concurrent Read-Write Mixed Workload
 
 **Description:**
-Fix any performance issues found during load testing, generate final reports, and prepare for ms3 submission.
+Proposed k6 Load Test (load-mixed-workload.js):
 
-1. Fix bugs discovered during load testing
-   - Action: Investigate any endpoints returning 500 errors or timing out under load. Fix error handling or query optimization as needed.
-   - Metric: Re-run load test — all thresholds pass, error rate < 1%.
+1. Mixed read + write at 50 VUs
+   - Test Scenario: 80% of VU iterations are read-only (GET products, categories, search). 20% are write operations (POST login, POST filters). Simulates realistic read-heavy e-commerce traffic.
+   - Assertion: Read p95 < 500ms. Write p95 < 800ms. Combined error rate < 1%.
 
-2. Generate final load test report
-   - Action: Run final load test with `K6_WEB_DASHBOARD=true`. Save HTML report, JSON results, and terminal summary screenshot.
-   - Metric: `results/load-test-report.html` and `results/load-test-results.json` committed.
+2. Concurrent product photo requests at 50 VUs
+   - Test Scenario: 50 VUs each requesting `GET /api/v1/product/product-photo/:pid`. Photo endpoint returns binary data — tests I/O and bandwidth under load.
+   - Assertion: p95 < 1000ms. No 500 errors. Response content-type is image/*.
 
-3. Add name and student ID comments
-   - Action: Ensure `// Kim Shi Tong, A0265858J` comment is at the top of `tests/nft/load-test.js`.
-   - Metric: Comment present and visible.
+3. Multiple paginated pages at 50 VUs
+   - Test Scenario: 50 VUs each cycling through pages 1, 2, 3 of `GET /api/v1/product/product-list/:page`. Tests consistent pagination performance.
+   - Assertion: All pages respond < 500ms. Page 3 latency is not significantly worse than page 1.
 
-4. Update README.md with MS3 contribution
-   - Action: Add MS3 table entry: test type (Load Testing), tool (Grafana k6), endpoints tested, key findings, bugs fixed.
-   - Metric: README contains clear MS3 contribution for Kim Shi Tong.
-
-5. Tag ms3 on GitHub
-   - Action: Coordinate with team, `git tag ms3 && git push origin ms3`.
-   - Metric: Tag exists on remote with all NFT artifacts included.
+4. Sustained 50-VU throughput over 10 minutes
+   - Test Scenario: Hold the full mixed workload at 50 VUs for 10 min. This is the final comprehensive load test.
+   - Assertion: All thresholds pass for the full duration. HTML report generated. JSON results exported.
 
 ---
 ---
 
 ## Yan Weidong (A0258151H) — Spike Testing
 
----
-
 ### Story 1
 
-**Title:** [Spike Test] k6 Environment Setup & Spike Profile Design
+**Title:** [Spike Test] Product Browsing Under Sudden Traffic Surge
 
 **Description:**
-Set up k6 for spike testing and design the VU profile that simulates sudden, massive traffic surges (e.g., flash sale, viral post).
+Proposed k6 Spike Test (spike-product-browsing.js):
 
-1. Install k6 and create test file
-   - Action: Install k6, create `tests/nft/spike-test.js` with placeholder structure.
-   - Metric: `k6 version` runs, file created.
+1. Spike test GET all products — baseline then surge
+   - Test Scenario: Baseline at 10 VUs for 1 min → instant jump to 500 VUs in 10s → hold at 500 for 1 min → instant drop to 10 VUs → observe 2 min recovery. Each VU hits `GET /api/v1/product/get-product`.
+   - Assertion: Server does not crash during surge. Error rate during spike < 15%. Recovery p95 returns to within 20% of baseline within 30s of spike ending.
 
-2. Design spike VU profile
-   - Action: Configure stages: baseline at 10 VUs (1 min) → instant jump to 500 VUs in 10s → hold 1 min → instant drop to 10 VUs in 10s → recovery observation 2 min → ramp down.
-   - Metric: Stages configured with near-zero ramp-up/down (10s) to simulate real-world sudden surge.
+2. Spike test paginated product list — sudden surge
+   - Test Scenario: Same spike profile (10 → 500 → 10 VUs). Each VU hits `GET /api/v1/product/product-list/:page` with random pages.
+   - Assertion: Pagination still works during spike. p95 during recovery < 800ms.
 
-3. Smoke test the spike script
-   - Action: Run with scaled-down VUs (10 → 50 → 10) to verify script executes correctly.
-   - Metric: k6 completes without script errors.
+3. Spike test product detail — sudden surge
+   - Test Scenario: Same spike profile. Each VU hits `GET /api/v1/product/get-product/:slug`.
+   - Assertion: Product details still load during peak. No data corruption in responses.
+
+4. Spike test product count — sudden surge
+   - Test Scenario: Same spike profile. Each VU hits `GET /api/v1/product/product-count`.
+   - Assertion: Count endpoint stays responsive (lightweight query should survive spike).
 
 ---
 
 ### Story 2
 
-**Title:** [Spike Test] Product Browsing Endpoints Under Sudden Traffic Surge
+**Title:** [Spike Test] Search & Filter Under Flash Sale Scenario
 
 **Description:**
-Test product browsing endpoints (the most traffic-heavy pages) under a sudden spike simulating a flash sale scenario.
+Proposed k6 Spike Test (spike-search-filter.js):
 
-1. Spike test — GET all products
-   - Test Scenario: Baseline at 10 VUs → instant surge to 500 VUs hitting `GET /api/v1/product/get-product`. Hold spike for 1 min. Drop back to 10 VUs.
-   - Metric: Server survives spike without crashing. Measure error rate during spike vs baseline.
+1. Spike test product search — flash sale rush
+   - Test Scenario: 10 VUs baseline → instant surge to 500 VUs → each VU searches `GET /api/v1/product/search/:keyword` with keywords (laptop, phone, headphones, tablet). Regex search is DB-intensive.
+   - Assertion: Search endpoint survives the spike without crashing. Track how many requests timeout or return 500.
 
-2. Spike test — GET categories
-   - Test Scenario: Same spike profile. Each VU also hits `GET /api/v1/category/get-category`.
-   - Metric: Response time during spike vs during recovery. Target: recovery p95 < 800ms.
+2. Spike test product filters — flash sale rush
+   - Test Scenario: Same spike profile. Each VU sends `POST /api/v1/product/product-filters` with `{ checked: [], radio: [0, 100] }`.
+   - Assertion: Filter endpoint responds during spike. p95 during recovery < 1s.
 
-3. Spike test — Product search under surge
-   - Test Scenario: Each VU hits `GET /api/v1/product/search/:keyword` with random keywords during the spike. Regex search is DB-intensive.
-   - Metric: Track how many search requests fail (status 500 or timeout) during the 500-VU spike.
+3. Spike test category-wise products — flash sale rush
+   - Test Scenario: Same spike profile. Each VU hits `GET /api/v1/product/product-category/:slug`.
+   - Assertion: Category filtering works under sudden surge.
 
-4. Spike test — Paginated product list
-   - Test Scenario: Each VU hits `GET /api/v1/product/product-list/:page` with random pages during spike.
-   - Metric: p95 response time during spike, error rate.
+4. Recovery measurement after search spike
+   - Test Scenario: After spike drops from 500 → 10 VUs, track search response time every 5s for 2 min.
+   - Assertion: Search p95 returns to baseline level within 60 seconds of spike ending.
 
 ---
 
 ### Story 3
 
-**Title:** [Spike Test] Auth Endpoint Under Sudden Login Surge
+**Title:** [Spike Test] Auth Endpoints Under Sudden Login Surge
 
 **Description:**
-Simulate a scenario where hundreds of users try to log in simultaneously (e.g., a flash sale starts and users rush to authenticate).
+Proposed k6 Spike Test (spike-auth.js):
 
-1. Spike test — Login endpoint under surge
-   - Test Scenario: During the 500-VU spike, every 3rd iteration sends `POST /api/v1/auth/login` with test credentials. bcrypt is CPU-bound — likely the first endpoint to degrade.
-   - Metric: Login response time during spike. Does the server queue or reject requests?
+1. Spike test login — hundreds of users logging in at once
+   - Test Scenario: 10 VUs baseline → instant jump to 500 VUs → each VU sends `POST /api/v1/auth/login`. bcrypt is CPU-bound — this is the most likely endpoint to degrade during a spike.
+   - Assertion: Server stays alive during login spike. Record max response time. Track how many login requests fail (timeout or 500).
 
-2. Spike test — Combined browsing + auth flow
-   - Test Scenario: Simulate realistic spike: users arrive → browse products → try to log in → search for items. Minimal think time (0.3s) to simulate urgency.
-   - Metric: Overall error rate during spike period. Which endpoint degrades first?
+2. Spike test register — mass registration surge
+   - Test Scenario: Same spike profile. Each VU sends `POST /api/v1/auth/register` with unique generated emails.
+   - Assertion: Registration works during spike. No duplicate user errors caused by race conditions.
 
-3. Spike test — Recovery after surge ends
-   - Test Scenario: After spike drops from 500 → 10 VUs, continue making requests for 2 minutes.
-   - Metric: How many seconds/iterations until p95 returns to baseline levels? Are there lingering errors after the spike ends?
+3. Spike test forgot-password — surge scenario
+   - Test Scenario: Same spike profile. Each VU sends `POST /api/v1/auth/forgot-password` with test data.
+   - Assertion: Endpoint handles concurrent requests without crashing.
+
+4. Login recovery after spike
+   - Test Scenario: After spike ends (500 → 10 VUs), measure login response time during the 2-min recovery window.
+   - Assertion: Login p95 returns to < 1s within 60 seconds. No lingering errors after spike.
 
 ---
 
 ### Story 4
 
-**Title:** [Spike Test] Custom Metrics, Thresholds & Recovery Analysis
+**Title:** [Spike Test] Full User Journey Under Sudden Surge
 
 **Description:**
-Configure spike-specific metrics to measure recovery time and compare baseline vs spike vs recovery performance.
+Proposed k6 Spike Test (spike-user-journey.js):
 
-1. Add custom spike metrics
-   - Action: Create `Rate('spike_error_rate')` and `Trend('spike_response_time')` custom metrics. Track errors per phase.
-   - Metric: Custom metrics appear in k6 summary and HTML report.
+1. Spike test realistic user flow — flash sale simulation
+   - Test Scenario: Baseline 10 VUs → instant spike to 500 VUs. Each VU follows: `GET categories` → `GET products` → `GET search/laptop` → `POST login` → `GET product-list/1`. 0.3s think time (users are rushing).
+   - Assertion: Full journey completes during spike (even if slow). Server does not crash.
 
-2. Configure phase-aware thresholds
-   - Action: Set relaxed thresholds during spike (p95 < 3000ms, errors < 15%) but strict thresholds during baseline/recovery (p95 < 500ms for baseline, p95 < 800ms for recovery).
-   - Metric: Thresholds pass for baseline/recovery phases.
+2. Compare per-endpoint impact during spike
+   - Test Scenario: Tag each request with endpoint name. Run the full spike. Compare which endpoint degrades the most.
+   - Assertion: Identify the bottleneck endpoint (expected: login due to bcrypt, or search due to regex).
 
-3. Run full spike test and capture results
-   - Action: Execute `K6_WEB_DASHBOARD=true k6 run tests/nft/spike-test.js`. Capture terminal screenshot, HTML report, JSON output.
-   - Metric: Report clearly shows the spike impact on latency and error rate.
+3. Double-spike test — two surges back-to-back
+   - Test Scenario: 10 VUs → spike to 500 → drop to 10 → wait 1 min → spike to 500 again → drop to 10 → recovery.
+   - Assertion: Server handles the second spike as well as the first. Second recovery time ≤ first recovery time.
 
-4. Document recovery time
-   - Action: From the results, calculate how long after the spike ends it takes for p95 to return within 20% of baseline.
-   - Metric: Recovery time documented in seconds.
+4. Graduated spike test — different surge levels
+   - Test Scenario: Test at spike levels 200, 500, and 800 VUs (separate runs). Compare error rate and recovery time across levels.
+   - Assertion: Document the max spike level the server can survive without crashing.
 
 ---
 
 ### Story 5
 
-**Title:** [Spike Test] Bug Fixes, Final Reports & README Update
+**Title:** [Spike Test] Category & Lightweight Endpoints Under Surge
 
 **Description:**
-Fix any crashes or issues found during spike testing, generate final reports, and prepare for ms3 submission.
+Proposed k6 Spike Test (spike-categories-lightweight.js):
 
-1. Fix bugs discovered during spike testing
-   - Action: Investigate server crashes during sudden surge. Fix connection handling, unhandled promise rejections, or timeouts. Address any errors that persist after spike ends (recovery failures).
-   - Metric: Re-run spike test — server survives 500-VU spike without crashing.
+1. Spike test GET all categories — sudden surge
+   - Test Scenario: 10 VUs → instant jump to 500 VUs. Each VU hits `GET /api/v1/category/get-category`. Lightweight query — should be more resilient.
+   - Assertion: p95 during spike < 1s. Error rate < 5%. This is the "control" — if categories fail, everything else will too.
 
-2. Test additional spike patterns (optional)
-   - Action: Try double-spike (two surges back-to-back) or varied spike levels (200, 500, 800 VUs).
-   - Metric: Compare recovery behavior across patterns.
+2. Spike test single category — sudden surge
+   - Test Scenario: Same spike profile. Each VU hits `GET /api/v1/category/single-category/:slug`.
+   - Assertion: Single category lookup survives spike. p95 < 1s during spike.
 
-3. Generate final spike test report
-   - Action: Run final spike test. Save HTML report, JSON results, and screenshot showing before/during/after spike metrics.
-   - Metric: `results/spike-test-report.html` and `results/spike-test-results.json` committed.
+3. Spike test related products — sudden surge
+   - Test Scenario: Same spike profile. Each VU hits `GET /api/v1/product/related-product/:pid/:cid`.
+   - Assertion: Related products endpoint handles spike without 500 errors.
 
-4. Add name and student ID comments
-   - Action: Ensure `// Yan Weidong, A0258151H` comment is at the top of `tests/nft/spike-test.js`.
-   - Metric: Comment present and visible.
-
-5. Update README.md with MS3 contribution
-   - Action: Add MS3 table entry: test type (Spike Testing), tool (Grafana k6), endpoints tested, spike scenario, recovery time findings, bugs fixed.
-   - Metric: README contains clear MS3 contribution for Yan Weidong.
+4. Spike test product photo — sudden surge
+   - Test Scenario: Same spike profile. Each VU hits `GET /api/v1/product/product-photo/:pid`. Binary data transfer under extreme concurrency.
+   - Assertion: Photo endpoint survives spike. Record bandwidth usage and timeout rate.
 
 ---
 ---
 
 ## Shaun Lee Xuan Wei (A0252626E) — Stress Testing
 
----
-
 ### Story 1
 
-**Title:** [Stress Test] k6 Environment Setup & Stress Profile Design
+**Title:** [Stress Test] Auth Endpoint Breaking Point Analysis
 
 **Description:**
-Set up k6 for stress testing and design the VU escalation profile to find the system's breaking point.
+Proposed k6 Stress Test (stress-auth.js):
 
-1. Install k6 and create test file
-   - Action: Install k6, create `tests/nft/stress-test.js` with placeholder structure.
-   - Metric: `k6 version` runs, file created.
+1. Stress test login — escalate from 50 to 500 VUs
+   - Test Scenario: Stages: 50 VUs (2 min) → 100 VUs (2 min) → 200 VUs (2 min) → 300 VUs (2 min) → 400 VUs (2 min) → 500 VUs (1 min) → ramp down (2 min). Each VU sends `POST /api/v1/auth/login`.
+   - Assertion: Record p95 latency at each stage. Identify the VU count where errors first exceed 1%. Identify the VU count where p95 exceeds 2s.
 
-2. Design stress escalation profile
-   - Action: Configure stepped stages: 50 VUs (warm-up) → 100 → 200 → 300 → 400 → 500 VUs, each held for 2 min. Then ramp down to 0 over 2 min (recovery).
-   - Metric: Profile covers a wide range from normal to well-beyond-capacity.
+2. Stress test login — breaking point identification
+   - Test Scenario: Same escalation. Track custom `Rate('login_error_rate')` at each stage.
+   - Assertion: Document exact breaking point: "Login breaks at X VUs (error rate > 5%)."
 
-3. Smoke test the stress script
-   - Action: Run with scaled-down stages (10 → 20 → 30) to verify script executes.
-   - Metric: k6 completes without script errors.
+3. Stress test register — escalate to 300 VUs
+   - Test Scenario: Escalate to 300 VUs, each sending `POST /api/v1/auth/register` with unique emails.
+   - Assertion: No duplicate user creation from race conditions. Identify breaking point.
+
+4. Stress test forgot-password — escalate to 300 VUs
+   - Test Scenario: Escalate to 300 VUs hitting `POST /api/v1/auth/forgot-password`.
+   - Assertion: Endpoint doesn't crash. Document error rate at each VU level.
 
 ---
 
 ### Story 2
 
-**Title:** [Stress Test] Auth Endpoint Breaking Point Analysis
+**Title:** [Stress Test] Product Search & Filter Breaking Point
 
 **Description:**
-Stress test the login endpoint (bcrypt-heavy, CPU-bound) to find at what concurrency level it breaks.
+Proposed k6 Stress Test (stress-search-filter.js):
 
-1. Stress test — Login at 50 VUs
-   - Test Scenario: 50 VUs each sending `POST /api/v1/auth/login` with test credentials.
-   - Metric: Baseline p95 latency. Error rate should be ~0%.
+1. Stress test search — escalate from 50 to 500 VUs
+   - Test Scenario: Same stepped escalation (50 → 100 → 200 → 300 → 400 → 500). Each VU hits `GET /api/v1/product/search/phone`. Regex search is DB-intensive.
+   - Assertion: Record at which VU count search p95 exceeds 2s. Record at which VU count 500 errors appear.
 
-2. Stress test — Login at 200 VUs
-   - Test Scenario: Escalate to 200 VUs hitting login endpoint.
-   - Metric: p95 latency and error rate. Check if bcrypt computation causes CPU saturation.
+2. Stress test filters — escalate from 50 to 500 VUs
+   - Test Scenario: Same escalation. Each VU sends `POST /api/v1/product/product-filters` with `{ checked: [], radio: [0, 100] }`.
+   - Assertion: Document filter breaking point. Compare to search breaking point.
 
-3. Stress test — Login at 400 VUs
-   - Test Scenario: Escalate to 400 VUs hitting login.
-   - Metric: Record at which VU count errors first appear (> 1%). Record at which VU count p95 exceeds 2s.
+3. Stress test search with varied keywords
+   - Test Scenario: Escalate to 400 VUs. Each VU searches with different keywords (laptop, phone, book, shirt, camera, headphones) — tests regex across different data sets.
+   - Assertion: Breaking point does not vary significantly by keyword.
 
-4. Stress test — Login at 500 VUs (extreme)
-   - Test Scenario: Push to 500 VUs. Server may crash or refuse connections.
-   - Metric: Does server crash, reject connections, or degrade gracefully? Record maximum error rate.
+4. Compare search vs filter breaking points
+   - Test Scenario: Run both search and filter in the same VU iteration under escalation.
+   - Assertion: Document which breaks first. Search (regex) expected to break before filters.
 
 ---
 
 ### Story 3
 
-**Title:** [Stress Test] Product Search & Filter Endpoints Breaking Point
+**Title:** [Stress Test] Product Browsing Endpoints Breaking Point
 
 **Description:**
-Stress test the search and filter endpoints (DB-intensive, regex queries) to find their breaking points.
+Proposed k6 Stress Test (stress-product-browsing.js):
 
-1. Stress test — Search endpoint escalation
-   - Test Scenario: Escalate from 50 → 100 → 200 → 300 → 400 VUs, each VU hitting `GET /api/v1/product/search/phone`. Regex search puts heavy load on MongoDB.
-   - Metric: At which VU count does search p95 exceed 2s? At which VU count do 500 errors appear?
+1. Stress test GET all products — escalate to 500 VUs
+   - Test Scenario: Stepped escalation from 50 → 500 VUs. Each VU hits `GET /api/v1/product/get-product`.
+   - Assertion: Record breaking point for basic DB read. This should break later than search/login.
 
-2. Stress test — Product filters escalation
-   - Test Scenario: Same escalation profile. Each VU sends `POST /api/v1/product/product-filters` with filter payload `{ checked: [], radio: [0, 100] }`.
-   - Metric: Breaking point VU count for filter endpoint.
+2. Stress test paginated list — escalate to 500 VUs
+   - Test Scenario: Same escalation. Each VU hits `GET /api/v1/product/product-list/:page`.
+   - Assertion: Document breaking point for pagination. Compare to GET all products.
 
-3. Stress test — GET all products escalation
-   - Test Scenario: Same escalation. Each VU hits `GET /api/v1/product/get-product` — tests basic DB read under extreme concurrency.
-   - Metric: Breaking point VU count. Compare to search/filter breaking points.
+3. Stress test product photo — escalate to 300 VUs
+   - Test Scenario: Escalate to 300 VUs. Each VU requests `GET /api/v1/product/product-photo/:pid`. Binary data under stress tests I/O and bandwidth limits.
+   - Assertion: Record at which VU count photo requests start timing out.
 
-4. Stress test — Combined endpoint load
-   - Test Scenario: Mix all endpoints (login + search + filters + products) in a single VU iteration to simulate realistic combined stress.
-   - Metric: Which endpoint breaks first under combined stress? Record the weakest link.
+4. Stress test product count — escalate to 500 VUs
+   - Test Scenario: Same escalation. Each VU hits `GET /api/v1/product/product-count`. Lightweight aggregation query.
+   - Assertion: Should survive to higher VU counts than other endpoints. Document the threshold.
 
 ---
 
 ### Story 4
 
-**Title:** [Stress Test] Custom Metrics, Recovery Tracking & Report Generation
+**Title:** [Stress Test] Combined API Workload Breaking Point
 
 **Description:**
-Add custom metrics to precisely track the breaking point and measure recovery behavior after overload.
+Proposed k6 Stress Test (stress-combined.js):
 
-1. Add custom breaking-point metrics
-   - Action: Create `Rate('custom_error_rate')`, `Trend('custom_login_duration')`, `Trend('custom_search_duration')` to track per-endpoint degradation separately.
-   - Metric: Custom metrics visible in k6 summary.
+1. Stress test combined workload — all endpoints mixed
+   - Test Scenario: Escalate from 50 → 500 VUs. Each VU iteration hits: login + search + filters + get products + categories. This simulates realistic combined stress on all server resources.
+   - Assertion: Identify which endpoint breaks first under combined load. Record combined breaking point.
 
-2. Configure relaxed thresholds for stress testing
-   - Action: Set `http_req_duration: ['p(95)<2000']` (relaxed), `http_req_failed: ['rate<0.15']` (allow some errors). Stress tests are expected to have failures.
-   - Metric: Thresholds set appropriately — not too strict (would always fail), not too loose (meaningless).
+2. Stress test read-heavy workload at 400 VUs
+   - Test Scenario: 400 VUs, 90% reads (products, categories, search) + 10% writes (login, filters).
+   - Assertion: Read performance under extreme concurrency. p95 for reads tracked separately.
 
-3. Analyze recovery phase
-   - Action: After peak VUs (500), ramp down to 0 over 2 min. Track whether response times return to baseline during ramp-down.
-   - Metric: Document recovery behavior — does system recover gracefully or remain degraded?
+3. Stress test write-heavy workload at 200 VUs
+   - Test Scenario: 200 VUs, 50% writes (login, register, filters) + 50% reads. Tests DB write concurrency.
+   - Assertion: No data corruption. Document write endpoint breaking points.
 
-4. Run full stress test and capture results
-   - Action: Execute `K6_WEB_DASHBOARD=true k6 run tests/nft/stress-test.js`. Capture screenshots, HTML report, JSON output.
-   - Metric: Report clearly shows the escalation pattern and breaking point.
+4. Stress test with zero think time at 300 VUs
+   - Test Scenario: 300 VUs with no `sleep()` — maximum request rate. Hammers the server as fast as possible.
+   - Assertion: Find absolute maximum req/s the server can handle. Record at what req/s errors begin.
 
 ---
 
 ### Story 5
 
-**Title:** [Stress Test] Bug Fixes, Final Reports & README Update
+**Title:** [Stress Test] Category & Recovery Behavior Under Extreme Load
 
 **Description:**
-Fix any crashes or errors found during stress testing, generate final reports, and prepare for ms3 submission.
+Proposed k6 Stress Test (stress-category-recovery.js):
 
-1. Fix bugs discovered during stress testing
-   - Action: Investigate server crashes at high VU counts. Fix unhandled errors under extreme concurrency. Address connection pool exhaustion or memory issues. Fix any error handling that returns 500 instead of graceful degradation.
-   - Metric: Re-run stress test — server degrades gracefully instead of crashing.
+1. Stress test GET all categories — escalate to 500 VUs
+   - Test Scenario: Stepped escalation from 50 → 500 VUs. Each VU hits `GET /api/v1/category/get-category`.
+   - Assertion: Categories (simple DB query) should break at a higher VU count than login/search. Document the ceiling.
 
-2. Generate final stress test report
-   - Action: Run final stress test. Save HTML report, JSON results, and terminal summary screenshot showing escalation and breaking point.
-   - Metric: `results/stress-test-report.html` and `results/stress-test-results.json` committed.
+2. Stress test single category — escalate to 500 VUs
+   - Test Scenario: Same escalation. Each VU hits `GET /api/v1/category/single-category/:slug`.
+   - Assertion: Document single-category breaking point.
 
-3. Document breaking point analysis
-   - Action: Create a summary: "Login breaks at X VUs, Search breaks at Y VUs, Filters break at Z VUs. Server max throughput is N req/s."
-   - Metric: Clear breaking point data documented.
+3. Recovery test — ramp down from 500 to 0 VUs
+   - Test Scenario: After reaching 500 VUs, ramp down to 0 over 2 min. Track response time and error rate during the ramp-down phase.
+   - Assertion: Server recovers gracefully. p95 returns to baseline levels. No lingering 500 errors after load drops.
 
-4. Add name and student ID comments
-   - Action: Ensure `// Shaun Lee Xuan Wei, A0252626E` comment is at the top of `tests/nft/stress-test.js`.
-   - Metric: Comment present and visible.
-
-5. Update README.md with MS3 contribution
-   - Action: Add MS3 table entry: test type (Stress Testing), tool (Grafana k6), endpoints tested, breaking points found, bugs fixed.
-   - Metric: README contains clear MS3 contribution for Shaun Lee Xuan Wei.
+4. Recovery test — immediate drop from 400 to 10 VUs
+   - Test Scenario: Hold at 400 VUs for 2 min then instantly drop to 10 VUs. Monitor recovery behavior for 2 min.
+   - Assertion: Server resumes normal operation within 30s. Error rate drops to 0% within 60s.
 
 ---
 ---
 
 ## Ong Chang Heng Bertrand (A0253013X) — Soak/Endurance Testing
 
----
-
 ### Story 1
 
-**Title:** [Soak Test] k6 Environment Setup & Soak Profile Design
+**Title:** [Soak Test] Product Browsing Stability Over Extended Duration
 
 **Description:**
-Set up k6 for soak/endurance testing and design the long-duration VU profile to detect gradual degradation over time.
+Proposed k6 Soak Test (soak-product-browsing.js):
 
-1. Install k6 and create test file
-   - Action: Install k6, create `tests/nft/soak-test.js` with placeholder structure.
-   - Metric: `k6 version` runs, file created.
+1. Soak test GET all products — 1 hour at 30 VUs
+   - Test Scenario: Ramp to 30 VUs over 2 min → hold at 30 VUs for 1 hour → ramp down over 2 min. Each VU hits `GET /api/v1/product/get-product` with 2s sleep.
+   - Assertion: p95 at 60-min mark is within 20% of p95 at 5-min mark. No latency drift. Error rate stays < 1% throughout.
 
-2. Design soak test VU profile
-   - Action: Configure stages: ramp to 30 VUs over 2 min → hold steady at 30 VUs for extended duration (configurable: 30 min for dev, 1–4 hours for full runs) → ramp down over 2 min. Use `__ENV.SOAK_DURATION` for configurability.
-   - Metric: Profile holds steady at moderate load for extended period — key difference from other test types.
+2. Soak test paginated product list — 1 hour at 30 VUs
+   - Test Scenario: Same soak profile. Each VU hits `GET /api/v1/product/product-list/:page` with random pages.
+   - Assertion: Pagination performance remains stable. No increasing latency over time.
 
-3. Smoke test the soak script (short run)
-   - Action: Run with 5-min hold duration to verify script executes end-to-end without errors.
-   - Metric: k6 completes, HTML report generated.
+3. Soak test product detail — 1 hour at 30 VUs
+   - Test Scenario: Same profile. Each VU hits `GET /api/v1/product/get-product/:slug`.
+   - Assertion: Detail endpoint p95 remains stable over full duration.
+
+4. Soak test product count — 1 hour at 30 VUs
+   - Test Scenario: Same profile. Each VU hits `GET /api/v1/product/product-count`.
+   - Assertion: Count remains consistent (no phantom data accumulation). Latency stable.
 
 ---
 
 ### Story 2
 
-**Title:** [Soak Test] Product & Category Endpoints Under Sustained Load
+**Title:** [Soak Test] Search & Filter Stability Over Extended Duration
 
 **Description:**
-Test core product and category endpoints under sustained moderate load to detect performance degradation, memory leaks, or connection pool exhaustion over time.
+Proposed k6 Soak Test (soak-search-filter.js):
 
-1. Soak test — GET all products (sustained)
-   - Test Scenario: 30 VUs hitting `GET /api/v1/product/get-product` continuously for 1 hour with 2s sleep between iterations.
-   - Metric: Compare p95 at 15-min mark vs 30-min mark vs 60-min mark. Should remain stable (< 600ms).
+1. Soak test product search — 1 hour at 30 VUs
+   - Test Scenario: 30 VUs for 1 hour. Every 3rd iteration hits `GET /api/v1/product/search/:keyword` with varied keywords (laptop, phone, book, shirt). Regex queries may cause MongoDB memory accumulation over time.
+   - Assertion: Search p95 at 60 min is within 20% of p95 at 5 min. No memory-related degradation.
 
-2. Soak test — GET categories (sustained)
-   - Test Scenario: Same soak profile. Each VU hits `GET /api/v1/category/get-category`.
-   - Metric: p95 latency should not increase over time. Error rate stays < 1% throughout.
+2. Soak test product filters — 1 hour at 30 VUs
+   - Test Scenario: Same soak profile. Each VU sends `POST /api/v1/product/product-filters` with `{ checked: [], radio: [0, 100] }`.
+   - Assertion: Filter response time stays stable. Error rate 0% over full duration.
 
-3. Soak test — Paginated product list (sustained)
-   - Test Scenario: Each VU hits `GET /api/v1/product/product-list/:page` with random page numbers.
-   - Metric: Response time stability over the full duration.
+3. Soak test category-wise product listing — 1 hour at 30 VUs
+   - Test Scenario: Each VU hits `GET /api/v1/product/product-category/:slug`.
+   - Assertion: No degradation over time for category-product queries.
 
-4. Soak test — Product search (sustained)
-   - Test Scenario: Every 3rd iteration hits `GET /api/v1/product/search/:keyword` with varied keywords. Regex search uses DB resources that may accumulate.
-   - Metric: Search latency should not drift upward over time.
+4. Soak test related products — 1 hour at 30 VUs
+   - Test Scenario: Each VU hits `GET /api/v1/product/related-product/:pid/:cid`.
+   - Assertion: Related product lookup remains performant. No connection pool exhaustion.
 
 ---
 
 ### Story 3
 
-**Title:** [Soak Test] Auth Endpoint & Mixed Workload Sustained Load
+**Title:** [Soak Test] Auth & Category Stability Over Extended Duration
 
 **Description:**
-Add authentication and mixed workload to the soak test, simulating periodic logins and varied operations over hours.
+Proposed k6 Soak Test (soak-auth-category.js):
 
-1. Soak test — Periodic login
-   - Test Scenario: Every 10th iteration, VU sends `POST /api/v1/auth/login`. Simulates users re-authenticating over hours. bcrypt CPU usage should remain constant.
-   - Metric: Login p95 at start vs after 1 hour. No upward drift expected.
+1. Soak test login — periodic auth over 1 hour
+   - Test Scenario: 30 VUs for 1 hour. Every 10th iteration sends `POST /api/v1/auth/login`. bcrypt CPU usage should remain constant (no accumulation).
+   - Assertion: Login p95 at 60 min equals p95 at 5 min (±10%). CPU doesn't saturate over time.
 
-2. Soak test — Mixed realistic workload
-   - Test Scenario: Each VU follows: browse products → browse categories → occasionally search → occasionally login. 2s think time for realistic pacing.
-   - Metric: Overall iteration time tracked with custom `Trend('soak_iteration_duration')`. Should remain stable.
+2. Soak test GET all categories — 1 hour at 30 VUs
+   - Test Scenario: Each VU hits `GET /api/v1/category/get-category` every iteration. This endpoint is called on every page load in the app.
+   - Assertion: Categories p95 remains < 400ms for the entire hour. Zero errors.
 
-3. Soak test — Total request counting
-   - Test Scenario: Use custom `Counter('soak_total_requests')` to track total requests served over the entire soak duration.
-   - Metric: Verify throughput (req/s) is consistent from start to finish — no gradual slowdown.
+3. Soak test single category — 1 hour at 30 VUs
+   - Test Scenario: Each VU hits `GET /api/v1/category/single-category/:slug` with known slugs.
+   - Assertion: Stable latency throughout. No connection issues.
+
+4. Soak test register with periodic writes — 1 hour
+   - Test Scenario: Every 20th iteration sends `POST /api/v1/auth/register` with unique emails. Tests slow write accumulation over time.
+   - Assertion: Write latency doesn't increase as the users collection grows during the test.
 
 ---
 
 ### Story 4
 
-**Title:** [Soak Test] Degradation Detection, Thresholds & Report Generation
+**Title:** [Soak Test] Realistic User Journey Over Extended Duration
 
 **Description:**
-Configure strict thresholds that must hold over the entire duration, and set up reporting for time-series analysis.
+Proposed k6 Soak Test (soak-user-journey.js):
 
-1. Set strict long-duration thresholds
-   - Action: Configure `http_req_duration: ['p(95)<600', 'p(99)<1200']` and `http_req_failed: ['rate<0.01']`. These must hold for the full duration — any late-stage degradation means failure.
-   - Metric: Thresholds remain PASS even at the end of a 1-hour run.
+1. Soak test full browsing journey — 1 hour at 30 VUs
+   - Test Scenario: Each VU follows: `GET categories` → `GET products` → `GET search/laptop` → `GET product-list/1` → `POST login` (every 10th iter). 2s think time. Run for 1 hour.
+   - Assertion: Full iteration time tracked with custom `Trend('soak_iteration_duration')`. Should remain stable (±15%) from start to finish.
 
-2. Configure HTML and JSON report generation
-   - Action: Add `handleSummary()` to export `results/soak-test-report.html` and `results/soak-test-results.json`.
-   - Metric: Report files generated after test run.
+2. Total throughput stability over 1 hour
+   - Test Scenario: Track `Counter('soak_total_requests')` throughout. Measure req/s at 15-min intervals.
+   - Assertion: Throughput at 60 min is within 10% of throughput at 5 min. No gradual slowdown.
 
-3. Execute 30-minute soak test
-   - Action: Run abbreviated soak (30 min) to validate everything works. Compare early vs late metrics.
-   - Metric: No degradation detected in 30-min run.
+3. Error accumulation check over 1 hour
+   - Test Scenario: Track cumulative errors at 15-min intervals.
+   - Assertion: Error count grows linearly (proportional to requests) not exponentially. Total error rate stays < 1%.
 
-4. Execute full 1-hour (or longer) soak test
-   - Action: Run `k6 run -e SOAK_DURATION=1h tests/nft/soak-test.js`. Monitor system resources (CPU, memory) during the run.
-   - Metric: p95 at 60 min is within 20% of p95 at 5 min. Error rate stays < 1%.
+4. Soak test with extended 2-hour run
+   - Test Scenario: Run the same journey for 2 hours (`k6 run -e SOAK_DURATION=2h`) to catch slower degradation patterns.
+   - Assertion: All metrics remain stable at 2 hours. No memory leaks (if Node.js `process.memoryUsage()` can be monitored).
 
 ---
 
 ### Story 5
 
-**Title:** [Soak Test] Bug Fixes, Final Reports & README Update
+**Title:** [Soak Test] Photo & Heavy Payload Stability Over Extended Duration
 
 **Description:**
-Fix any degradation issues found during soak testing, generate final reports, and prepare for ms3 submission.
+Proposed k6 Soak Test (soak-heavy-payload.js):
 
-1. Fix bugs discovered during soak testing
-   - Action: Investigate any memory leaks (Node.js heap growth), MongoDB connection pool exhaustion, or gradual latency increase. Fix resource management issues. Address any error accumulation over time.
-   - Metric: Re-run soak test — no degradation detected over 1 hour.
+1. Soak test product photo — 1 hour at 30 VUs
+   - Test Scenario: 30 VUs for 1 hour. Each VU hits `GET /api/v1/product/product-photo/:pid`. Binary image data transfer — tests I/O stability and bandwidth over time.
+   - Assertion: Photo response time stays stable. No I/O resource exhaustion. Content-type remains image/*.
 
-2. Generate final soak test report
-   - Action: Run final soak test (1 hour minimum). Save HTML report, JSON results, terminal summary screenshot. Document p95 at 15-min intervals.
-   - Metric: `results/soak-test-report.html` and `results/soak-test-results.json` committed.
+2. Soak test mixed read-write workload — 1 hour at 30 VUs
+   - Test Scenario: 80% reads (products, categories, search) + 20% writes (login, filters). 2s think time. Run for 1 hour.
+   - Assertion: Read p95 < 600ms and write p95 < 800ms hold for entire duration. No divergence between read/write latency.
 
-3. Document degradation analysis
-   - Action: Create summary: "After 1 hour at 30 VUs: p95 started at Xms, ended at Yms. Error rate: Z%. Total requests served: N. Degradation: [none/mild/significant]."
-   - Metric: Clear degradation analysis documented.
+3. Soak test with increasing data — 1 hour
+   - Test Scenario: Periodically create new users via register endpoint throughout the test. Monitor if growing dataset impacts query performance.
+   - Assertion: Query performance (get products, search) does not degrade as data volume increases.
 
-4. Add name and student ID comments
-   - Action: Ensure `// Ong Chang Heng Bertrand, A0253013X` comment is at the top of `tests/nft/soak-test.js`.
-   - Metric: Comment present and visible.
-
-5. Update README.md with MS3 contribution
-   - Action: Add MS3 table entry: test type (Soak/Endurance Testing), tool (Grafana k6), endpoints tested, duration, degradation findings, bugs fixed.
-   - Metric: README contains clear MS3 contribution for Ong Chang Heng Bertrand.
+4. Soak test product count consistency — 1 hour
+   - Test Scenario: Hit `GET /api/v1/product/product-count` every iteration. Compare the count at start vs end of test.
+   - Assertion: Count remains consistent (no phantom data). Response time stays < 300ms throughout.
