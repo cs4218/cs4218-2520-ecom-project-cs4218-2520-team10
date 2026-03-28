@@ -15,6 +15,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
+    "test:nft:seed": "node tests/db-seed.js",
     "test:spike": "bash tests/spike/run-spike-tests.sh"
   },
   "keywords": [],
