@@ -367,7 +367,6 @@ User → SKILL → Spin-out Agent → Subprocess (isolated)
 | Test UI and flows | ui_test | agent.md, implementer.md, reviewer.md |
 | Test performance | load_test | agent.md, implementer.md, reviewer.md |
 | Document learnings | experience_consolidate | agent.md, implementer.md, reviewer.md |
-| General best practices | reference/ | industry_standards.md, test_pyramid.md, etc. |
 
 ---
 
@@ -382,8 +381,7 @@ SKILL/
 ├── integration_test/        ← Then test interactions
 ├── ui_test/                 ← Then test UI/user flows
 ├── load_test/               ← Then test performance
-├── experience_consolidate/  ← Finally, document learnings
-└── reference/               ← Available for all agents (best practices)
+└── experience_consolidate/  ← Finally, document learnings
 ```
 
 Each folder has:
@@ -397,7 +395,6 @@ Each folder has:
 
 - SKILL.md = **Main routing only** (you are here)
 - Each agent folder = **Complete workflow** (plan → implement → review)
-- Reference folder = **Shared knowledge** (for all agents)
 - architecture_reader = **Prerequisite** (must understand before other agents)
 
 **Ready?** Go to your first agent:

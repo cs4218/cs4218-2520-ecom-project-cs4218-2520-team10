@@ -14,6 +14,36 @@ variety_weight: 1%
 
 ---
 
+## OPTIONAL Phase 0: Reference User Flow Patterns (For Cross-Module Learning)
+
+**Skip this if this is your first module. Use this if prior E2E tests exist.**
+
+If previous modules have been tested with E2E:
+
+**Check prior module's user flows:**
+```
+_memory-base/knowledge/patterns/test-data-patterns.json
+  → See what test data (user credentials, product info) was effective
+  → See boundary values used for test data
+  → Understand realistic data for this domain
+
+_memory-base/modules/[prior-module]/runs/run-*.json
+  → See which user journeys were tested
+  → See wait strategies that worked (waitForNavigation, waitForLoadState)
+  → See selector strategies that were effective (data-testid > role > CSS)
+  → See common issues with timing or selectors
+```
+
+**Optional actions:**
+- [ ] Read prior module's test data: "What realistic test data should I use?"
+- [ ] Read prior module's user flows: "What journey patterns should I test?"
+- [ ] Read prior module's run results: "What selectors and waits worked best?"
+- [ ] Read jest-patterns.json: "What Playwright assertions were clear?"
+
+**No mandatory actions** — This is optional. Proceed to Phase 1 even if no prior data exists.
+
+---
+
 ## MS3 Rubric Requirements
 
 ### Key Distinction: E2E vs Page Element Testing

@@ -2,6 +2,43 @@
 
 **Analyze → Plan → Implement** (No code written in this phase!)
 
+---
+
+## OPTIONAL Phase 0: Check Memory (For Cross-Module Learning)
+
+**Skip this if this is your first module. Use this if a prior module has been tested.**
+
+If previous modules have been tested and memories captured, optionally reference learned patterns:
+
+**Check these files if they exist:**
+```
+_memory-base/knowledge/patterns/validation-strategies.json
+  → See what boundary tests were effective for similar validation functions
+  → Example: "Email TLD boundary test at length 2/3/4 catches regex errors"
+
+_memory-base/knowledge/patterns/mocking-strategies.json
+  → See what mock strategies worked for similar component types
+  → Example: "bcrypt should be REAL (security-critical), emailService MOCKED"
+
+_memory-base/knowledge/patterns/jest-patterns.json
+  → See what test naming and assertion patterns were clear
+  → Example: Test naming pattern "should <action> when <condition>"
+
+_memory-base/knowledge/agent-optimizations.json
+  → See time estimates for similar complexity functions
+  → Example: "Unit test planning for medium complexity: 45 minutes"
+```
+
+**Optional actions:**
+- [ ] Read validation-strategies.json: "What validation patterns were effective?"
+- [ ] Read mocking-strategies.json: "How should I mock for this component type?"
+- [ ] Read jest-patterns.json: "What test patterns were clear and reusable?"
+- [ ] Read agent-optimizations.json: "What's the time estimate for this complexity?"
+
+**No mandatory actions** — This is optional. Proceed to Phase 1 even if no memories exist.
+
+---
+
 This planner ensures your unit tests meet the rubric criteria:
 - ✅ Adherence to Principled Approach (1%)
 - ✅ Test Variety & Scope (1%)
