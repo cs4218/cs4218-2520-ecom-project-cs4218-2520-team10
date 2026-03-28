@@ -12,7 +12,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: resolve(__dirname, "../../../.env") });
 
 const DB_NAME = "test";
-const SCHEMA_DIR = resolve(__dirname, "../../../sample db schema");
+const SCHEMA_DIR = resolve(__dirname, "../../../sample-db-schema");
 
 const COLLECTIONS = [
   { name: "categories", file: "test.categories.json" },
