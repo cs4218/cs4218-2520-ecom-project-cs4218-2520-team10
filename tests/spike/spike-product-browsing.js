@@ -19,12 +19,19 @@ const preSpikeLatency = new Trend("pre_spike_latency");
 const duringSpikeLatency = new Trend("during_spike_latency");
 const postSpikeLatency = new Trend("post_spike_latency");
 
-// Custom metrics for tracking recovery rates per scenario
-const recoveryRate = new Rate("recovered_to_baseline");
-const getAllProductsRecoveryRate = new Rate("get_all_products_recovered");
-const paginationRecoveryRate = new Rate("pagination_recovered");
-const productDetailRecoveryRate = new Rate("product_detail_recovered");
-const productCountRecoveryRate = new Rate("product_count_recovered");
+// Custom metrics for tracking recovery time per scenario (in seconds)
+const getAllProductsRecoveryTime = new Trend("get_all_products_recovery_time_seconds");
+const paginationRecoveryTime = new Trend("pagination_recovery_time_seconds");
+const productDetailRecoveryTime = new Trend("product_detail_recovery_time_seconds");
+const productCountRecoveryTime = new Trend("product_count_recovery_time_seconds");
+
+// Global state to track recovery per scenario
+const recoveryState = {
+  getAllProducts: { recovered: false, recoveryTime: null, window: [] },
+  pagination: { recovered: false, recoveryTime: null, window: [] },
+  detail: { recovered: false, recoveryTime: null, window: [] },
+  count: { recovered: false, recoveryTime: null, window: [] },
+};
 
 // Shared spike profile
 // Baseline (1m at 10 VUs)→ Surge (10s ramp-up to 500 VUs) → Hold (1m at 500 VUs) → Drop (10s drop to 10 VUs) → Recovery (2m at 10 VUs)
@@ -73,19 +80,19 @@ export const options = {
   },
   thresholds: {
     // Global error thresholds
-    http_req_failed: ["rate<0.10"],
+    http_req_failed: ["rate<0.01"],
 
-    // Scenario-specific error thresholds - Expected: <10%
-    "http_req_failed{endpoint:get-product}": ["rate<0.10"],
-    "http_req_failed{endpoint:product-list}": ["rate<0.10"],
-    "http_req_failed{endpoint:get-product-slug}": ["rate<0.10"],
-    "http_req_failed{endpoint:product-count}": ["rate<0.10"],
+    // Scenario-specific error thresholds - Expected: <1%
+    "http_req_failed{endpoint:get-product}": ["rate<0.01"],
+    "http_req_failed{endpoint:product-list}": ["rate<0.01"],
+    "http_req_failed{endpoint:get-product-slug}": ["rate<0.01"],
+    "http_req_failed{endpoint:product-count}": ["rate<0.01"],
 
-    // Expected: 80% of requests recovers within 20% of their baseline response time after the spike
-    get_all_products_recovered: ["rate>0.80"],
-    pagination_recovered: ["rate>0.80"],
-    product_detail_recovered: ["rate>0.80"],
-    product_count_recovered: ["rate>0.80"],
+    // Expected: System recovers to baseline (1.2x) after spike ends
+    get_all_products_recovery_time_seconds: ["avg<60"], // Longer recovery time expected for full product list with larger payload
+    pagination_recovery_time_seconds: ["avg<30"],
+    product_detail_recovery_time_seconds: ["avg<30"],
+    product_count_recovery_time_seconds: ["avg<30"],
 
     // Scenario-specific latency thresholds
     "http_req_duration{endpoint:get-product}": ["p(95)<1000"], // Get all products p95 < 1000ms
@@ -141,10 +148,18 @@ export function setup() {
   };
 
   console.log("✅ Baseline latencies established:");
+  console.log(`   - Get All Products: ${baselines.getAllProducts.toFixed(2)}ms`);
+  console.log(`   - Pagination: ${baselines.pagination.toFixed(2)}ms`);
+  console.log(`   - Product Detail: ${baselines.detail.toFixed(2)}ms`);
+  console.log(`   - Product Count: ${baselines.count.toFixed(2)}ms`);
+
+  // Spike ends at 150s (after 10s baseline + 60s hold + 10s surge + 60s peak + 10s drop)
+  const SPIKE_END_TIME = 150;
 
   return {
     baselines,
     startTime: Date.now(),
+    spikeEndTime: SPIKE_END_TIME,
   };
 }
 
@@ -158,8 +173,8 @@ function getPhase(elapsed) {
   return "post-recovery";
 }
 
-// Helper function: Track latency by phase with scenario-specific baseline
-function trackPhaseLatency(latency, phase, baselineLatency, scenarioRecoveryMetric) {
+// Helper function: Track latency by phase with scenario-specific baseline and recovery time
+function trackPhaseLatency(latency, phase, baselineLatency, scenarioKey, scenarioRecoveryMetric, elapsed, spikeEndTime) {
   switch (phase) {
     case "baseline":
     case "surge":
@@ -171,12 +186,31 @@ function trackPhaseLatency(latency, phase, baselineLatency, scenarioRecoveryMetr
     case "recovery":
     case "post-recovery":
       postSpikeLatency.add(latency);
-      // Check if recovered to within 20% of THIS SCENARIO's baseline
-      const threshold = baselineLatency * 1.2;
-      const recovered = latency <= threshold;
-      recoveryRate.add(recovered);
-      if (scenarioRecoveryMetric) {
-        scenarioRecoveryMetric.add(recovered);
+      
+      // Track recovery time using a rolling window approach
+      const state = recoveryState[scenarioKey];
+      if (!state.recovered) {
+        // Add current latency to rolling window (keep last 10 requests)
+        state.window.push(latency);
+        if (state.window.length > 10) {
+          state.window.shift();
+        }
+        
+        // Check if we have enough samples and if average is within threshold
+        if (state.window.length >= 5) {
+          const avgLatency = state.window.reduce((a, b) => a + b, 0) / state.window.length;
+          const threshold = baselineLatency * 1.2;
+          
+          if (avgLatency <= threshold) {
+            // Recovery achieved! Record the time
+            state.recovered = true;
+            state.recoveryTime = elapsed - spikeEndTime;
+            scenarioRecoveryMetric.add(state.recoveryTime);
+          }
+        }
+      } else {
+        // Already recovered, just report the recovery time
+        scenarioRecoveryMetric.add(state.recoveryTime);
       }
       break;
   }
@@ -194,7 +228,10 @@ export function testGetAllProducts(data) {
       response.timings.duration, 
       phase, 
       data.baselines.getAllProducts,
-      getAllProductsRecoveryRate
+      "getAllProducts",
+      getAllProductsRecoveryTime,
+      elapsed,
+      data.spikeEndTime
     );
 
     check(response, {
@@ -236,7 +273,10 @@ export function testProductPagination(data) {
       response.timings.duration,
       phase,
       data.baselines.pagination,
-      paginationRecoveryRate
+      "pagination",
+      paginationRecoveryTime,
+      elapsed,
+      data.spikeEndTime
     );
 
     check(response, {
@@ -276,7 +316,10 @@ export function testProductDetail(data) {
       response.timings.duration,
       phase,
       data.baselines.detail,
-      productDetailRecoveryRate
+      "detail",
+      productDetailRecoveryTime,
+      elapsed,
+      data.spikeEndTime
     );
 
     check(response, {
@@ -331,7 +374,10 @@ export function testProductCount(data) {
       response.timings.duration,
       phase,
       data.baselines.count,
-      productCountRecoveryRate
+      "count",
+      productCountRecoveryTime,
+      elapsed,
+      data.spikeEndTime
     );
 
     check(response, {
@@ -367,13 +413,15 @@ export function testProductCount(data) {
 }
 
 export function teardown(data) {
-  console.log("=== Spike Test Recovery Summary ===");
+  console.log("\n=== Spike Test Recovery Summary ===");
   console.log("Recovery threshold = baseline × 1.2 (20% above baseline)");
-  console.log("Each scenario is compared against its own baseline:");
+  console.log("Recovery time = Time for 5 consecutive requests to average within threshold\n");
+  
+  console.log("Baseline Latencies:");
   console.log(`   - Get All Products: ${data.baselines.getAllProducts.toFixed(2)}ms (threshold: ${(data.baselines.getAllProducts * 1.2).toFixed(2)}ms)`);
   console.log(`   - Pagination: ${data.baselines.pagination.toFixed(2)}ms (threshold: ${(data.baselines.pagination * 1.2).toFixed(2)}ms)`);
   console.log(`   - Product Detail: ${data.baselines.detail.toFixed(2)}ms (threshold: ${(data.baselines.detail * 1.2).toFixed(2)}ms)`);
-  console.log(`   - Product Count: ${data.baselines.count.toFixed(2)}ms (threshold: ${(data.baselines.count * 1.2).toFixed(2)}ms)`);
+  console.log(`   - Product Count: ${data.baselines.count.toFixed(2)}ms (threshold: ${(data.baselines.count * 1.2).toFixed(2)}ms)\n`);
 }
 
 export default testGetAllProducts;
