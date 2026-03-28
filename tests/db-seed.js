@@ -1,6 +1,5 @@
-// Shared DB seed helper for E2E tests - Shaun Lee Xuan Wei A0252626E
-// NOTE: The following tests and documentation are created with the help of AI based on user defined test scenario plan.
-// Usage: Call `npm run test:seed` to seed the test database with the default product dataset (2 products).
+// DB seed helper for NFT tests - YAN WEIDONG A0258151H
+// Usage: Call `npm run test:nft:seed` to seed the test database with the default product dataset (2 products).
 // To seed with the larger spike test dataset (50+ products), set the environment variable `USE_SPIKE_DATA=true` before running the test command.
 
 import { MongoClient } from "mongodb";
