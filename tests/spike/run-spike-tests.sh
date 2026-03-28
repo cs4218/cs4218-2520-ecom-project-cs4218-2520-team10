@@ -23,7 +23,7 @@ echo ""
 echo "⏳ Waiting for server to be ready..."
 MAX_RETRIES=30
 RETRY_COUNT=0
-SERVER_URL="http://localhost:6060/"
+SERVER_URL="http://localhost:6060/health"
 
 until curl -s -f "$SERVER_URL" > /dev/null 2>&1 || [ $RETRY_COUNT -eq $MAX_RETRIES ]; do
   RETRY_COUNT=$((RETRY_COUNT + 1))
