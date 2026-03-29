@@ -6,6 +6,4 @@ export {
   testProductPagination,
   testProductDetail,
   testProductCount,
-  teardown,
-  default as defaultTest,
 } from "./spike-product-browsing.js";
