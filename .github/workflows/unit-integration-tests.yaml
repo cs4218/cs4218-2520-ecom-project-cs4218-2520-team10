@@ -1,4 +1,4 @@
-name: Run FE & BE Unit & Integration Tests
+name: Run Unit & Integration Tests
 
 on:
   push:
