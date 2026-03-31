@@ -27,10 +27,12 @@ const spikeStages = [
   { duration: "10s", target: 125 }, // Spike ramp up
   { duration: "1m", target: 125 }, // Spike hold
   { duration: "10s", target: 10 }, // Spike ramp down
-  { duration: "2m", target: 10 }, // Recovery hold
+  { duration: "1m", target: 10 }, // Recovery hold
 ];
 
 export const options = {
+  gracefulRampDown: "10s",
+  gracefulStop: "10s",
   scenarios: {
     // Scenario 1: Get all products
     "get-all-products": {
