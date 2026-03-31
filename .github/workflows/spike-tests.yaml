@@ -2,15 +2,6 @@ name: Run Spike Tests
 
 on:
   workflow_dispatch: # Manual trigger only
-    inputs:
-      mongodb-version:
-        description: 'MongoDB version to use'
-        required: false
-        default: '7.0'
-      node-version:
-        description: 'Node.js version to use'
-        required: false
-        default: '24'
 
 jobs:
   spike-tests:
@@ -24,12 +15,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: ${{ github.event.inputs.node-version || '24' }}
+          node-version: '24'
 
       - name: Setup MongoDB
         uses: supercharge/mongodb-github-action@1.11.0
         with:
-          mongodb-version: ${{ github.event.inputs.mongodb-version || '7.0' }}
+          mongodb-version: '7.0'
 
       - name: Install k6
         run: |
