@@ -1,5 +1,17 @@
 // File Created - YAN WEIDONG A0258151H
 
+export const BASE_URL = __ENV.BASE_URL || "http://localhost:6060/api/v1";
+
+// Acceptable response range multiplier to be considered "recovered" (x times baseline latency)
+export const RECOVERY_TOLERANCE = 1.5;
+// Number of consecutive stable requests required for recovery
+export const STABILITY_THRESHOLD = 5;
+
+// Phase timing boundaries (in seconds)
+export const BASELINE_START = 10;
+export const BASELINE_END = 70;
+export const SPIKE_END = 140;
+
 // Based on sample-db-schema/test.products.spike-test.json
 export const PRODUCT_SLUGS = [
   "gaming-laptop-pro",
@@ -55,7 +67,6 @@ export const PRODUCT_SLUGS = [
   "screen-protector",
 ];
 
-// Search keywords for spike testing - flash sale rush scenarios
 export const SEARCH_KEYWORDS = [
   "laptop",
   "phone",
@@ -67,7 +78,6 @@ export const SEARCH_KEYWORDS = [
   "keyboard",
 ];
 
-// Category slugs for spike testing
 // Based on sample-db-schema/test.categories.json
 export const CATEGORY_SLUGS = [
   "electronics",

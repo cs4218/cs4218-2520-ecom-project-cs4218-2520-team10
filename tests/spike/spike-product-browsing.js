@@ -10,14 +10,13 @@
 import http from "k6/http";
 import { check, group, sleep } from "k6";
 import { Trend } from "k6/metrics";
-import { PRODUCT_SLUGS } from "./constants.js";
+import { BASE_URL, PRODUCT_SLUGS } from "./constants.js";
+import { measureBaselineLatency, trackRecovery, recordPhaseMetrics, hasRequiredProductFields } from "./utils.js";
 
-const BASE_URL = __ENV.BASE_URL || "http://localhost:6060/api/v1";
-
-// Custom metrics to track latency during different phases
 const baselineTrend = new Trend("duration_baseline_phase");
 const spikeTrend = new Trend("duration_spike_phase");
 const recoveryTrend = new Trend("duration_recovery_phase");
+const timeToRecoveryTrend = new Trend("time_to_recovery_seconds");
 
 // Shared spike profile
 // 50 VUs -> 500 VUs -> 50 VUs
@@ -31,14 +30,14 @@ const spikeStages = [
 ];
 
 export const options = {
-  gracefulRampDown: "10s",
-  gracefulStop: "10s",
   scenarios: {
     // Scenario 1: Get all products
     "get-all-products": {
       executor: "ramping-vus",
       exec: "testGetAllProducts",
       stages: spikeStages,
+      gracefulRampDown: "5s",
+      gracefulStop: "5s",
       tags: { test_type: "spike", endpoint: "get-product" },
     },
     // Scenario 2: Product pagination
@@ -47,6 +46,8 @@ export const options = {
       exec: "testProductPagination",
       stages: spikeStages,
       startTime: "0s",
+      gracefulRampDown: "5s",
+      gracefulStop: "5s",
       tags: { test_type: "spike", endpoint: "product-list" },
     },
     // Scenario 3: Product detail by slug
@@ -55,6 +56,8 @@ export const options = {
       exec: "testProductDetail",
       stages: spikeStages,
       startTime: "0s",
+      gracefulRampDown: "5s",
+      gracefulStop: "5s",
       tags: { test_type: "spike", endpoint: "get-product-detail" },
     },
     // Scenario 4: Product count
@@ -63,6 +66,8 @@ export const options = {
       exec: "testProductCount",
       stages: spikeStages,
       startTime: "0s",
+      gracefulRampDown: "5s",
+      gracefulStop: "5s",
       tags: { test_type: "spike", endpoint: "product-count" },
     },
   },
@@ -74,51 +79,67 @@ export const options = {
     "http_req_failed{endpoint:get-product-detail}": ["rate<0.01"],
     "http_req_failed{endpoint:product-count}": ["rate<0.01"],
 
-    // Baseline thresholds - System should be healthy before spike
-    duration_baseline_phase: ["p(90)<400"], // Baseline P90 < 400ms
+    // Baseline
+    duration_baseline_phase: ["p(90)<400"],
     "duration_baseline_phase{endpoint:get-product}": ["p(90)<500"],
     "duration_baseline_phase{endpoint:product-list}": ["p(90)<300"],
     "duration_baseline_phase{endpoint:get-product-detail}": ["p(90)<500"],
     "duration_baseline_phase{endpoint:product-count}": ["p(90)<300"],
 
-    // Spike thresholds - Allowing degradation but setting ceilings
-    duration_spike_phase: ["p(90)<10000"], // Global spike P90 < 10s
-    "duration_spike_phase{endpoint:get-product}": ["p(90)<10000"], // Get all products should stay < 5s
-    "duration_spike_phase{endpoint:product-list}": ["p(90)<5000"], // Pagination can be a bit heavier but should stay < 5s
-    "duration_spike_phase{endpoint:get-product-detail}": ["p(90)<10000"], // Detail can be heavier but should stay < 10s
-    "duration_spike_phase{endpoint:product-count}": ["p(90)<5000"], // Count should be very fast, < 5s
+    // Spike
+    duration_spike_phase: ["p(90)<10000"],
+    "duration_spike_phase{endpoint:get-product}": ["p(90)<10000"],
+    "duration_spike_phase{endpoint:product-list}": ["p(90)<5000"],
+    "duration_spike_phase{endpoint:get-product-detail}": ["p(90)<10000"],
+    "duration_spike_phase{endpoint:product-count}": ["p(90)<5000"],
 
-    // Recovery thresholds - System must return to healthy levels
-    duration_recovery_phase: ["p(90)<600"], // Global recovery P90 < 600ms
-    "duration_recovery_phase{endpoint:get-product}": ["p(90)<600"], // Get all products should recover to < 600ms
-    "duration_recovery_phase{endpoint:product-list}": ["p(90)<400"], // Pagination should recover to < 400ms
-    "duration_recovery_phase{endpoint:get-product-detail}": ["p(90)<600"], // Detail should recover to < 600ms
-    "duration_recovery_phase{endpoint:product-count}": ["p(90)<400"], // Count should recover to < 400ms
+    // Recovery
+    duration_recovery_phase: ["p(90)<600"],
+    "duration_recovery_phase{endpoint:get-product}": ["p(90)<600"],
+    "duration_recovery_phase{endpoint:product-list}": ["p(90)<400"],
+    "duration_recovery_phase{endpoint:get-product-detail}": ["p(90)<600"],
+    "duration_recovery_phase{endpoint:product-count}": ["p(90)<400"],
+
+    // Time-to-recovery - Use min to find the first successful recovery time across VUs
+    time_to_recovery_seconds: ["min<30"],
+    "time_to_recovery_seconds{endpoint:get-product}": ["min<20"],
+    "time_to_recovery_seconds{endpoint:product-list}": ["min<20"],
+    "time_to_recovery_seconds{endpoint:get-product-detail}": ["min<20"],
+    "time_to_recovery_seconds{endpoint:product-count}": ["min<20"],
   },
 };
 
-// Setup function
+// Setup function: Measure baseline latency for each endpoint before test starts
 export function setup() {
+  const startTime = Date.now();
+  
+  const baselineLatency = {
+    "get-product": measureBaselineLatency(
+      `${BASE_URL}/product/get-product`,
+    ),
+    "product-list": measureBaselineLatency(
+      `${BASE_URL}/product/product-list/1`,
+    ),
+    "get-product-detail": measureBaselineLatency(
+      `${BASE_URL}/product/get-product/gaming-laptop-pro`,
+    ),
+    "product-count": measureBaselineLatency(
+      `${BASE_URL}/product/product-count`,
+    ),
+  };
+
   return {
-    startTime: Date.now()
+    startTime,
+    baselineLatency,
   };
 }
 
-// Helper function: Identify phase of test based on elapsed time and record response time
-function recordPhaseMetrics(res, endpointName, elapsedTime) {
-  // Baseline Phase
-  if (elapsedTime >= 10 && elapsedTime < 70) {
-    baselineTrend.add(res.timings.duration, { endpoint: endpointName });
-  }
-  // Ramp up + Spike Phase
-  else if (elapsedTime >= 70 && elapsedTime < 140) {
-    spikeTrend.add(res.timings.duration, { endpoint: endpointName });
-  }
-  // Ramp down + Recovery Phase
-  else if (elapsedTime >= 140) {
-    recoveryTrend.add(res.timings.duration, { endpoint: endpointName });
-  }
-}
+const recoveryStates = {
+  "get-product": { consecutiveRecovered: 0, recoveryRecorded: false },
+  "product-list": { consecutiveRecovered: 0, recoveryRecorded: false },
+  "get-product-detail": { consecutiveRecovered: 0, recoveryRecorded: false },
+  "product-count": { consecutiveRecovered: 0, recoveryRecorded: false }
+};
 
 // Scenario 1: Test GET all products endpoint
 export function testGetAllProducts(data) {
@@ -146,7 +167,15 @@ export function testGetAllProducts(data) {
         }
       },
     });
-    recordPhaseMetrics(response, "get-product", elapsedTime);
+    recordPhaseMetrics(response, "get-product", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
+    
+    recoveryStates["get-product"] = trackRecovery(
+      response,
+      "get-product",
+      data,
+      recoveryStates["get-product"],
+      timeToRecoveryTrend
+    );
 
     sleep(0.5);
   });
@@ -179,7 +208,15 @@ export function testProductPagination(data) {
         }
       },
     });
-    recordPhaseMetrics(response, "product-list", elapsedTime);
+    recordPhaseMetrics(response, "product-list", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
+    
+    recoveryStates["product-list"] = trackRecovery(
+      response,
+      "product-list",
+      data,
+      recoveryStates["product-list"],
+      timeToRecoveryTrend
+    );
 
     sleep(0.5);
   });
@@ -207,18 +244,21 @@ export function testProductDetail(data) {
       "product-detail: no data corruption": (r) => {
         try {
           const body = JSON.parse(r.body);
-          return (
-            body.product &&
-            body.product.name !== undefined &&
-            body.product.price !== undefined &&
-            body.product.slug !== undefined
-          );
+          return body.product && hasRequiredProductFields(body.product);
         } catch {
           return false;
         }
       },
     });
-    recordPhaseMetrics(response, "get-product-detail", elapsedTime);
+    recordPhaseMetrics(response, "get-product-detail", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
+    
+    recoveryStates["get-product-detail"] = trackRecovery(
+      response,
+      "get-product-detail",
+      data,
+      recoveryStates["get-product-detail"],
+      timeToRecoveryTrend
+    );
 
     sleep(0.5);
   });
@@ -246,7 +286,16 @@ export function testProductCount(data) {
         }
       },
     });
-    recordPhaseMetrics(response, "product-count", elapsedTime);
+    recordPhaseMetrics(response, "product-count", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
+    
+    // Track recovery time after spike
+    recoveryStates["product-count"] = trackRecovery(
+      response,
+      "product-count",
+      data,
+      recoveryStates["product-count"],
+      timeToRecoveryTrend
+    );
 
     sleep(0.5);
   });
