@@ -1,9 +1,21 @@
 #!/bin/bash
 
+# Spike Test Execution Script
+# Created by - YAN WEIDONG A0258151H
+# 
+# Usage:
+#   ./run-spike-tests.sh                          # Run all spike tests
+#   ./run-spike-tests.sh <test-file-path>         # Run specific test file
+#
+# Examples:
+#   npm run test:spike                                    # Run all spike tests
+#   npm run test:spike -- tests/spike/spike-search-filter.js  # Run specific test
+#   bash tests/spike/run-spike-tests.sh tests/spike/spike-search-filter.js
+
 # Don't exit on error - we want to run all tests and track failures
 set +e
 
-echo "🚀 Starting Spike Test Orchestration"
+echo "🚀 Starting Spike Test Execution"
 echo "===================================="
 
 # Step 1: Seed database with spike test data
@@ -43,26 +55,45 @@ fi
 
 echo "✅ Server is ready!"
 
-# Step 4: Discover and run all spike test files
+# Step 4: Discover and run spike test files
 echo ""
-echo "🔍 Discovering spike test files..."
 SPIKE_DIR="tests/spike"
 
-# Find all spike-*.js files, excluding suite files
-SPIKE_TESTS=($(find "$SPIKE_DIR" -maxdepth 1 -name "spike-*.js" | sort))
-TOTAL_TESTS=${#SPIKE_TESTS[@]}
+# Check if a specific test file was provided as argument
+if [ -n "$1" ]; then
+  echo "🎯 Running specific test file: $1"
+  
+  # Validate file exists
+  if [ ! -f "$1" ]; then
+    echo "❌ Test file not found: $1"
+    kill $SERVER_PID 2>/dev/null || true
+    exit 1
+  fi
+  
+  # Run only the specified test
+  SPIKE_TESTS=("$1")
+  TOTAL_TESTS=1
+else
+  # Run all spike tests
+  echo "🔍 Discovering spike test files..."
+  
+  # Find all spike-*.js files, excluding suite files
+  SPIKE_TESTS=($(find "$SPIKE_DIR" -maxdepth 1 -name "spike-*.js" | sort))
+  TOTAL_TESTS=${#SPIKE_TESTS[@]}
 
-if [ $TOTAL_TESTS -eq 0 ]; then
-  echo "⚠️  No spike test files found matching pattern: spike-*.js"
-  kill $SERVER_PID 2>/dev/null || true
-  exit 1
+  if [ $TOTAL_TESTS -eq 0 ]; then
+    echo "⚠️  No spike test files found matching pattern: spike-*.js"
+    kill $SERVER_PID 2>/dev/null || true
+    exit 1
+  fi
+
+  echo "Found $TOTAL_TESTS spike test file(s)"
 fi
 
-echo "Found $TOTAL_TESTS spike test file(s)"
 echo ""
 
 # Create reports directory
-REPORT_DIR="test_results/spike"
+REPORT_DIR="test-results/spike"
 mkdir -p "$REPORT_DIR"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 

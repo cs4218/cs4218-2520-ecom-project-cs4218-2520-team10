@@ -1,3 +1,5 @@
+// File Created - YAN WEIDONG A0258151H
+
 // Based on sample-db-schema/test.products.spike-test.json
 export const PRODUCT_SLUGS = [
   "gaming-laptop-pro",
@@ -51,4 +53,24 @@ export const PRODUCT_SLUGS = [
   "finance-management-book",
   "tablet-case",
   "screen-protector",
+];
+
+// Search keywords for spike testing - flash sale rush scenarios
+export const SEARCH_KEYWORDS = [
+  "laptop",
+  "phone",
+  "headphones",
+  "tablet",
+  "book",
+  "shirt",
+  "mouse",
+  "keyboard",
+];
+
+// Category slugs for spike testing
+// Based on sample-db-schema/test.categories.json
+export const CATEGORY_SLUGS = [
+  "electronics",
+  "book",
+  "clothing",
 ];
