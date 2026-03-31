@@ -22,7 +22,7 @@ export default {
     "helpers/**",
     "middlewares/**",
     "models/**",
-    "tests/**",
+    "tests/integration/**",
   ],
   coverageThreshold: {
     global: {
