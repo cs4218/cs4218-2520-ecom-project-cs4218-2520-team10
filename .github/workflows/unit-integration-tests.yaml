@@ -1,4 +1,4 @@
-name: Run FE & BE Tests
+name: Run FE & BE Unit & Integration Tests
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
         run: npm run test
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          MONGODB_URL: ${{ secrets.MONGODB_URL }}
+          MONGO_URL: ${{ secrets.MONGO_URL }}
           BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
           BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
           BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}

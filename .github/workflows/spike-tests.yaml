@@ -1,0 +1,69 @@
+name: Run Spike Tests
+
+on:
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      mongodb-version:
+        description: 'MongoDB version to use'
+        required: false
+        default: '7.0'
+      node-version:
+        description: 'Node.js version to use'
+        required: false
+        default: '24'
+
+jobs:
+  spike-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # Might be longer for multiple spike tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ github.event.inputs.node-version || '24' }}
+
+      - name: Setup MongoDB
+        uses: supercharge/mongodb-github-action@1.11.0
+        with:
+          mongodb-version: ${{ github.event.inputs.mongodb-version || '7.0' }}
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Verify k6 installation
+        run: k6 version
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install client dependencies
+        run: npm install
+        working-directory: ./client
+
+      - name: Run spike tests
+        run: npm run test:spike
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MONGO_URL: ${{ secrets.MONGO_URL }}
+          BRAINTREE_MERCHANT_ID: ${{ secrets.BRAINTREE_MERCHANT_ID }}
+          BRAINTREE_PUBLIC_KEY: ${{ secrets.BRAINTREE_PUBLIC_KEY }}
+          BRAINTREE_PRIVATE_KEY: ${{ secrets.BRAINTREE_PRIVATE_KEY }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
+      - name: Upload spike test reports
+        if: always() # Upload even if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: spike-test-reports-${{ github.run_number }}
+          path: test-results/spike/
+          retention-days: 7
