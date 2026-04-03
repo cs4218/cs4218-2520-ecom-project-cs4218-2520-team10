@@ -22,7 +22,7 @@ const iterationDuration   = new Trend('soak_iteration_duration'); // tracks full
 const BASE_URL       = __ENV.API_URL      || 'http://localhost:6060/api/v1';
 const SOAK_DURATION  = __ENV.SOAK_DURATION || '1h';  // override with -e SOAK_DURATION=2h
 const RAMP_DURATION  = '2m';
-const VIRTUAL_USERS  = 30;
+const VIRTUAL_USERS  = 40;
 const SLEEP_TIME     = 2;
 
 // Test data — replace with real values from your DB

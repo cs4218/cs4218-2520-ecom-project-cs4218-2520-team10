@@ -4,7 +4,9 @@ const { readFileSync, existsSync } = require('fs');
 const { resolve } = require('path');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: resolve(process.cwd(), '.env') });
+const projectRoot = resolve(__dirname, '../..');
+
+dotenv.config({ path: resolve(projectRoot, '.env') });
 
 const DB_NAME = process.env.SOAK_DB_NAME || 'test';
 const MONGO_URL = process.env.MONGO_URL;
@@ -19,8 +21,7 @@ const COLLECTIONS = [
 
 function resolveSchemaDir() {
   const candidates = [
-    resolve(process.cwd(), 'Sample DB Schema'),
-    resolve(process.cwd(), 'sample db schema'),
+    resolve(projectRoot, 'sample-db-schema'),
   ];
 
   for (const candidate of candidates) {
@@ -30,7 +31,7 @@ function resolveSchemaDir() {
   }
 
   throw new Error(
-    'Cannot find sample schema directory. Expected "Sample DB Schema" or "sample db schema" in project root.'
+    'Cannot find sample schema directory. Expected "sample-db-schema" in project root.'
   );
 }
 
@@ -54,7 +55,11 @@ async function seedDatabase() {
 
     for (const { name, file } of COLLECTIONS) {
       const col = db.collection(name);
-      const raw = readFileSync(resolve(schemaDir, file), 'utf-8');
+      const seedPath = resolve(schemaDir, file);
+      if (!existsSync(seedPath)) {
+        throw new Error(`Seed file not found for ${name}: ${file}`);
+      }
+      const raw = readFileSync(seedPath, 'utf-8');
       const docs = EJSON.parse(raw);
 
       await col.deleteMany({}, { writeConcern: { w: 'majority' } });

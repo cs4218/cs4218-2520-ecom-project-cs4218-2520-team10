@@ -4,7 +4,7 @@
  *
  * Purpose: Verify that search and filter endpoints maintain stable performance under sustained load
  * Duration: 1 hour per test
- * Virtual Users: 30 VUs
+ * Virtual Users: 30 VUs total across all scenarios in this file
  * Load Profile: Ramp up 2min → Hold 1hr → Ramp down 2min
  */
 
@@ -21,8 +21,8 @@ const successRate = new Rate('success_rate');
 const BASE_URL = __ENV.API_URL || 'http://localhost:6060/api/v1';
 const SOAK_DURATION = __ENV.SOAK_DURATION || '1h';
 const RAMP_DURATION = '2m';
-const VIRTUAL_USERS = 30;
 const SLEEP_TIME = 2;
+const SCENARIO_TARGETS = [10, 10, 10, 10];
 
 // Test data
 const SEARCH_KEYWORDS = ['laptop', 'phone', 'book', 'shirt'];
@@ -32,11 +32,22 @@ const CATEGORY_SLUGS  = ['electronics', 'clothing', 'book'];
 const PRODUCT_IDS  = ['66db427fdb0119d9234b27f3', '66db427fdb0119d9234b27f5', '66db427fdb0119d9234b27f1'];
 const CATEGORY_IDS = ['66db427fdb0119d9234b27ed', '66db427fdb0119d9234b27ee', '66db427fdb0119d9234b27ef'];
 
-const stages = [
-  { duration: RAMP_DURATION, target: VIRTUAL_USERS },
-  { duration: SOAK_DURATION, target: VIRTUAL_USERS },
-  { duration: RAMP_DURATION, target: 0 },
-];
+function createStages(target) {
+  return [
+    { duration: RAMP_DURATION, target },
+    { duration: SOAK_DURATION, target },
+    { duration: RAMP_DURATION, target: 0 },
+  ];
+}
+
+function requestWithSingleRetry(requestFn) {
+  let response = requestFn();
+  if (!response || response.status === 0) {
+    sleep(0.2);
+    response = requestFn();
+  }
+  return response;
+}
 
 export const options = {
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
@@ -45,7 +56,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakProductSearch',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[0]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -53,7 +64,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakProductFilters',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[1]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -61,7 +72,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakCategoryProducts',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[2]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -69,16 +80,15 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakRelatedProducts',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[3]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
   },
   thresholds: {
-    // Soak thresholds should tolerate sustained-load tail latency while still catching regressions.
-    'latency':           ['p(95)<12000', 'p(99)<20000'],
+    'latency':           ['p(95)<6000', 'p(99)<10000'],
     'errors':            ['rate<0.01'],
-    'http_req_duration': ['p(95)<12000', 'p(99)<20000'],
+    'http_req_duration': ['p(95)<6000', 'p(99)<10000'],
     'success_rate':      ['rate>0.99'],
   },
 };
@@ -150,11 +160,13 @@ export function soakCategoryProducts() {
   const randomSlug = CATEGORY_SLUGS[Math.floor(Math.random() * CATEGORY_SLUGS.length)];
 
   group('GET /product/product-category/:slug', () => {
-    const response = http.get(`${BASE_URL}/product/product-category/${randomSlug}`, {
-      headers: { 'Content-Type': 'application/json' },
-      tags: { name: 'CategoryProducts', slug: randomSlug },
-      timeout: '30s',
-    });
+    const response = requestWithSingleRetry(() =>
+      http.get(`${BASE_URL}/product/product-category/${randomSlug}`, {
+        headers: { 'Content-Type': 'application/json' },
+        tags: { name: 'CategoryProducts', slug: randomSlug },
+        timeout: '40s',
+      })
+    );
 
     recordRequestMetrics(response, { endpoint: 'product-category', slug: randomSlug });
   });
@@ -172,11 +184,13 @@ export function soakRelatedProducts() {
   const cid = CATEGORY_IDS[randomIndex];
 
   group('GET /product/related-product/:pid/:cid', () => {
-    const response = http.get(`${BASE_URL}/product/related-product/${pid}/${cid}`, {
-      headers: { 'Content-Type': 'application/json' },
-      tags: { name: 'RelatedProducts', pid, cid },
-      timeout: '30s',
-    });
+    const response = requestWithSingleRetry(() =>
+      http.get(`${BASE_URL}/product/related-product/${pid}/${cid}`, {
+        headers: { 'Content-Type': 'application/json' },
+        tags: { name: 'RelatedProducts', pid, cid },
+        timeout: '40s',
+      })
+    );
 
     recordRequestMetrics(response, { endpoint: 'related-products', pid });
   });

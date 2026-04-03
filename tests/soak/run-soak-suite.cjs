@@ -6,6 +6,8 @@ const rootDir = process.cwd();
 const soakDir = resolve(rootDir, 'tests/soak');
 const reportsDir = resolve(soakDir, 'reports');
 const resetScript = resolve(rootDir, 'tests/soak/db-reset-seed.cjs');
+const SOAK_PRODUCTS_FILE = 'test.products.soak.json';
+const ORIGINAL_PRODUCTS_FILE = 'test.products.json';
 
 const suite = [
   { name: 'soak-auth-category', file: 'tests/soak/soak-auth-category.test.js' },
@@ -54,18 +56,18 @@ function getFirstMetric(summary, metricNames, stat) {
   return null;
 }
 
-function runReset(phase, testName) {
+function runReset(phase, testName, extraEnv = {}) {
   console.log(`\n--- DB reset ${phase} ${testName} ---`);
   const result = spawnSync('node', [resetScript], {
     stdio: 'inherit',
     cwd: rootDir,
-    env: process.env,
+    env: { ...process.env, ...extraEnv },
   });
   return typeof result.status === 'number' ? result.status : 1;
 }
 
 function runSingle(test) {
-  const preResetExitCode = runReset('before', test.name);
+  const preResetExitCode = runReset('before', test.name, { SOAK_PRODUCTS_FILE });
   if (preResetExitCode !== 0) {
     return {
       test,
@@ -98,7 +100,7 @@ function runSingle(test) {
   });
 
   const k6ExitCode = typeof result.status === 'number' ? result.status : 1;
-  const postResetExitCode = runReset('after', test.name);
+  const postResetExitCode = runReset('after', test.name, { SOAK_PRODUCTS_FILE });
   const exitCode = k6ExitCode !== 0 || postResetExitCode !== 0 ? 1 : 0;
   let summary = null;
 
@@ -227,5 +229,15 @@ console.log(`\nCombined JSON: ${jsonOut}`);
 console.log(`Combined HTML: ${htmlOut}`);
 console.log(`Per-test summaries: ${reportsDir}`);
 
-const failed = results.some((r) => r.exitCode !== 0);
+const restoreOriginalExitCode = runReset('restore-original-products', 'suite', {
+  SOAK_PRODUCTS_FILE: ORIGINAL_PRODUCTS_FILE,
+});
+
+if (restoreOriginalExitCode === 0) {
+  console.log(`Restored original products from ${ORIGINAL_PRODUCTS_FILE}.`);
+} else {
+  console.log('Failed to restore original products at end of suite.');
+}
+
+const failed = results.some((r) => r.exitCode !== 0) || restoreOriginalExitCode !== 0;
 process.exit(failed ? 1 : 0);

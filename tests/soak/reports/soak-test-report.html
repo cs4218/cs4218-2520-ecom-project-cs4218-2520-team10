@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Soak Test Suite Report</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 24px; }
+    h1 { margin-bottom: 8px; }
+    .meta { color: #444; margin-bottom: 16px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
+    th { background: #f5f5f5; text-align: left; }
+    .pass { color: #0a7f2e; font-weight: 700; }
+    .fail { color: #b00020; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Soak Test Suite Report</h1>
+  <div class="meta">Generated at: 2026-04-03T11:04:34.764Z</div>
+  <div class="meta">Passed: 5 / 5, Failed: 0</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Test</th>
+        <th>File</th>
+        <th>Status</th>
+        <th>DB Reset</th>
+        <th>Throughput (req/s)</th>
+        <th>Response p95 (ms)</th>
+        <th>Response p99 (ms)</th>
+        <th>HTTP Error Rate (%)</th>
+        <th>Total Requests</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+      <tr>
+        <td>soak-auth-category</td>
+        <td>tests/soak/soak-auth-category.test.js</td>
+        <td class="pass">PASS</td>
+        <td>OK</td>
+        <td>9.50</td>
+        <td>105.33</td>
+        <td>121.67</td>
+        <td>0.00</td>
+        <td>36513</td>
+      </tr>
+    
+
+      <tr>
+        <td>soak-heavy-payload</td>
+        <td>tests/soak/soak-heavy-payload.test.js</td>
+        <td class="pass">PASS</td>
+        <td>OK</td>
+        <td>19.77</td>
+        <td>2570.69</td>
+        <td>2646.77</td>
+        <td>0.00</td>
+        <td>75940</td>
+      </tr>
+    
+
+      <tr>
+        <td>soak-product-browsing</td>
+        <td>tests/soak/soak-product-browsing.test.js</td>
+        <td class="pass">PASS</td>
+        <td>OK</td>
+        <td>18.56</td>
+        <td>161.82</td>
+        <td>249.68</td>
+        <td>0.02</td>
+        <td>71280</td>
+      </tr>
+    
+
+      <tr>
+        <td>soak-search-filter</td>
+        <td>tests/soak/soak-search-filter.test.js</td>
+        <td class="pass">PASS</td>
+        <td>OK</td>
+        <td>15.45</td>
+        <td>240.81</td>
+        <td>330.91</td>
+        <td>0.00</td>
+        <td>59351</td>
+      </tr>
+    
+
+      <tr>
+        <td>soak-user-journey</td>
+        <td>tests/soak/soak-user-journey.test.js</td>
+        <td class="pass">PASS</td>
+        <td>OK</td>
+        <td>19.20</td>
+        <td>175.98</td>
+        <td>277.46</td>
+        <td>0.00</td>
+        <td>73797</td>
+      </tr>
+    
+    </tbody>
+  </table>
+</body>
+</html>

@@ -1,0 +1,465 @@
+{
+    "root_group": {
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "GET /product/product-count": {
+                "groups": {},
+                "checks": {
+                        "product count status is 200": {
+                            "path": "::GET /product/product-count::product count status is 200",
+                            "id": "265a3df79f5bcc81dac129f5abb58a7f",
+                            "passes": 17845,
+                            "fails": 0,
+                            "name": "product count status is 200"
+                        },
+                        "product count total is valid integer": {
+                            "path": "::GET /product/product-count::product count total is valid integer",
+                            "id": "c5d53f232fc738d2e05686cdb2a6aadc",
+                            "passes": 17845,
+                            "fails": 0,
+                            "name": "product count total is valid integer"
+                        },
+                        "product count has no drift": {
+                            "id": "70f4c0d088b495bc81d8167f897fd3b8",
+                            "passes": 17845,
+                            "fails": 0,
+                            "name": "product count has no drift",
+                            "path": "::GET /product/product-count::product count has no drift"
+                        },
+                        "product count no server errors": {
+                            "passes": 17845,
+                            "fails": 0,
+                            "name": "product count no server errors",
+                            "path": "::GET /product/product-count::product count no server errors",
+                            "id": "a3ca2c1bc4b75e68fc2d560b9f765ef3"
+                        }
+                    },
+                "name": "GET /product/product-count",
+                "path": "::GET /product/product-count",
+                "id": "2589233d4762d15ef3908b2832c0c7cb"
+            },
+            "Mixed workload read (80%)": {
+                "name": "Mixed workload read (80%)",
+                "path": "::Mixed workload read (80%)",
+                "id": "d5abfe7dc6370ee363f5b97fba2fbb9c",
+                "groups": {},
+                "checks": {
+                        "mixed read status is 200": {
+                            "name": "mixed read status is 200",
+                            "path": "::Mixed workload read (80%)::mixed read status is 200",
+                            "id": "5bf814bfb65f180018f12ee8396b7c08",
+                            "passes": 14246,
+                            "fails": 0
+                        },
+                        "mixed read no server errors": {
+                            "name": "mixed read no server errors",
+                            "path": "::Mixed workload read (80%)::mixed read no server errors",
+                            "id": "08d5a5857aa922406e2950b1066f9555",
+                            "passes": 14246,
+                            "fails": 0
+                        },
+                        "mixed read response body not null": {
+                            "id": "d39d3839d285b70d72e769cf660e4fa1",
+                            "passes": 14246,
+                            "fails": 0,
+                            "name": "mixed read response body not null",
+                            "path": "::Mixed workload read (80%)::mixed read response body not null"
+                        }
+                    }
+            },
+            "Increasing data write: POST /auth/register": {
+                "path": "::Increasing data write: POST /auth/register",
+                "id": "d9153439c131ab2473e865258762b8f9",
+                "groups": {},
+                "checks": {
+                        "growth register status is 201 or 409": {
+                            "fails": 0,
+                            "name": "growth register status is 201 or 409",
+                            "path": "::Increasing data write: POST /auth/register::growth register status is 201 or 409",
+                            "id": "a3818b672035b24182f40029c92b7278",
+                            "passes": 3562
+                        },
+                        "growth register no server errors": {
+                            "id": "ae897c64bb94f70f5fd3562b21d22ab7",
+                            "passes": 3562,
+                            "fails": 0,
+                            "name": "growth register no server errors",
+                            "path": "::Increasing data write: POST /auth/register::growth register no server errors"
+                        },
+                        "growth register response body not null": {
+                            "passes": 3562,
+                            "fails": 0,
+                            "name": "growth register response body not null",
+                            "path": "::Increasing data write: POST /auth/register::growth register response body not null",
+                            "id": "6c159f4c68d074c4d84cf15a2b65c2ac"
+                        }
+                    },
+                "name": "Increasing data write: POST /auth/register"
+            },
+            "Increasing data query: GET products/search": {
+                "id": "6f71087c86c0bf1bcb415b772e3094db",
+                "groups": {},
+                "checks": {
+                        "growth query status is 200": {
+                            "path": "::Increasing data query: GET products/search::growth query status is 200",
+                            "id": "3f61439636dadbd6e0ede1ceb0f1cc43",
+                            "passes": 17791,
+                            "fails": 0,
+                            "name": "growth query status is 200"
+                        },
+                        "growth query no server errors": {
+                            "name": "growth query no server errors",
+                            "path": "::Increasing data query: GET products/search::growth query no server errors",
+                            "id": "f7edea59efe5aa4d3db803b03f6774de",
+                            "passes": 17791,
+                            "fails": 0
+                        },
+                        "growth query response body not null": {
+                            "fails": 0,
+                            "name": "growth query response body not null",
+                            "path": "::Increasing data query: GET products/search::growth query response body not null",
+                            "id": "de012d11be0179cd43282a7556fb8526",
+                            "passes": 17791
+                        }
+                    },
+                "name": "Increasing data query: GET products/search",
+                "path": "::Increasing data query: GET products/search"
+            },
+            "GET /product/product-photo/:pid": {
+                "groups": {},
+                "checks": {
+                        "photo status is 200": {
+                            "fails": 0,
+                            "name": "photo status is 200",
+                            "path": "::GET /product/product-photo/:pid::photo status is 200",
+                            "id": "9afae7eeb4d6a1248b07e4482cb29204",
+                            "passes": 18926
+                        },
+                        "photo payload is not empty": {
+                            "id": "1eea5b3fd338daadb44550a61b0e9151",
+                            "passes": 18926,
+                            "fails": 0,
+                            "name": "photo payload is not empty",
+                            "path": "::GET /product/product-photo/:pid::photo payload is not empty"
+                        },
+                        "photo content-type is image/*": {
+                            "name": "photo content-type is image/*",
+                            "path": "::GET /product/product-photo/:pid::photo content-type is image/*",
+                            "id": "66bcdefde7f68314a845a2442a94c1b7",
+                            "passes": 18926,
+                            "fails": 0
+                        },
+                        "photo no server errors": {
+                            "id": "5539b4415debe92c2f800ff159d70b84",
+                            "passes": 18926,
+                            "fails": 0,
+                            "name": "photo no server errors",
+                            "path": "::GET /product/product-photo/:pid::photo no server errors"
+                        }
+                    },
+                "name": "GET /product/product-photo/:pid",
+                "path": "::GET /product/product-photo/:pid",
+                "id": "2dff3e7f0a0fc69a28d7b3541e9431e0"
+            },
+            "Mixed workload write (20%)": {
+                "name": "Mixed workload write (20%)",
+                "path": "::Mixed workload write (20%)",
+                "id": "4e05293cd6167dac4c672b95c5a4036e",
+                "groups": {},
+                "checks": {
+                        "mixed write status is 2xx": {
+                            "id": "c3e11f8214260ace7257d596aab13055",
+                            "passes": 3570,
+                            "fails": 0,
+                            "name": "mixed write status is 2xx",
+                            "path": "::Mixed workload write (20%)::mixed write status is 2xx"
+                        },
+                        "mixed write no server errors": {
+                            "name": "mixed write no server errors",
+                            "path": "::Mixed workload write (20%)::mixed write no server errors",
+                            "id": "d5097e460c334ec33575f300f44701be",
+                            "passes": 3570,
+                            "fails": 0
+                        },
+                        "mixed write response body not null": {
+                            "passes": 3570,
+                            "fails": 0,
+                            "name": "mixed write response body not null",
+                            "path": "::Mixed workload write (20%)::mixed write response body not null",
+                            "id": "0519382a35dda72338e74c4625f42c7d"
+                        }
+                    }
+            }
+        },
+        "checks": {},
+        "name": ""
+    },
+    "metrics": {
+        "checks": {
+            "fails": 0,
+            "passes": 264591,
+            "value": 1
+        },
+        "http_reqs": {
+            "count": 75940,
+            "rate": 19.769568497289963
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 75940,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_waiting": {
+            "p(99)": 2646.15122,
+            "avg": 425.77262620489597,
+            "min": 9.111,
+            "med": 96.389,
+            "max": 2818.859,
+            "p(90)": 1443.4821000000002,
+            "p(95)": 2569.9098499999996
+        },
+        "photo_latency": {
+            "avg": 1464.2582205431665,
+            "min": 303.528,
+            "med": 1421.482,
+            "max": 2819.174,
+            "p(90)": 2639.609,
+            "p(95)": 2645.3355,
+            "p(99)": 2655.00275,
+            "thresholds": {
+                "p(95)<3000": false,
+                "p(99)<4000": false
+            }
+        },
+        "group_duration": {
+            "max": 2819.38975,
+            "p(90)": 1444.0966544999999,
+            "p(95)": 2570.9198666499997,
+            "p(99)": 2647.09335486,
+            "avg": 426.27881196741185,
+            "min": 9.264458,
+            "med": 96.79306299999999
+        },
+        "data_received": {
+            "rate": 705143.087738484,
+            "count": 2708636058
+        },
+        "http_req_duration": {
+            "max": 2819.174,
+            "p(90)": 1443.7424,
+            "p(95)": 2570.6909499999997,
+            "p(99)": 2646.77171,
+            "avg": 425.9579367658709,
+            "min": 9.171,
+            "med": 96.5
+        },
+        "http_req_connecting": {
+            "p(99)": 0,
+            "avg": 0.0004922702133263103,
+            "min": 0,
+            "med": 0,
+            "max": 1.978,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "mixed_write_ratio": {
+            "passes": 3570,
+            "fails": 14246,
+            "thresholds": {
+                "rate>0.15": false,
+                "rate<0.25": false
+            },
+            "value": 0.20038167938931298
+        },
+        "vus_max": {
+            "value": 40,
+            "min": 40,
+            "max": 40
+        },
+        "http_req_blocked": {
+            "med": 0.006,
+            "max": 8.219,
+            "p(90)": 0.019,
+            "p(95)": 0.023,
+            "p(99)": 0.066,
+            "avg": 0.01156996312878421,
+            "min": 0
+        },
+        "success_rate": {
+            "passes": 75940,
+            "fails": 0,
+            "thresholds": {
+                "rate>0.99": false
+            },
+            "value": 1
+        },
+        "product_count_consistency_failures": {
+            "passes": 0,
+            "fails": 17845,
+            "thresholds": {
+                "rate<0.001": false
+            },
+            "value": 0
+        },
+        "mixed_read_latency": {
+            "med": 91.5555,
+            "max": 275.662,
+            "p(90)": 124.3005,
+            "p(95)": 127.73975,
+            "p(99)": 134.6508,
+            "avg": 79.77365983433981,
+            "min": 11.557,
+            "thresholds": {
+                "p(95)<200": false
+            }
+        },
+        "iterations": {
+            "count": 72378,
+            "rate": 18.842267957556665
+        },
+        "photo_content_type_failures": {
+            "passes": 0,
+            "fails": 18926,
+            "thresholds": {
+                "rate<0.002": false
+            },
+            "value": 0
+        },
+        "growth_query_latency{phase:late}": {
+            "max": 328.489,
+            "p(90)": 99.592,
+            "p(95)": 121.53025,
+            "p(99)": 130.54205,
+            "avg": 52.720536776212896,
+            "min": 11.371,
+            "med": 45.17,
+            "thresholds": {
+                "p(95)<200": false
+            }
+        },
+        "data_sent": {
+            "count": 11196716,
+            "rate": 2914.857043806986
+        },
+        "growth_register_latency": {
+            "avg": 164.87540932060617,
+            "min": 85.822,
+            "med": 166.0695,
+            "max": 378.1,
+            "p(90)": 194.9352,
+            "p(95)": 198.18714999999997,
+            "p(99)": 233.60422999999997
+        },
+        "http_req_sending": {
+            "med": 0.023,
+            "max": 7.881,
+            "p(90)": 0.06,
+            "p(95)": 0.081,
+            "p(99)": 0.286,
+            "avg": 0.039424677376874384,
+            "min": 0.002
+        },
+        "iteration_duration": {
+            "avg": 2056.388763644678,
+            "min": 804.293667,
+            "med": 2093.4664169999996,
+            "max": 3320.505,
+            "p(90)": 2219.531134,
+            "p(95)": 3087.55973485,
+            "p(99)": 3148.90439925
+        },
+        "growth_query_latency": {
+            "med": 48.325,
+            "max": 328.489,
+            "p(90)": 102.324,
+            "p(95)": 123.2415,
+            "p(99)": 130.9192,
+            "avg": 56.72218930920089,
+            "min": 11.371
+        },
+        "growth_query_latency{phase:early}": {
+            "med": 53.438,
+            "max": 264.397,
+            "p(90)": 108.13200000000002,
+            "p(95)": 124.4374,
+            "p(99)": 131.16711999999998,
+            "avg": 60.76953623516084,
+            "min": 11.844,
+            "thresholds": {
+                "p(95)<200": false
+            }
+        },
+        "http_req_tls_handshaking": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0
+        },
+        "errors": {
+            "passes": 0,
+            "fails": 75940,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "mixed_write_latency": {
+            "p(99)": 182.9466,
+            "avg": 115.79938795518184,
+            "min": 25.502,
+            "med": 108.975,
+            "max": 336.224,
+            "p(90)": 173.8066,
+            "p(95)": 177.16085,
+            "thresholds": {
+                "p(95)<300": false
+            }
+        },
+        "heavy_payload_total_requests": {
+            "count": 75940,
+            "rate": 19.769568497289963
+        },
+        "http_req_receiving": {
+            "avg": 0.14588588359231122,
+            "min": 0.006,
+            "med": 0.07,
+            "max": 37.85,
+            "p(90)": 0.335,
+            "p(95)": 0.553,
+            "p(99)": 0.9246099999999994
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(99)": 2646.77171,
+            "avg": 425.9579367658709,
+            "min": 9.171,
+            "med": 96.5,
+            "max": 2819.174,
+            "p(90)": 1443.7424,
+            "p(95)": 2570.6909499999997
+        },
+        "vus": {
+            "value": 2,
+            "min": 0,
+            "max": 40
+        },
+        "product_count_latency": {
+            "avg": 83.40737377416615,
+            "min": 9.171,
+            "med": 94.72,
+            "max": 256.83,
+            "p(90)": 99.5198,
+            "p(95)": 101.44279999999999,
+            "p(99)": 109.07391999999999,
+            "thresholds": {
+                "p(95)<150": false
+            }
+        }
+    }
+}

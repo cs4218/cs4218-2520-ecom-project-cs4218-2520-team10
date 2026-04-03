@@ -4,7 +4,7 @@
  *
  * Purpose: Verify that auth and category endpoints maintain stable performance under sustained load
  * Duration: 1 hour per test
- * Virtual Users: 30 VUs
+ * Virtual Users: 30 VUs total across all scenarios in this file
  * Load Profile: Ramp up 2min → Hold 1hr → Ramp down 2min
  */
 
@@ -21,8 +21,8 @@ const successRate = new Rate('success_rate');
 const BASE_URL    = __ENV.API_URL || 'http://localhost:6060/api/v1';
 const SOAK_DURATION  = __ENV.SOAK_DURATION || '1h';
 const RAMP_DURATION  = '2m';
-const VIRTUAL_USERS  = 30;
 const SLEEP_TIME     = 2;
+const SCENARIO_TARGETS = [10, 10, 10, 10];
 
 // Test data — replace with real slugs from your DB
 // db.categories.find({}, { slug: 1 })
@@ -34,11 +34,13 @@ const LOGIN_PAYLOAD = JSON.stringify({
   password: 'user@test.com',
 });
 
-const stages = [
-  { duration: RAMP_DURATION, target: VIRTUAL_USERS },
-  { duration: SOAK_DURATION, target: VIRTUAL_USERS },
-  { duration: RAMP_DURATION, target: 0 },
-];
+function createStages(target) {
+  return [
+    { duration: RAMP_DURATION, target },
+    { duration: SOAK_DURATION, target },
+    { duration: RAMP_DURATION, target: 0 },
+  ];
+}
 
 export const options = {
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
@@ -47,7 +49,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakLogin',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[0]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -55,7 +57,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakGetCategories',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[1]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -63,7 +65,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakSingleCategory',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[2]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -71,7 +73,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakRegister',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[3]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },

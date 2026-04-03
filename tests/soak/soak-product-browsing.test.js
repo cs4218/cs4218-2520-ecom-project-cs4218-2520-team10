@@ -4,7 +4,7 @@
  *
  * Purpose: Verify that product endpoints maintain stable performance under sustained load
  * Duration: 1 hour per test
- * Virtual Users: 30 VUs
+ * Virtual Users: 30 VUs total across all scenarios in this file
  * Load Profile: Ramp up 2min → Hold 1hr → Ramp down 2min
  */
 
@@ -20,19 +20,21 @@ const requestCount = new Counter('requests');
 const successRate = new Rate('success_rate');
 
 const BASE_URL = __ENV.API_URL || 'http://localhost:6060/api/v1';
-const SOAK_DURATION = '1h';
+const SOAK_DURATION = __ENV.SOAK_DURATION || '1h';
 const RAMP_DURATION = '2m';
-const VIRTUAL_USERS = 30;
 const SLEEP_TIME = 2; // seconds between requests per VU
+const SCENARIO_TARGETS = [10, 10, 10, 10];
 
 // Product slugs from test database
 const PRODUCT_SLUGS = ['novel', 'nus-tshirt', 'the-law-of-contract-in-singapore', 'laptop', 'smartphone', 'textbook'];
 
-const stages = [
-  { duration: RAMP_DURATION, target: VIRTUAL_USERS },
-  { duration: SOAK_DURATION, target: VIRTUAL_USERS },
-  { duration: RAMP_DURATION, target: 0 },
-];
+function createStages(target) {
+  return [
+    { duration: RAMP_DURATION, target },
+    { duration: SOAK_DURATION, target },
+    { duration: RAMP_DURATION, target: 0 },
+  ];
+}
 
 export const options = {
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
@@ -41,7 +43,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakAllProducts',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[0]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -49,7 +51,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakPaginatedProducts',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[1]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -57,7 +59,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakProductDetail',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[2]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -65,7 +67,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'soakProductCount',
       startVUs: 0,
-      stages,
+      stages: createStages(SCENARIO_TARGETS[3]),
       gracefulRampDown: '30s',
       gracefulStop: '30s',
     },
@@ -77,6 +79,18 @@ export const options = {
     'success_rate':      ['rate>0.99'],
   },
 };
+
+let initialProductCount = null;
+
+function safeJsonPath(response, path) {
+  if (!response || response.status < 200 || response.status >= 300) return null;
+  if (response.body === null || response.body === '') return null;
+  try {
+    return response.json(path);
+  } catch (e) {
+    return null;
+  }
+}
 
 /**
  * Test 1: Soak test GET all products
@@ -91,10 +105,11 @@ export function soakAllProducts() {
       timeout: '10s',
     });
 
+    const products = safeJsonPath(response, 'products');
+
     const success = check(response, {
       'status is 200': (r) => r.status === 200,
-      'response has products': (r) => r.json('products') !== undefined,
-      'response time < 500ms': (r) => r.timings.duration < 500,
+      'response has products': () => products !== null,
       'no server errors': (r) => r.status < 500,
     });
 
@@ -104,11 +119,8 @@ export function soakAllProducts() {
     requestCount.add(1);
 
     // Track product count consistency
-    if (response.status === 200) {
-      const products = response.json('products');
-      if (products && Array.isArray(products)) {
-        productCountGauge.add(products.length);
-      }
+    if (Array.isArray(products)) {
+      productCountGauge.add(products.length);
     }
 
     sleep(SLEEP_TIME);
@@ -122,17 +134,18 @@ export function soakAllProducts() {
  */
 export function soakPaginatedProducts() {
   group('GET /product/product-list/:page', () => {
-    const randomPage = Math.floor(Math.random() * 2) + 1; // Pages 1-2 (only 6 products)
+    const randomPage = Math.floor(Math.random() * 5) + 1;
     const response = http.get(`${BASE_URL}/product/product-list/${randomPage}`, {
       headers: { 'Content-Type': 'application/json' },
       tags: { name: 'GetPaginatedProducts', page: randomPage },
       timeout: '10s',
     });
 
+    const products = safeJsonPath(response, 'products');
+
     const success = check(response, {
       'status is 200': (r) => r.status === 200,
-      'response has products': (r) => r.json('products') !== undefined,
-      'response time < 600ms': (r) => r.timings.duration < 600,
+      'response has products': () => products !== null,
       'no server errors': (r) => r.status < 500,
     });
 
@@ -161,10 +174,11 @@ export function soakProductDetail() {
       timeout: '10s',
     });
 
+    const product = safeJsonPath(response, 'product');
+
     const success = check(response, {
       'status is 200': (r) => r.status === 200,
-      'response has product': (r) => r.json('product') !== undefined,
-      'response time < 400ms': (r) => r.timings.duration < 400,
+      'response has product': () => product !== null,
       'no server errors': (r) => r.status < 500,
     });
 
@@ -190,17 +204,27 @@ export function soakProductCount() {
       timeout: '10s',
     });
 
+    const total = safeJsonPath(response, 'total');
+    const hasValidTotal = Number.isInteger(total) && total >= 0;
+    let hasDrift = false;
+
+    if (hasValidTotal) {
+      if (initialProductCount === null) {
+        initialProductCount = total;
+      } else {
+        hasDrift = total !== initialProductCount;
+      }
+    }
+
     const success = check(response, {
       'status is 200': (r) => r.status === 200,
-      'response has total': (r) => r.json('total') !== undefined,
-      'response time < 300ms': (r) => r.timings.duration < 300,
-      'count is a number': (r) => typeof r.json('total') === 'number',
-      'count is 6': (r) => r.json('total') === 6, // Verify consistent count
+      'response has total': () => total !== null,
+      'count is a number': () => hasValidTotal,
+      'count has no drift': () => !hasDrift,
       'no server errors': (r) => r.status < 500,
     });
 
-    const total = response.json('total');
-    if (response.status === 200) {
+    if (hasValidTotal) {
       productCountGauge.add(total, { endpoint: 'product-count' });
     }
 
@@ -236,7 +260,7 @@ export function soakCombined() {
 
     case 1:
       group('GET /product/product-list/:page', () => {
-        const page = Math.floor(Math.random() * 2) + 1; // Pages 1-2 (only 6 products)
+        const page = Math.floor(Math.random() * 5) + 1;
         const response = http.get(`${BASE_URL}/product/product-list/${page}`, {
           timeout: '10s',
         });

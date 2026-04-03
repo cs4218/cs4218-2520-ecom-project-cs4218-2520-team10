@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-04-03T11:04:34.764Z",
+  "total": 5,
+  "passed": 5,
+  "failed": 0,
+  "runs": [
+    {
+      "name": "soak-auth-category",
+      "file": "tests/soak/soak-auth-category.test.js",
+      "exitCode": 0,
+      "preResetExitCode": 0,
+      "k6ExitCode": 0,
+      "postResetExitCode": 0,
+      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-auth-category.summary.json",
+      "throughputReqPerSec": 9.497754776213835,
+      "responseP95Ms": 105.327,
+      "responseP99Ms": 121.67376,
+      "errorRate": 0,
+      "totalRequests": 36513
+    },
+    {
+      "name": "soak-heavy-payload",
+      "file": "tests/soak/soak-heavy-payload.test.js",
+      "exitCode": 0,
+      "preResetExitCode": 0,
+      "k6ExitCode": 0,
+      "postResetExitCode": 0,
+      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-heavy-payload.summary.json",
+      "throughputReqPerSec": 19.769568497289963,
+      "responseP95Ms": 2570.6909499999997,
+      "responseP99Ms": 2646.77171,
+      "errorRate": 0,
+      "totalRequests": 75940
+    },
+    {
+      "name": "soak-product-browsing",
+      "file": "tests/soak/soak-product-browsing.test.js",
+      "exitCode": 0,
+      "preResetExitCode": 0,
+      "k6ExitCode": 0,
+      "postResetExitCode": 0,
+      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-product-browsing.summary.json",
+      "throughputReqPerSec": 18.558396854445462,
+      "responseP95Ms": 161.8248999999999,
+      "responseP99Ms": 249.68135999999998,
+      "errorRate": 0.00019640852974186308,
+      "totalRequests": 71280
+    },
+    {
+      "name": "soak-search-filter",
+      "file": "tests/soak/soak-search-filter.test.js",
+      "exitCode": 0,
+      "preResetExitCode": 0,
+      "k6ExitCode": 0,
+      "postResetExitCode": 0,
+      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-search-filter.summary.json",
+      "throughputReqPerSec": 15.44780716952202,
+      "responseP95Ms": 240.8149999999999,
+      "responseP99Ms": 330.91349999999994,
+      "errorRate": 0,
+      "totalRequests": 59351
+    },
+    {
+      "name": "soak-user-journey",
+      "file": "tests/soak/soak-user-journey.test.js",
+      "exitCode": 0,
+      "preResetExitCode": 0,
+      "k6ExitCode": 0,
+      "postResetExitCode": 0,
+      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-user-journey.summary.json",
+      "throughputReqPerSec": 19.20224357768107,
+      "responseP95Ms": 175.97699999999998,
+      "responseP99Ms": 277.45768,
+      "errorRate": 0,
+      "totalRequests": 73797
+    }
+  ]
+}

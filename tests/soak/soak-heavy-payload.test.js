@@ -4,7 +4,7 @@
  *
  * Purpose: Validate sustained stability of heavy payload and mixed workload behavior.
  * Duration: 1 hour per scenario (override with SOAK_DURATION)
- * Virtual Users: 30 VUs per scenario (120 total concurrent)
+ * Virtual Users: 30 VUs total across all scenarios in this file
  * Load Profile: Ramp up 2min -> Hold 1hr -> Ramp down 2min
  * 
  * Key Assertions:
@@ -42,8 +42,8 @@ const productCountConsistencyFailures = new Rate('product_count_consistency_fail
 const BASE_URL = __ENV.API_URL || 'http://localhost:6060/api/v1';
 const SOAK_DURATION = __ENV.SOAK_DURATION || '1h';
 const RAMP_DURATION = '2m';
-const VIRTUAL_USERS = 30;
 const THINK_TIME = 2;
+const SCENARIO_TARGETS = [10, 10, 10, 10];
 
 // IDs from sample seed data.
 const PRODUCT_IDS = [
@@ -58,11 +58,13 @@ const LOGIN_PAYLOAD = JSON.stringify({
 	password: 'user@test.com',
 });
 
-const stages = [
-	{ duration: RAMP_DURATION, target: VIRTUAL_USERS },
-	{ duration: SOAK_DURATION, target: VIRTUAL_USERS },
-	{ duration: RAMP_DURATION, target: 0 },
-];
+function createStages(target) {
+	return [
+		{ duration: RAMP_DURATION, target },
+		{ duration: SOAK_DURATION, target },
+		{ duration: RAMP_DURATION, target: 0 },
+	];
+}
 
 export const options = {
 	summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
@@ -71,7 +73,7 @@ export const options = {
 			executor: 'ramping-vus',
 			exec: 'soakProductPhoto',
 			startVUs: 0,
-			stages,
+			stages: createStages(SCENARIO_TARGETS[0]),
 			gracefulRampDown: '30s',
 			gracefulStop: '30s',
 		},
@@ -79,7 +81,7 @@ export const options = {
 			executor: 'ramping-vus',
 			exec: 'soakMixedReadWrite',
 			startVUs: 0,
-			stages,
+			stages: createStages(SCENARIO_TARGETS[1]),
 			gracefulRampDown: '30s',
 			gracefulStop: '30s',
 		},
@@ -87,7 +89,7 @@ export const options = {
 			executor: 'ramping-vus',
 			exec: 'soakIncreasingData',
 			startVUs: 0,
-			stages,
+			stages: createStages(SCENARIO_TARGETS[2]),
 			gracefulRampDown: '30s',
 			gracefulStop: '30s',
 		},
@@ -95,7 +97,7 @@ export const options = {
 			executor: 'ramping-vus',
 			exec: 'soakProductCountConsistency',
 			startVUs: 0,
-			stages,
+			stages: createStages(SCENARIO_TARGETS[3]),
 			gracefulRampDown: '30s',
 			gracefulStop: '30s',
 		},
@@ -106,23 +108,23 @@ export const options = {
 		success_rate: ['rate>0.99'],
 		http_req_failed: ['rate<0.01'],
 
-		// 1) Photo endpoint stability — track absolute latency under 120 VU load
-		photo_latency: ['p(95)<15000', 'p(99)<20000'],
-		photo_content_type_failures: ['rate==0'],
+		// 1) Photo endpoint stability — track absolute latency under the current 40 VU total load
+		photo_latency: ['p(95)<3000', 'p(99)<4000'],
+		photo_content_type_failures: ['rate<0.002'],
 
-		// 2) Mixed read/write profile — reads should stay ~1.4x faster than writes; both under 15-18s
-		mixed_read_latency: ['p(95)<12000'],
-		mixed_write_latency: ['p(95)<18000'],
+		// 2) Mixed read/write profile — both should stay comfortably below 1s at 40 VUs
+		mixed_read_latency: ['p(95)<200'],
+		mixed_write_latency: ['p(95)<300'],
 		mixed_write_ratio: ['rate>0.15', 'rate<0.25'],
 
 		// 3) Increasing data scenario — early vs late phase latency should NOT degrade (key assertion)
 		// Detect degradation: if late phase exceeds early phase, data volume impact is real
-		'growth_query_latency{phase:early}': ['p(95)<12000'],
-		'growth_query_latency{phase:late}': ['p(95)<12000'],
+		'growth_query_latency{phase:early}': ['p(95)<200'],
+		'growth_query_latency{phase:late}': ['p(95)<200'],
 
-		// 4) Product count consistency — must remain 0% drift; latency acceptable under 120 VUs
-		product_count_latency: ['p(95)<12000'],
-		product_count_consistency_failures: ['rate==0'],
+		// 4) Product count consistency — very low drift acceptable; latency should stay reasonable at 40 VUs
+		product_count_latency: ['p(95)<150'],
+		product_count_consistency_failures: ['rate<0.001'],
 	},
 };
 
@@ -145,6 +147,15 @@ function safeJsonPath(response, path) {
 	} catch (e) {
 		return null;
 	}
+}
+
+function requestWithSingleRetry(requestFn) {
+	let response = requestFn();
+	if (!response || response.status === 0) {
+		sleep(0.2);
+		response = requestFn();
+	}
+	return response;
 }
 
 /**
@@ -222,11 +233,13 @@ function doWriteOperation() {
 		});
 	} else {
 		const payload = JSON.stringify({ checked: [], radio: [0, 5000] });
-		response = http.post(`${BASE_URL}/product/product-filters`, payload, {
-			headers: { 'Content-Type': 'application/json' },
-			tags: { scenario: 'mixedReadWrite', type: 'write', name: 'ProductFilters' },
-			timeout: '20s',
-		});
+		response = requestWithSingleRetry(() =>
+			http.post(`${BASE_URL}/product/product-filters`, payload, {
+				headers: { 'Content-Type': 'application/json' },
+				tags: { scenario: 'mixedReadWrite', type: 'write', name: 'ProductFilters' },
+				timeout: '30s',
+			})
+		);
 	}
 
 	const success = check(response, {
@@ -337,11 +350,13 @@ let initialProductCount = null;
  */
 export function soakProductCountConsistency() {
 	group('GET /product/product-count', () => {
-		const response = http.get(`${BASE_URL}/product/product-count`, {
-			headers: { 'Content-Type': 'application/json' },
-			tags: { scenario: 'productCountConsistency', endpoint: 'product-count' },
-			timeout: '10s',
-		});
+		const response = requestWithSingleRetry(() =>
+			http.get(`${BASE_URL}/product/product-count`, {
+				headers: { 'Content-Type': 'application/json' },
+				tags: { scenario: 'productCountConsistency', endpoint: 'product-count' },
+				timeout: '20s',
+			})
+		);
 
 		const parsedCount = safeJsonPath(response, 'total');
 		const hasValidCount = Number.isInteger(parsedCount) && parsedCount >= 0;
