@@ -92,10 +92,6 @@ function runSingle(test) {
     args.push('-e', `SOAK_DURATION=${process.env.SOAK_DURATION}`);
   }
 
-  if (process.env.API_URL) {
-    args.push('-e', `API_URL=${process.env.API_URL}`);
-  }
-
   args.push(test.file);
 
   console.log(`\n=== Running ${test.name} (${test.file}) ===`);
