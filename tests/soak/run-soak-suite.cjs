@@ -1,3 +1,9 @@
+/**
+ * Soak test suite script written by Ong Chang Heng Bertrand A0253013X
+ *
+ * This script runs multiple soak test scenarios sequentially, with database resets before and after each test.
+ */
+
 const { spawnSync } = require('child_process');
 const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs');
 const { join, resolve } = require('path');

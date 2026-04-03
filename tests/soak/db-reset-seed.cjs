@@ -1,3 +1,7 @@
+/**
+ * Database reset and seeding script for soak tests, written by Ong Chang Heng Bertrand A0253013X
+ */
+
 const { MongoClient } = require('mongodb');
 const { EJSON } = require('bson');
 const { readFileSync, existsSync } = require('fs');
