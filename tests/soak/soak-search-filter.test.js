@@ -86,9 +86,10 @@ export const options = {
     },
   },
   thresholds: {
-    'latency':           ['p(95)<6000', 'p(99)<10000'],
+    // Based on latest run baseline (p95~193ms, p99~301ms) with reasonable CI headroom.
+    'latency':           ['p(95)<300', 'p(99)<500'],
     'errors':            ['rate<0.01'],
-    'http_req_duration': ['p(95)<6000', 'p(99)<10000'],
+    'http_req_duration': ['p(95)<300', 'p(99)<500'],
     'success_rate':      ['rate>0.99'],
   },
 };

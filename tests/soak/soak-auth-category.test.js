@@ -79,10 +79,10 @@ export const options = {
     },
   },
   thresholds: {
-    // Keep soak thresholds realistic for sustained load while still catching severe regressions.
-    'latency':           ['p(95)<12000', 'p(99)<20000'],
+    // Based on previous run baseline (p95~105ms, p99~122ms) with headroom for CI variability.
+    'latency':           ['p(95)<250', 'p(99)<500'],
     'errors':            ['rate<0.01'],
-    'http_req_duration': ['p(95)<12000', 'p(99)<20000'],
+    'http_req_duration': ['p(95)<250', 'p(99)<500'],
     'success_rate':      ['rate>0.99'],
   },
 	ext: {

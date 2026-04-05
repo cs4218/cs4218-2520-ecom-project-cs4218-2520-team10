@@ -117,14 +117,14 @@ export const options = {
 		mixed_write_latency: ['p(95)<300'],
 		mixed_write_ratio: ['rate>0.15', 'rate<0.25'],
 
-		// 3) Increasing data scenario — early vs late phase latency should NOT degrade (key assertion)
-		// Detect degradation: if late phase exceeds early phase, data volume impact is real
+		// 3) Increasing data baseline (early p95~120ms, late p95~159ms, register p95~289ms).
 		'growth_query_latency{phase:early}': ['p(95)<200'],
-		'growth_query_latency{phase:late}': ['p(95)<200'],
+		'growth_query_latency{phase:late}': ['p(95)<250'],
+		growth_register_latency: ['p(95)<400'],
 
-		// 4) Product count consistency — very low drift acceptable; latency should stay reasonable at 40 VUs
-		product_count_latency: ['p(95)<150'],
-		product_count_consistency_failures: ['rate<0.001'],
+		// 4) Product-count baseline (p95~140ms) and strict consistency checks.
+		product_count_latency: ['p(95)<200'],
+		product_count_consistency_failures: ['rate<0.0005'],
 	},
 };
 

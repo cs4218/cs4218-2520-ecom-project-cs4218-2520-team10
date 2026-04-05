@@ -50,11 +50,11 @@ export const options = {
     },
   },
   thresholds: {
-    // Includes intentional think-time from four sleep(2) calls.
-    'soak_iteration_duration': ['p(95)<10000'],
-    'latency':                 ['p(95)<500', 'p(99)<1000'],
+    // Based on latest run baseline (iteration p95~8562ms, req p95~152ms, req p99~191ms).
+    'soak_iteration_duration': ['p(95)<9500'],
+    'latency':                 ['p(95)<250', 'p(99)<500'],
     'errors':                  ['rate<0.01'],
-    'http_req_duration':       ['p(95)<500', 'p(99)<1000'],
+    'http_req_duration':       ['p(95)<250', 'p(99)<500'],
     'success_rate':            ['rate>0.99'],
   },
 };

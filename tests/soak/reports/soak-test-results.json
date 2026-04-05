@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-03T11:04:34.764Z",
+  "generatedAt": "2026-04-05T08:28:28.548Z",
   "total": 5,
   "passed": 5,
   "failed": 0,
@@ -12,11 +12,11 @@
       "k6ExitCode": 0,
       "postResetExitCode": 0,
       "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-auth-category.summary.json",
-      "throughputReqPerSec": 9.497754776213835,
-      "responseP95Ms": 105.327,
-      "responseP99Ms": 121.67376,
-      "errorRate": 0,
-      "totalRequests": 36513
+      "throughputReqPerSec": 9.579661988544034,
+      "responseP95Ms": 155.1325,
+      "responseP99Ms": 224.64289999999994,
+      "errorRate": 0.0016290624745458988,
+      "totalRequests": 36831
     },
     {
       "name": "soak-heavy-payload",
@@ -26,11 +26,11 @@
       "k6ExitCode": 0,
       "postResetExitCode": 0,
       "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-heavy-payload.summary.json",
-      "throughputReqPerSec": 19.769568497289963,
-      "responseP95Ms": 2570.6909499999997,
-      "responseP99Ms": 2646.77171,
+      "throughputReqPerSec": 20.00992101233346,
+      "responseP95Ms": 2548.86525,
+      "responseP99Ms": 2642.81025,
       "errorRate": 0,
-      "totalRequests": 75940
+      "totalRequests": 76876
     },
     {
       "name": "soak-product-browsing",
@@ -40,11 +40,11 @@
       "k6ExitCode": 0,
       "postResetExitCode": 0,
       "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-product-browsing.summary.json",
-      "throughputReqPerSec": 18.558396854445462,
-      "responseP95Ms": 161.8248999999999,
-      "responseP99Ms": 249.68135999999998,
-      "errorRate": 0.00019640852974186308,
-      "totalRequests": 71280
+      "throughputReqPerSec": 18.474292331312274,
+      "responseP95Ms": 151.86569999999998,
+      "responseP99Ms": 253.7903,
+      "errorRate": 0,
+      "totalRequests": 70979
     },
     {
       "name": "soak-search-filter",
@@ -54,11 +54,11 @@
       "k6ExitCode": 0,
       "postResetExitCode": 0,
       "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-search-filter.summary.json",
-      "throughputReqPerSec": 15.44780716952202,
-      "responseP95Ms": 240.8149999999999,
-      "responseP99Ms": 330.91349999999994,
+      "throughputReqPerSec": 15.426091863833136,
+      "responseP95Ms": 175.28039999999993,
+      "responseP99Ms": 289.32023999999984,
       "errorRate": 0,
-      "totalRequests": 59351
+      "totalRequests": 59264
     },
     {
       "name": "soak-user-journey",
@@ -68,11 +68,11 @@
       "k6ExitCode": 0,
       "postResetExitCode": 0,
       "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-user-journey.summary.json",
-      "throughputReqPerSec": 19.20224357768107,
-      "responseP95Ms": 175.97699999999998,
-      "responseP99Ms": 277.45768,
+      "throughputReqPerSec": 18.944016758701352,
+      "responseP95Ms": 162.2864,
+      "responseP99Ms": 239.82731999999996,
       "errorRate": 0,
-      "totalRequests": 73797
+      "totalRequests": 72845
     }
   ]
 }
