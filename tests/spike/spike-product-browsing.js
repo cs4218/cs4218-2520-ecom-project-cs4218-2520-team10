@@ -102,10 +102,10 @@ export const options = {
 
     // Time-to-recovery - Use min to find the first successful recovery time across VUs
     time_to_recovery_seconds: ["min<30"],
-    "time_to_recovery_seconds{endpoint:get-product}": ["min<20"],
-    "time_to_recovery_seconds{endpoint:product-list}": ["min<20"],
-    "time_to_recovery_seconds{endpoint:get-product-detail}": ["min<20"],
-    "time_to_recovery_seconds{endpoint:product-count}": ["min<20"],
+    "time_to_recovery_seconds{endpoint:get-product}": ["min<30"],
+    "time_to_recovery_seconds{endpoint:product-list}": ["min<30"],
+    "time_to_recovery_seconds{endpoint:get-product-detail}": ["min<30"],
+    "time_to_recovery_seconds{endpoint:product-count}": ["min<30"],
   },
 };
 

@@ -87,7 +87,7 @@ export const options = {
     "duration_recovery_phase{endpoint:filter-products}": ["p(90)<1000"],
     "duration_recovery_phase{endpoint:category-products}": ["p(90)<1000"],
 
-    // Time-to-recovery thresholds - How quickly system stabilizes post-spike
+    // Time-to-recovery thresholds - Use min to find the first successful recovery time across VUs
     time_to_recovery_seconds: ["min<30"],
     "time_to_recovery_seconds{endpoint:search-products}": ["min<30"],
     "time_to_recovery_seconds{endpoint:filter-products}": ["min<30"],
