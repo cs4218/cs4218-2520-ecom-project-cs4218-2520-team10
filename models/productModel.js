@@ -40,7 +40,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Added indexes on slug, category, price, and createdAt for improved query performance - Ong Chang Heng Bertrand A0253013X
+// Bug fix: Added indexes on slug, category, price, and createdAt for improved query performance - Ong Chang Heng Bertrand A0253013X
 productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ category: 1 });
 productSchema.index({ price: 1 });
