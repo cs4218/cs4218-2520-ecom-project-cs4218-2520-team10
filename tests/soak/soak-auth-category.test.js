@@ -28,8 +28,8 @@ const CATEGORY_SLUGS = ['electronics', 'clothing', 'book'];
 
 // Existing test account — must exist in your test DB
 const LOGIN_PAYLOAD = JSON.stringify({
-  email:    process.env.TEST_USER_EMAIL,
-  password: process.env.TEST_USER_PASSWORD,
+  email:    'user@test.com',
+  password: 'user@test.com',
 });
 
 function createStages(target) {

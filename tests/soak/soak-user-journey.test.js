@@ -26,8 +26,8 @@ const VIRTUAL_USERS  = 40;
 const SLEEP_TIME     = 2;
 
 const LOGIN_PAYLOAD  = JSON.stringify({
-  email:    process.env.TEST_USER_EMAIL,
-  password: process.env.TEST_USER_PASSWORD,
+  email:    'user@test.com',
+  password: 'user@test.com',
 });
 
 const stages = [
