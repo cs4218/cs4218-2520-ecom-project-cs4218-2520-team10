@@ -25,10 +25,9 @@ const RAMP_DURATION  = '2m';
 const VIRTUAL_USERS  = 40;
 const SLEEP_TIME     = 2;
 
-// Test data — replace with real values from your DB
 const LOGIN_PAYLOAD  = JSON.stringify({
-  email:    'user@test.com',
-  password: 'user@test.com',
+  email:    process.env.TEST_USER_EMAIL,
+  password: process.env.TEST_USER_PASSWORD,
 });
 
 const stages = [

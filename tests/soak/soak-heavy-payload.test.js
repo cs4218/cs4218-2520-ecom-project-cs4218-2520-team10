@@ -54,8 +54,8 @@ const PRODUCT_IDS = [
 
 const SEARCH_KEYWORDS = ['laptop', 'phone', 'book', 'shirt'];
 const LOGIN_PAYLOAD = JSON.stringify({
-	email: 'user@test.com',
-	password: 'user@test.com',
+	email: process.env.TEST_USER_EMAIL,
+	password: process.env.TEST_USER_PASSWORD,
 });
 
 function createStages(target) {

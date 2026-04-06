@@ -28,7 +28,6 @@ const SCENARIO_TARGETS = [10, 10, 10, 10];
 const SEARCH_KEYWORDS = ['laptop', 'phone', 'book', 'shirt'];
 const CATEGORY_SLUGS  = ['electronics', 'clothing', 'book'];
 
-// NOTE: Replace these with real product/category IDs from your test database
 const PRODUCT_IDS  = ['66db427fdb0119d9234b27f3', '66db427fdb0119d9234b27f5', '66db427fdb0119d9234b27f1'];
 const CATEGORY_IDS = ['66db427fdb0119d9234b27ed', '66db427fdb0119d9234b27ee', '66db427fdb0119d9234b27ef'];
 
