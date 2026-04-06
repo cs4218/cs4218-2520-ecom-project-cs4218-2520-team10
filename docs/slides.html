@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKILL Framework — AI-Driven Testing</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    background: #000;
+    color: #fff;
+  }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    padding: 60px 80px;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .slide.active { display: flex; }
+
+  @media print {
+    .slide {
+      display: flex !important;
+      page-break-after: always;
+      height: 100vh;
+      width: 100vw;
+    }
+    .slide:last-of-type { page-break-after: avoid; }
+    .nav, .counter { display: none; }
+    body { background: #000; }
+  }
+
+  /* Title slide */
+  .slide-title h1 {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+  .slide-title .subtitle {
+    font-size: 20px;
+    color: #888;
+    margin-bottom: 40px;
+  }
+  .slide-title .team {
+    font-size: 16px;
+    color: #666;
+    line-height: 1.8;
+  }
+
+  /* Section headers */
+  h2 {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    letter-spacing: -0.5px;
+  }
+  h2 .dim { color: #555; }
+
+  /* Compare layout */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    flex: 1;
+    align-items: start;
+  }
+
+  .compare-col h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #333;
+  }
+  .compare-col.bad h3 { color: #666; }
+  .compare-col.good h3 { color: #fff; }
+
+  /* Code blocks */
+  .code {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 16px 0;
+    overflow: hidden;
+    white-space: pre;
+  }
+  .code .comment { color: #555; }
+  .code .highlight { color: #fff; font-weight: 700; }
+  .code .dim { color: #444; }
+  .code .green { color: #aaa; }
+
+  /* Bullet lists */
+  ul {
+    list-style: none;
+    font-size: 18px;
+    line-height: 2.2;
+  }
+  ul li::before {
+    content: ">";
+    color: #555;
+    margin-right: 12px;
+    font-weight: 700;
+  }
+  ul li.bad::before { content: "x"; color: #555; }
+  ul li.good::before { content: "+"; color: #fff; }
+
+  /* Impact bar */
+  .impact {
+    margin-top: 32px;
+    padding: 16px 24px;
+    border-left: 3px solid #fff;
+    font-size: 16px;
+    color: #ccc;
+    background: #0a0a0a;
+  }
+  .impact strong { color: #fff; }
+
+  /* Architecture */
+  .arch {
+    font-size: 15px;
+    line-height: 1.9;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .arch .folder { color: #fff; font-weight: 700; }
+  .arch .desc { color: #666; }
+  .arch .arrow { color: #444; }
+  .arch .step { color: #888; }
+  .arch .memory { color: #aaa; }
+
+  /* Features grid */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 40px;
+  }
+  .feature {
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 28px;
+  }
+  .feature h3 {
+    font-size: 20px;
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+  .feature p {
+    font-size: 14px;
+    color: #888;
+    line-height: 1.7;
+  }
+  .feature .tag {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 4px 12px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+  }
+
+  /* Demo slide */
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+  .demo-box {
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 32px;
+  }
+  .demo-box h3 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: 700;
+  }
+  .demo-box .steps {
+    font-size: 14px;
+    color: #888;
+    line-height: 2;
+  }
+  .demo-box .steps span { color: #fff; }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 24px;
+    right: 32px;
+    font-size: 14px;
+    color: #333;
+    z-index: 100;
+  }
+
+  /* Slide counter */
+  .counter {
+    position: fixed;
+    bottom: 24px;
+    left: 32px;
+    font-size: 14px;
+    color: #333;
+    z-index: 100;
+  }
+
+  /* Divider */
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: #333;
+    margin: 24px 0;
+  }
+
+  .small { font-size: 14px; color: #555; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<div class="slide slide-title active" id="s1">
+  <h1>SKILL Framework</h1>
+  <div class="subtitle">AI-Driven Testing That Learns</div>
+  <div class="divider"></div>
+  <div class="team">
+    CS4218 Team 10 &mdash; Virtual Vault<br>
+    Kim Shi Tong &middot; Yan Weidong &middot; Ong Chang Heng Bertrand &middot; Shaun Lee Xuan Wei
+  </div>
+</div>
+
+<!-- ==================== SLIDE 2: WHY AI ==================== -->
+<div class="slide" id="s2">
+  <h2>Without AI <span class="dim">vs</span> With AI</h2>
+  <div class="compare">
+    <div class="compare-col bad">
+      <h3>MANUAL</h3>
+      <div class="code">
+<span class="comment">// Developer writes tests by hand</span>
+<span class="comment">// 20 minutes later...</span>
+
+test('password hashing', () => {
+  const hash = hashPassword('test123');
+  expect(hash).toBeTruthy();
+});
+
+test('passwords match', () => {
+  const hash = hashPassword('myPass');
+  expect(comparePassword('myPass', hash))
+    .toBe(true);
+});
+
+<span class="dim">// 2 tests. Passes. Ship it.</span>
+<span class="dim">// Missed: null, empty, boundary,</span>
+<span class="dim">//   bcrypt format, error paths...</span>
+      </div>
+      <ul>
+        <li class="bad">Slow &mdash; 20 min, 2 tests</li>
+        <li class="bad">Inconsistent &mdash; depends who writes it</li>
+        <li class="bad">Gaps &mdash; misses edge cases</li>
+      </ul>
+    </div>
+    <div class="compare-col good">
+      <h3>WITH AI (e.g. Claude Code)</h3>
+      <div class="code">
+<span class="highlight">User:</span>
+"Generate unit tests for authHelper.js"
+
+<span class="comment">// AI generates tests in ~2 minutes:</span>
+
+test('should hash valid password', ...)
+test('should reject 7-char password', ...)
+test('should accept 8-char password', ...)
+test('should throw on null input', ...)
+test('should not equal plaintext', ...)
+test('should match bcrypt format', ...)
+test('should handle bcrypt failure', ...)
+... <span class="dim">// 18 tests total</span>
+
+<span class="dim">// Boundary test at length=7</span>
+<span class="dim">// caught off-by-one validation bug</span>
+      </div>
+      <ul>
+        <li class="good">Fast &mdash; 18 tests in 2 minutes</li>
+        <li class="good">Systematic &mdash; covers more scenarios</li>
+        <li class="good">Found real bug manual tests missed</li>
+      </ul>
+    </div>
+  </div>
+  <div class="impact">
+    <strong>AI is clearly better.</strong> But is just prompting AI enough?
+  </div>
+</div>
+
+<!-- ==================== SLIDE 3: PROBLEM WITH CURRENT AI ==================== -->
+<div class="slide" id="s3">
+  <h2>Problem with Typical AI <span class="dim">&mdash; SKILL Solves It</span></h2>
+  <div class="compare">
+    <div class="compare-col bad">
+      <h3>TYPICAL AI PROMPTING</h3>
+      <div class="code">
+<span class="comment">// Every new session:</span>
+
+<span class="highlight">User:</span> "Write unit tests for hashPassword.
+Use AAA pattern.
+Use Jest.
+Test boundary values.
+Mock DB but keep bcrypt real.
+Name tests 'should X when Y'..."
+
+<span class="comment">// Next session, different function:</span>
+
+<span class="highlight">User:</span> "Write unit tests for registerController.
+Use AAA pattern.
+Use Jest.
+Test boundary values.
+Mock DB but keep bcrypt real.
+Name tests 'should X when Y'..."
+
+<span class="dim">// Same instructions every time.</span>
+      </div>
+      <div style="margin-top: 20px;">
+        <ul>
+          <li class="bad">Repetitive &mdash; re-teach every session</li>
+          <li class="bad">Inflated &mdash; stuff it all in system prompt,<br>&ensp;&ensp;&ensp;AI forgets halfway through</li>
+          <li class="bad">No memory &mdash; learns nothing from<br>&ensp;&ensp;&ensp;previous modules</li>
+          <li class="bad">No review &mdash; AI outputs code,<br>&ensp;&ensp;&ensp;no quality gate</li>
+        </ul>
+      </div>
+    </div>
+    <div class="compare-col good">
+      <h3>SKILL FRAMEWORK</h3>
+      <div class="code">
+<span class="comment">// Every session, one instruction:</span>
+
+<span class="highlight">User:</span> "Follow SKILL.md. Test auth module."
+
+<span class="comment">// AI loads knowledge progressively:</span>
+
+SKILL.md    <span class="green">&rarr; Routes to correct agent</span>
+  <span class="arrow">&darr;</span>
+agent.md    <span class="green">&rarr; Plans (9 techniques)</span>
+  <span class="arrow">&darr;</span>
+implementer <span class="green">&rarr; Writes code (AAA, Jest)</span>
+  <span class="arrow">&darr;</span>
+reviewer    <span class="green">&rarr; Verifies quality</span>
+
+<span class="comment">// Next module, AI reads past learnings:</span>
+
+_memory/    <span class="green">&rarr; "Boundary tests caught bugs.</span>
+               <span class="green">Apply to next module."</span>
+      </div>
+      <div style="margin-top: 20px;">
+        <ul>
+          <li class="good">One instruction &mdash; "Follow SKILL.md"</li>
+          <li class="good">Progressive disclosure &mdash; loads ~500<br>&ensp;&ensp;&ensp;lines at a time, not 5,000</li>
+          <li class="good">Memory &mdash; remembers what worked,<br>&ensp;&ensp;&ensp;applies to next module</li>
+          <li class="good">Quality gate &mdash; reviewer checks<br>&ensp;&ensp;&ensp;before approving</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="impact">
+    <strong>Impact:</strong> Never repeat. Isolated context. Self-learning. Quality verified.
+  </div>
+</div>
+
+<!-- ==================== SLIDE 4: SKILL FEATURES ==================== -->
+<div class="slide" id="s4">
+  <h2>SKILL Framework</h2>
+  <div class="features">
+    <div class="feature">
+      <h3>Progressive Disclosure</h3>
+      <p>
+        6 agents, each with plan &rarr; implement &rarr; review.<br><br>
+        AI loads only the agent it needs. Never all 5,751 lines at once.<br><br>
+        Each test type is isolated &mdash; unit tests don't pollute integration context.
+      </p>
+      <div class="tag">Cleaner context, better output</div>
+    </div>
+    <div class="feature">
+      <h3>Memory System</h3>
+      <p>
+        After testing auth, AI saves what worked to <code>_memory/</code>.<br><br>
+        Next module reads it &mdash; "boundary tests catch off-by-one bugs."<br><br>
+        AI gets smarter with each module. No re-teaching.
+      </p>
+      <div class="tag">Self-learning across modules</div>
+    </div>
+    <div class="feature">
+      <h3>Platform Portable</h3>
+      <p>
+        SKILL.md is just markdown steps. Any AI can follow them.<br><br>
+        <strong>CLI:</strong> Claude Code, Codex (full auto)<br>
+        <strong>Web+GitHub:</strong> ChatGPT, Gemini (read auto)<br>
+        <strong>Web only:</strong> User pastes code
+      </p>
+      <div class="tag">Same quality on any platform</div>
+    </div>
+  </div>
+  <div style="margin-top: 40px;">
+    <div class="arch">
+      <span class="folder">SKILL/</span><br>
+      <span class="arrow">&ensp;├── </span><span class="folder">SKILL.md</span> <span class="desc">&mdash; Router (detects platform, routes to agent)</span><br>
+      <span class="arrow">&ensp;├── </span><span class="folder">architecture_reader/</span> <span class="step">&mdash; Step 1: Understand code</span><br>
+      <span class="arrow">&ensp;├── </span><span class="folder">unit_test/</span> <span class="step">&mdash; Step 2: 9-technique planning &rarr; AAA tests &rarr; rubric review</span><br>
+      <span class="arrow">&ensp;├── </span><span class="folder">integration_test/</span> <span class="step">&mdash; Step 3: Component pairs &rarr; real interactions</span><br>
+      <span class="arrow">&ensp;├── </span><span class="folder">ui_test/</span> <span class="step">&mdash; Step 4: User journeys &rarr; Playwright</span><br>
+      <span class="arrow">&ensp;├── </span><span class="folder">load_test/</span> <span class="step">&mdash; Step 5: Performance baselines</span><br>
+      <span class="arrow">&ensp;├── </span><span class="folder">experience_consolidate/</span> <span class="step">&mdash; Step 6: Capture learnings</span><br>
+      <span class="arrow">&ensp;└── </span><span class="folder">_memory/</span> <span class="memory">&mdash; Persistent brain (patterns.md + module learnings)</span><br>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 5: SKILL.MD OVERVIEW ==================== -->
+<div class="slide" id="s5" style="padding: 40px 60px;">
+  <h2 style="margin-bottom: 20px;">Inside SKILL.md <span class="dim">&mdash; Environment Detection &amp; Dependencies</span></h2>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <img src="skill-md-overview.png" style="max-height: 80vh; max-width: 90vw; border: 1px solid #333; border-radius: 8px;" />
+  </div>
+</div>
+
+<!-- ==================== SLIDE 6: SKILL.MD ROUTING ==================== -->
+<div class="slide" id="s6" style="padding: 40px 60px;">
+  <h2 style="margin-bottom: 20px;">Inside SKILL.md <span class="dim">&mdash; Routing &amp; Agent Workflow</span></h2>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <img src="skill-md-routing.png" style="max-height: 80vh; max-width: 90vw; border: 1px solid #333; border-radius: 8px;" />
+  </div>
+</div>
+
+<!-- ==================== SLIDE 7: DEMO INTRO ==================== -->
+<div class="slide" id="s7">
+  <h2>Live Demo</h2>
+  <div style="display: grid; grid-template-columns: 1fr; gap: 40px; max-width: 700px;">
+    <div class="code" style="font-size: 16px; line-height: 2.2;">
+<span class="highlight">Step 1:</span>  Import SKILL as Claude Web Skill
+         <span class="dim">or place in project directory for Claude Code</span>
+
+<span class="highlight">Step 2A:</span> Claude Web + GitHub
+         <span class="dim">Connect repo &rarr; AI reads code &rarr; outputs tests in chat</span>
+
+<span class="highlight">Step 2B:</span> Claude Code (CLI)
+         <span class="dim">AI reads code &rarr; writes tests &rarr; runs tests &rarr; reviews</span>
+    </div>
+    <div class="impact">
+      <strong>Same SKILL. Two platforms. Same quality output.</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 8: CLAUDE WEB PROGRESSIVE ==================== -->
+<div class="slide" id="s8" style="padding: 40px 60px;">
+  <h2 style="margin-bottom: 20px;">Claude Web <span class="dim">&mdash; Progressive Disclosure in Action</span></h2>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <img src="demo-claude-web-progressive.png" style="max-height: 80vh; max-width: 90vw; border: 1px solid #333; border-radius: 8px;" />
+  </div>
+  <div class="impact" style="margin-top: 16px;">
+    <strong>AI reads SKILL.md &rarr; agent.md &rarr; implementer.md</strong> &ensp;each loaded only when needed. Context stays isolated.
+  </div>
+</div>
+
+<!-- ==================== SLIDE 9: CLAUDE WEB OUTPUT ==================== -->
+<div class="slide" id="s9" style="padding: 40px 60px;">
+  <h2 style="margin-bottom: 20px;">Claude Web <span class="dim">&mdash; Outputs test files for download</span></h2>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <img src="demo-claude-web-2.png" style="max-height: 80vh; max-width: 90vw; border: 1px solid #333; border-radius: 8px;" />
+  </div>
+</div>
+
+<!-- ==================== SLIDE 10: CLAUDE CODE 1 ==================== -->
+<div class="slide" id="s10" style="padding: 40px 60px;">
+  <h2 style="margin-bottom: 20px;">Claude Code <span class="dim">&mdash; Planner + Implementer</span></h2>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <img src="demo-claude-code-1.png" style="max-height: 80vh; max-width: 90vw; border: 1px solid #333; border-radius: 8px;" />
+  </div>
+</div>
+
+<!-- ==================== SLIDE 11: CLAUDE CODE 2 ==================== -->
+<div class="slide" id="s11" style="padding: 40px 60px;">
+  <h2 style="margin-bottom: 20px;">Claude Code <span class="dim">&mdash; Reviewer Summary</span></h2>
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <img src="demo-claude-code-2.png" style="max-height: 80vh; max-width: 90vw; border: 1px solid #333; border-radius: 8px;" />
+  </div>
+</div>
+
+<!-- ==================== NAVIGATION ==================== -->
+<div class="counter"><span id="current">1</span> / 11</div>
+<div class="nav">&larr; &rarr; to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function show(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    document.getElementById('current').textContent = current + 1;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(current - 1); }
+  });
+
+  // Click to advance
+  document.addEventListener('click', (e) => {
+    if (e.clientX > window.innerWidth / 2) show(current + 1);
+    else show(current - 1);
+  });
+</script>
+
+</body>
+</html>
