@@ -162,14 +162,34 @@ Each agent folder contains its own complete workflow:
 
 ---
 
-### 5. **load_test/**
-**Role:** Plan and write performance tests
-- agent.md → How to plan load test scenarios
-- implementer.md → How to write load tests
-- reviewer.md → Verify load test quality
+### 5. **Performance Testing** (4 agents, all k6-based)
+
+Each type uses Grafana k6 but differs in VU profile, goals, and what it measures:
+
+#### **load_test/** — Validate at Expected Traffic
+- VU profile: Gradual ramp → hold steady → ramp down (50 VUs, 3-10 min)
+- Key metric: p95 latency, throughput, error rate
+- Thresholds: Strict (p95 < 500ms, errors < 1%)
+
+#### **stress_test/** — Find the Breaking Point
+- VU profile: Stepped escalation (50 → 100 → 200 → 300 → 400+ VUs, ~12 min)
+- Key metric: At which VU count do errors exceed 5%? What's the max capacity?
+- Thresholds: Relaxed (p95 < 2s, errors < 10%)
+
+#### **spike_test/** — Handle Sudden Surges
+- VU profile: Baseline 10 VUs → instant jump to 500 VUs → drop back → observe recovery
+- Key metric: Does server crash? Recovery time after spike?
+- Thresholds: Very relaxed during spike (p95 < 3s, errors < 15%), strict during recovery
+
+#### **soak_test/** — Detect Degradation Over Time
+- VU profile: Moderate load (30 VUs) held for 1-4 hours
+- Key metric: Does p95 at 60 min match p95 at 5 min? Memory leaks? Latency drift?
+- Thresholds: Strict but comparative (end-of-test within 20% of start-of-test)
+
+Each agent has: agent.md (plan) → implementer.md (execute) → reviewer.md (verify)
 
 **Input:** Architecture understanding, critical paths
-**Output:** Load test code + performance baselines
+**Output:** Performance test code + baselines/findings
 
 ---
 
@@ -223,7 +243,10 @@ GO TO: architecture_reader/
 - Unit functions in isolation? → **unit_test/**
 - Components working together? → **integration_test/**
 - UI and user flows? → **ui_test/**
-- Performance under load? → **load_test/**
+- Performance under expected load? → **load_test/**
+- Find the breaking point? → **stress_test/**
+- Handle sudden traffic surges? → **spike_test/**
+- Detect degradation over time? → **soak_test/**
 - Learning patterns? → **experience_consolidate/**
 
 ---
@@ -489,8 +512,11 @@ Each cycle makes the SKILL files better. Experiences from project A improve SOPs
 | Test individual functions | unit_test | agent.md, implementer.md, reviewer.md |
 | Test component interactions | integration_test | agent.md, implementer.md, reviewer.md |
 | Test UI and flows | ui_test | agent.md, implementer.md, reviewer.md |
-| Test performance | load_test | agent.md, implementer.md, reviewer.md |
-| Document learnings | experience_consolidate | agent.md, implementer.md, reviewer.md |
+| Validate expected traffic | load_test | agent.md, implementer.md, reviewer.md |
+| Find breaking point | stress_test | agent.md, implementer.md, reviewer.md |
+| Handle sudden surges | spike_test | agent.md, implementer.md, reviewer.md |
+| Detect degradation over time | soak_test | agent.md, implementer.md, reviewer.md |
+| Document learnings | experience_consolidate | agent.md, implementer.md, reviewer.md, remediator.md |
 
 ---
 
@@ -504,8 +530,11 @@ SKILL/
 ├── unit_test/               ← Then test individual units
 ├── integration_test/        ← Then test interactions
 ├── ui_test/                 ← Then test UI/user flows
-├── load_test/               ← Then test performance
-└── experience_consolidate/  ← Finally, document learnings
+├── load_test/               ← Performance: validate expected traffic
+├── stress_test/             ← Performance: find breaking point
+├── spike_test/              ← Performance: handle sudden surges
+├── soak_test/               ← Performance: detect degradation over time
+└── experience_consolidate/  ← Document learnings + remediate SOPs
 ```
 
 Each folder has:
@@ -526,5 +555,8 @@ Each folder has:
 - [unit_test/](./unit_test/agent.md) — Plan unit tests
 - [integration_test/](./integration_test/agent.md) — Plan integration tests
 - [ui_test/](./ui_test/agent.md) — Plan UI tests
-- [load_test/](./load_test/agent.md) — Plan load tests
+- [load_test/](./load_test/agent.md) — Plan load tests (expected traffic)
+- [stress_test/](./stress_test/agent.md) — Plan stress tests (breaking point)
+- [spike_test/](./spike_test/agent.md) — Plan spike tests (sudden surges)
+- [soak_test/](./soak_test/agent.md) — Plan soak tests (long-duration stability)
 
