@@ -220,7 +220,7 @@ Total: 3 tests - Missing many scenarios, too vague
   - [ ] Test would fail if assertion value changed
 
 - [ ] **All Tests Pass**
-  - [ ] npm run test:backend passes 100%
+  - [ ] All tests pass when running your project's test command
   - [ ] No failing tests
   - [ ] No skipped/pending tests (unless documented reason)
   - [ ] Coverage meets 80% target
@@ -268,7 +268,7 @@ Tests must pass **at least 3 of 4 pillars**:
 ### How to Verify
 
 1. **Run the tests** - Do they all pass?
-2. **Check coverage** - npm run test:backend -- --coverage (≥80%?)
+2. **Check coverage** - run your project's coverage command (≥80%?)
 3. **Break the code** - Modify unit, which tests fail? (Should be multiple)
 4. **Run in different order** - shuffle test order, all still pass?
 5. **Check mocks are correct** - Do they return what code expects?
@@ -368,7 +368,7 @@ describe('loginController', () => {
   - [ ] Test data cleaned up
 
 - [ ] **Comments Where Needed**
-  - [ ] Author name and student ID on each test file
+  - [ ] Author name on each test file
   - [ ] Complex setup explained
   - [ ] Why mocking a particular way (if not obvious)
   - [ ] Not over-commented (code should be clear)
@@ -386,7 +386,7 @@ describe('loginController', () => {
 ```javascript
 /**
  * Unit Tests: authHelper.js
- * Author: Kim Shi Tong, A0265858J
+ * Author: [Your Name]
  */
 
 describe('hashPassword', () => {

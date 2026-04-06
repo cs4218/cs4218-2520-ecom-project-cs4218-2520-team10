@@ -1,36 +1,53 @@
 ---
 name: SKILL Framework
-description: Main routing workflow for systematic testing and architectural learning
-type: framework
-version: 1.0
-status: production-ready
-last_updated: 2026-03-27
+description: Systematic testing and architectural learning - works on any AI platform (Claude Code, Cursor, ChatGPT, Gemini, etc.)
+version: 2.0
 ---
 
 # SKILL Framework - Main Logic & Routing
 
 **Systematic workflow routing to specialized agents for testing and architectural learning.**
+**Works on any AI platform that can read these instructions.**
 
 ---
 
-## Prerequisites
+## Dependencies
 
-**SKILL requires file access to operate. Choose one:**
+**Your project needs these to run the generated tests:**
 
-- ✅ **Local Environment (Claude Code):** AI can read/write files directly
-  - Agent outputs → Written as .md files
-  - Agent workflows → Direct file creation
+| Dependency | Used For | Required? |
+|-----------|----------|-----------|
+| Node.js | Runtime | Yes |
+| Jest | Unit + integration tests | Yes (or equivalent: Vitest, Mocha) |
+| Playwright | E2E / UI tests | Only for ui_test agent |
+| K6 or Artillery | Load tests | Only for load_test agent |
+| mongodb-memory-server | In-memory DB for integration tests | Recommended if using MongoDB |
 
-- ✅ **GitHub/Web with Access:** User provides GitHub credentials/access
-  - Agent outputs → Can commit to repo
-  - Agent workflows → Direct file creation
+**Check:** Read your project's `package.json` (or equivalent) to confirm which test frameworks are installed. Adapt agent instructions to your project's actual test tooling.
 
-- ⚠️ **No File Access:** User cannot grant file access
-  - Agent outputs → Provided in chat as markdown
-  - User responsibility → Copy-paste to files manually
-  - Agent workflows → Described step-by-step in chat
+---
 
-**No prerequisite:** If you're reading this in Claude Code, you have file access. ✓
+## Environment Detection
+
+**Before starting, assess what you can do:**
+
+1. **Can you read project files?**
+   - Yes (local IDE, sandbox, file upload) → Read and discover modules automatically
+   - No (chat only) → Ask the user to paste code or describe structure
+
+2. **Can you write files?**
+   - Yes → Save outputs as files (test files, memory docs)
+   - No → Output everything in chat for user to copy
+
+3. **Can you run shell commands?**
+   - Yes → Run tests directly, check coverage
+   - No → Tell the user what commands to run
+
+4. **Can you spin sub-agents / parallel tasks?**
+   - Yes → Delegate agent files to sub-agents for parallel work
+   - No → Read each agent file yourself and execute inline, sequentially
+
+**Adapt your workflow to your actual capabilities. All agents work in any mode.**
 
 ---
 
@@ -217,38 +234,48 @@ THEN: Repeat cycle for next module
 
 ## Using SKILL for Your Project
 
-### Example: Testing Auth Module
+### Step 0: Discover Your Modules
+
+**Do NOT assume module names.** Read the project structure and identify modules by looking for:
+- `controllers/` → each controller file = potential module
+- `models/` → each model file = potential module
+- `routes/` → each route file = potential module
+- `services/` → each service file = potential module
+
+Ask the user: "Which module should we test first?" if unclear.
+
+### Example Workflow (adapt to your project)
 
 ```
-1. START: Understand Auth Architecture
+1. START: Understand Module Architecture
    └─ GO TO: architecture_reader/agent.md
-   └─ Analyze: controllers, models, helpers, routes
+   └─ Analyze: controllers, models, helpers, routes for the target module
    └─ Document relationships
 
 2. CHOOSE: Test unit functions first
    └─ GO TO: unit_test/agent.md
-   └─ Plan: hashPassword, validateEmail, etc.
+   └─ Plan: identify functions in the module to test
    └─ Write tests following unit_test/implementer.md
    └─ Review using unit_test/reviewer.md
 
 3. THEN: Test integration points
    └─ GO TO: integration_test/agent.md
-   └─ Plan: controller + model + DB scenarios
+   └─ Plan: component interaction scenarios for the module
    └─ Implement following integration_test/implementer.md
    └─ Review using integration_test/reviewer.md
 
-4. THEN: Test UI flows
+4. THEN: Test UI flows (if applicable)
    └─ GO TO: ui_test/agent.md
-   └─ Plan: login form, register form flows
+   └─ Plan: user-facing flows that involve this module
    └─ Implement UI tests
    └─ Review quality
 
 5. CONSOLIDATE: Document learnings
    └─ GO TO: experience_consolidate/
    └─ What patterns learned?
-   └─ What should next module know?
+   └─ What should the next module know?
 
-6. REPEAT: For next module (Products, Categories, Orders, etc.)
+6. REPEAT: For the next module
 ```
 
 ---
@@ -327,22 +354,23 @@ User → SKILL → Spin-out Agent → Subprocess (isolated)
 
 ---
 
-## Output Format (Based on Environment)
+## Output Format (Based on Your Capabilities)
 
-**Agent output adapts to your environment:**
+**Agent output adapts to what you can do:**
 
-| Environment | Agent Output | Format |
+| You Can... | Agent Output | Format |
 |---|---|---|
-| **Claude Code (local files)** | Write files directly | .md files created |
-| **GitHub with access** | Commit to repository | Files + git commits |
-| **Chat only (no file access)** | Provide in chat | Markdown in messages |
+| Read + write files (IDE, sandbox) | Write files directly | Test files + markdown docs |
+| Read files + chat only | Output in chat | Markdown for user to save |
+| Chat only (no file access) | Output in chat | Markdown + instructions |
 
-**How agents decide:**
-- If file access available → Write .md files
-- If no file access → Output as chat markdown
-- User responsibility → Copy-paste if needed
+**Decision logic:**
+- If you can write files → Write test files and docs directly
+- If you can only read → Output code in chat for user to save
+- If you can run commands → Execute tests and report results
+- If you cannot run commands → Tell user what commands to run
 
-**Key:** Agents are flexible. They work in any environment.
+**Key:** All agents work in any environment. Adapt output to your capabilities.
 
 ---
 

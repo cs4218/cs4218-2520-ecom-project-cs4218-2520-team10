@@ -404,7 +404,7 @@ it('should not call external email service during unit test', () => {
 - [ ] **Use jest.fn() for mocks** - Consistent mocking approach
 - [ ] **Expect specific values** - Not just truthy/falsy
 - [ ] **Test error paths** - Not just happy path
-- [ ] **Comment author on each test** - "// Kim Shi Tong, A0265858J"
+- [ ] **Comment author on each test** - "// [Your Name]"
 
 ### ❌ DON'T
 
@@ -473,7 +473,7 @@ await expect(asyncFn()).rejects.toThrow();
 
 /**
  * Unit Tests for [ComponentName]
- * Author: [Your Name, Student ID]
+ * Author: [Your Name]
  * Date: [Date]
  */
 

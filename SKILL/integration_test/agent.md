@@ -14,39 +14,14 @@ variety_weight: 0.5%
 
 ---
 
-## OPTIONAL Phase 0: Review Architecture & Prior Patterns (For Cross-Module Learning)
+## OPTIONAL Phase 0: Review Architecture & Prior Patterns (Cross-Module Learning)
 
-**Skip this if this is your first module. Use this if architecture and prior tests exist.**
+**Skip if first module. Check `_memory/` if prior modules were tested.**
 
-If previous modules have been tested and documented:
+- [ ] Read `_memory/[prior-module].md` — Architecture, component pairs, integration approach used
+- [ ] Read `_memory/patterns.md` — Mocking strategies, what worked as REAL vs MOCK
 
-**Check architecture documentation:**
-```
-_memory-base/architecture/[prior-module].json
-  → Understand component interactions from prior module
-  → Understand which components pair well for integration testing
-  → Understand which components have complex dependencies
-```
-
-**Check integration patterns:**
-```
-_memory-base/knowledge/patterns/mocking-strategies.json
-  → See which components were tested REAL vs MOCKED in integration tests
-  → See which mock strategies worked (Controller REAL, Model MOCKED) or (Both REAL with in-memory DB)
-
-_memory-base/modules/[prior-module]/runs/run-*.json
-  → See which integration approach was used (bottom-up, top-down, sandwich)
-  → See which component pairs were most effective
-  → See bottlenecks encountered in integration setup
-```
-
-**Optional actions:**
-- [ ] Read prior module's architecture: "What component pairs exist?"
-- [ ] Read prior module's mocking strategy: "What worked as REAL vs MOCK?"
-- [ ] Read prior module's integration approach: "Should I use bottom-up/top-down?"
-- [ ] Read prior module's test runs: "What component pairs were tested?"
-
-**No mandatory actions** — This is optional. Proceed to Phase 1 even if no prior data exists.
+**Optional.** Proceed to Phase 1 even if no prior data exists.
 
 ---
 
