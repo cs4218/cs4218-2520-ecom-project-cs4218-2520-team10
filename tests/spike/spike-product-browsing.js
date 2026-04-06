@@ -11,7 +11,12 @@ import http from "k6/http";
 import { check, group, sleep } from "k6";
 import { Trend } from "k6/metrics";
 import { BASE_URL, PRODUCT_SLUGS } from "./constants.js";
-import { measureBaselineLatency, trackRecovery, recordPhaseMetrics, hasRequiredProductFields } from "./utils.js";
+import {
+  measureBaselineLatency,
+  trackRecovery,
+  recordPhaseMetrics,
+  hasRequiredProductFields,
+} from "./utils.js";
 
 const baselineTrend = new Trend("duration_baseline_phase");
 const spikeTrend = new Trend("duration_spike_phase");
@@ -32,7 +37,7 @@ const spikeStages = [
 export const options = {
   scenarios: {
     // Scenario 1: Get all products
-    "get-all-products": {
+    "get-all-products-spike": {
       executor: "ramping-vus",
       exec: "testGetAllProducts",
       stages: spikeStages,
@@ -41,7 +46,7 @@ export const options = {
       tags: { test_type: "spike", endpoint: "get-product" },
     },
     // Scenario 2: Product pagination
-    "product-pagination": {
+    "product-pagination-spike": {
       executor: "ramping-vus",
       exec: "testProductPagination",
       stages: spikeStages,
@@ -51,7 +56,7 @@ export const options = {
       tags: { test_type: "spike", endpoint: "product-list" },
     },
     // Scenario 3: Product detail by slug
-    "product-detail": {
+    "product-detail-spike": {
       executor: "ramping-vus",
       exec: "testProductDetail",
       stages: spikeStages,
@@ -61,7 +66,7 @@ export const options = {
       tags: { test_type: "spike", endpoint: "get-product-detail" },
     },
     // Scenario 4: Product count
-    "product-count": {
+    "product-count-spike": {
       executor: "ramping-vus",
       exec: "testProductCount",
       stages: spikeStages,
@@ -112,11 +117,9 @@ export const options = {
 // Setup function: Measure baseline latency for each endpoint before test starts
 export function setup() {
   const startTime = Date.now();
-  
+
   const baselineLatency = {
-    "get-product": measureBaselineLatency(
-      `${BASE_URL}/product/get-product`,
-    ),
+    "get-product": measureBaselineLatency(`${BASE_URL}/product/get-product`),
     "product-list": measureBaselineLatency(
       `${BASE_URL}/product/product-list/1`,
     ),
@@ -138,7 +141,7 @@ const recoveryStates = {
   "get-product": { consecutiveRecovered: 0, recoveryRecorded: false },
   "product-list": { consecutiveRecovered: 0, recoveryRecorded: false },
   "get-product-detail": { consecutiveRecovered: 0, recoveryRecorded: false },
-  "product-count": { consecutiveRecovered: 0, recoveryRecorded: false }
+  "product-count": { consecutiveRecovered: 0, recoveryRecorded: false },
 };
 
 // Scenario 1: Test GET all products endpoint
@@ -167,14 +170,21 @@ export function testGetAllProducts(data) {
         }
       },
     });
-    recordPhaseMetrics(response, "get-product", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
-    
+
+    recordPhaseMetrics(
+      response,
+      "get-product",
+      elapsedTime,
+      baselineTrend,
+      spikeTrend,
+      recoveryTrend,
+    );
     recoveryStates["get-product"] = trackRecovery(
       response,
       "get-product",
       data,
       recoveryStates["get-product"],
-      timeToRecoveryTrend
+      timeToRecoveryTrend,
     );
 
     sleep(0.5);
@@ -208,14 +218,21 @@ export function testProductPagination(data) {
         }
       },
     });
-    recordPhaseMetrics(response, "product-list", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
-    
+
+    recordPhaseMetrics(
+      response,
+      "product-list",
+      elapsedTime,
+      baselineTrend,
+      spikeTrend,
+      recoveryTrend,
+    );
     recoveryStates["product-list"] = trackRecovery(
       response,
       "product-list",
       data,
       recoveryStates["product-list"],
-      timeToRecoveryTrend
+      timeToRecoveryTrend,
     );
 
     sleep(0.5);
@@ -250,14 +267,21 @@ export function testProductDetail(data) {
         }
       },
     });
-    recordPhaseMetrics(response, "get-product-detail", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
-    
+
+    recordPhaseMetrics(
+      response,
+      "get-product-detail",
+      elapsedTime,
+      baselineTrend,
+      spikeTrend,
+      recoveryTrend,
+    );
     recoveryStates["get-product-detail"] = trackRecovery(
       response,
       "get-product-detail",
       data,
       recoveryStates["get-product-detail"],
-      timeToRecoveryTrend
+      timeToRecoveryTrend,
     );
 
     sleep(0.5);
@@ -286,18 +310,23 @@ export function testProductCount(data) {
         }
       },
     });
-    recordPhaseMetrics(response, "product-count", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
-    
-    // Track recovery time after spike
+
+    recordPhaseMetrics(
+      response,
+      "product-count",
+      elapsedTime,
+      baselineTrend,
+      spikeTrend,
+      recoveryTrend,
+    );
     recoveryStates["product-count"] = trackRecovery(
       response,
       "product-count",
       data,
       recoveryStates["product-count"],
-      timeToRecoveryTrend
+      timeToRecoveryTrend,
     );
 
     sleep(0.5);
   });
 }
-

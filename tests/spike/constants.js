@@ -84,3 +84,56 @@ export const CATEGORY_SLUGS = [
   "book",
   "clothing",
 ];
+
+// Auth test data - registered during spike test setup for login testing
+export const AUTH_TEST_USERS = [
+  {
+    name: "Spike Login User 1",
+    email: "spike-login-user-1@spike-test.com",
+    password: "spike-test-password-123",
+    phone: "91234567",
+    address: "100 Spike Test Road",
+    answer: "spike-test-answer",
+  },
+  {
+    name: "Spike Login User 2",
+    email: "spike-login-user-2@spike-test.com",
+    password: "spike-test-password-456",
+    phone: "98765432",
+    address: "200 Spike Test Avenue",
+    answer: "spike-test-answer",
+  },
+];
+
+// Create separate users for forgot password testing to avoid interfering with login tests
+export const FORGOT_PASSWORD_USERS = [
+  {
+    name: "Spike ForgotPwd User 1",
+    email: "spike-forgotpwd-user-1@spike-test.com",
+    password: "spike-forgotpwd-password-123",
+    phone: "81234567",
+    address: "300 Spike ForgotPwd Road",
+    answer: "spike-forgotpwd-answer",
+  },
+  {
+    name: "Spike ForgotPwd User 2",
+    email: "spike-forgotpwd-user-2@spike-test.com",
+    password: "spike-forgotpwd-password-456",
+    phone: "88765432",
+    address: "400 Spike ForgotPwd Avenue",
+    answer: "spike-forgotpwd-answer",
+  },
+];
+
+export const FORGOT_PASSWORD_TEST_DATA = [
+  {
+    email: "spike-forgotpwd-user-1@spike-test.com",
+    answer: "spike-forgotpwd-answer",
+    newPassword: "new-spike-password-123",
+  },
+  {
+    email: "spike-forgotpwd-user-2@spike-test.com",
+    answer: "spike-forgotpwd-answer",
+    newPassword: "new-spike-password-456",
+  },
+];
