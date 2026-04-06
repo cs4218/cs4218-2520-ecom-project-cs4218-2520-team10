@@ -11,7 +11,12 @@ import http from "k6/http";
 import { check, group, sleep } from "k6";
 import { Trend } from "k6/metrics";
 import { BASE_URL, SEARCH_KEYWORDS, CATEGORY_SLUGS } from "./constants.js";
-import { measureBaselineLatency, trackRecovery, recordPhaseMetrics, validateProductArray } from "./utils.js";
+import {
+  measureBaselineLatency,
+  trackRecovery,
+  recordPhaseMetrics,
+  validateProductArray,
+} from "./utils.js";
 
 const baselineTrend = new Trend("duration_baseline_phase");
 const spikeTrend = new Trend("duration_spike_phase");
@@ -21,12 +26,12 @@ const timeToRecoveryTrend = new Trend("time_to_recovery_seconds");
 // Shared spike profile
 // ~167 VUs per scenario -> ~500 VUs total combined load
 const spikeStages = [
-  { duration: "10s", target: 10 },   // Initial ramp to baseline
-  { duration: "1m", target: 10 },    // Baseline hold
-  { duration: "10s", target: 167 },  // Spike ramp up
-  { duration: "1m", target: 167 },   // Spike hold
-  { duration: "10s", target: 10 },   // Spike ramp down
-  { duration: "1m", target: 10 },    // Recovery hold
+  { duration: "10s", target: 10 }, // Initial ramp to baseline
+  { duration: "1m", target: 10 }, // Baseline hold
+  { duration: "10s", target: 167 }, // Spike ramp up
+  { duration: "1m", target: 167 }, // Spike hold
+  { duration: "10s", target: 10 }, // Spike ramp down
+  { duration: "1m", target: 10 }, // Recovery hold
 ];
 
 export const options = {
@@ -68,19 +73,19 @@ export const options = {
     "http_req_failed{endpoint:search-products}": ["rate<0.01"],
     "http_req_failed{endpoint:filter-products}": ["rate<0.01"],
     "http_req_failed{endpoint:category-products}": ["rate<0.01"],
-    
+
     // Baseline
     duration_baseline_phase: ["p(90)<100"],
     "duration_baseline_phase{endpoint:search-products}": ["p(90)<100"],
     "duration_baseline_phase{endpoint:filter-products}": ["p(90)<100"],
     "duration_baseline_phase{endpoint:category-products}": ["p(90)<100"],
-    
+
     // Spike
     duration_spike_phase: ["p(90)<10000"],
     "duration_spike_phase{endpoint:search-products}": ["p(90)<15000"], // Search by regex is expected to be more DB-intensive
     "duration_spike_phase{endpoint:filter-products}": ["p(90)<10000"],
     "duration_spike_phase{endpoint:category-products}": ["p(90)<15000"],
-    
+
     // Recovery
     duration_recovery_phase: ["p(90)<1000"],
     "duration_recovery_phase{endpoint:search-products}": ["p(90)<1500"],
@@ -98,22 +103,22 @@ export const options = {
 // Setup function: Measure baseline latency for each endpoint before test starts
 export function setup() {
   const startTime = Date.now();
-  
+
   const baselineLatency = {
     "search-products": measureBaselineLatency(
-      `${BASE_URL}/product/search/laptop`
+      `${BASE_URL}/product/search/laptop`,
     ),
     "filter-products": measureBaselineLatency(
       `${BASE_URL}/product/product-filters`,
       5,
       "POST",
-      { checked: [], radio: [] }
+      { checked: [], radio: [] },
     ),
     "category-products": measureBaselineLatency(
-      `${BASE_URL}/product/product-category/electronics`
+      `${BASE_URL}/product/product-category/electronics`,
     ),
   };
-  
+
   return {
     startTime,
     baselineLatency,
@@ -123,7 +128,7 @@ export function setup() {
 const recoveryStates = {
   "search-products": { consecutiveRecovered: 0, recoveryRecorded: false },
   "filter-products": { consecutiveRecovered: 0, recoveryRecorded: false },
-  "category-products": { consecutiveRecovered: 0, recoveryRecorded: false }
+  "category-products": { consecutiveRecovered: 0, recoveryRecorded: false },
 };
 
 // Scenario 1: Test product search endpoint - regex search (DB-intensive)
@@ -132,7 +137,8 @@ export function testSearchProducts(data) {
 
   group("Product Search by keyword", () => {
     // Randomly select a search keyword
-    const keyword = SEARCH_KEYWORDS[Math.floor(Math.random() * SEARCH_KEYWORDS.length)];
+    const keyword =
+      SEARCH_KEYWORDS[Math.floor(Math.random() * SEARCH_KEYWORDS.length)];
     const response = http.get(`${BASE_URL}/product/search/${keyword}`);
 
     check(response, {
@@ -154,17 +160,23 @@ export function testSearchProducts(data) {
         }
       },
     });
-    
-    recordPhaseMetrics(response, "search-products", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
-    
+
+    recordPhaseMetrics(
+      response,
+      "search-products",
+      elapsedTime,
+      baselineTrend,
+      spikeTrend,
+      recoveryTrend,
+    );
     recoveryStates["search-products"] = trackRecovery(
       response,
       "search-products",
       data,
       recoveryStates["search-products"],
-      timeToRecoveryTrend
+      timeToRecoveryTrend,
     );
-    
+
     sleep(0.5);
   });
 }
@@ -176,20 +188,20 @@ export function testFilterProducts(data) {
   group("Product Filters by price", () => {
     // Randomly generate filter payload to test different query patterns
     const filterTypes = [
-      { checked: [], radio: [0, 100] },           // Price only
-      { checked: [], radio: [50, 150] },          // Different price range
-      { checked: [], radio: [100, 500] },         // Higher price range
-      { checked: [], radio: [] },                 // No filters (all products)
+      { checked: [], radio: [0, 100] }, // Price only
+      { checked: [], radio: [50, 150] }, // Different price range
+      { checked: [], radio: [100, 500] }, // Higher price range
+      { checked: [], radio: [] }, // No filters (all products)
     ];
-    
+
     const payload = filterTypes[Math.floor(Math.random() * filterTypes.length)];
-    
+
     const response = http.post(
       `${BASE_URL}/product/product-filters`,
       JSON.stringify(payload),
       {
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
 
     check(response, {
@@ -211,17 +223,23 @@ export function testFilterProducts(data) {
         }
       },
     });
-    
-    recordPhaseMetrics(response, "filter-products", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
-    
+
+    recordPhaseMetrics(
+      response,
+      "filter-products",
+      elapsedTime,
+      baselineTrend,
+      spikeTrend,
+      recoveryTrend,
+    );
     recoveryStates["filter-products"] = trackRecovery(
       response,
       "filter-products",
       data,
       recoveryStates["filter-products"],
-      timeToRecoveryTrend
+      timeToRecoveryTrend,
     );
-    
+
     sleep(0.5);
   });
 }
@@ -232,7 +250,8 @@ export function testCategoryProducts(data) {
 
   group("Category Products by category slug", () => {
     // Randomly select a category slug
-    const slug = CATEGORY_SLUGS[Math.floor(Math.random() * CATEGORY_SLUGS.length)];
+    const slug =
+      CATEGORY_SLUGS[Math.floor(Math.random() * CATEGORY_SLUGS.length)];
     const response = http.get(`${BASE_URL}/product/product-category/${slug}`);
 
     check(response, {
@@ -270,17 +289,23 @@ export function testCategoryProducts(data) {
         }
       },
     });
-    
-    recordPhaseMetrics(response, "category-products", elapsedTime, baselineTrend, spikeTrend, recoveryTrend);
-    
+
+    recordPhaseMetrics(
+      response,
+      "category-products",
+      elapsedTime,
+      baselineTrend,
+      spikeTrend,
+      recoveryTrend,
+    );
     recoveryStates["category-products"] = trackRecovery(
       response,
       "category-products",
       data,
       recoveryStates["category-products"],
-      timeToRecoveryTrend
+      timeToRecoveryTrend,
     );
-    
+
     sleep(0.5);
   });
 }
