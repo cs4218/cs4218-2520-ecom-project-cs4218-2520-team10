@@ -42,6 +42,39 @@ The following table outlines the UI E2E testing contribution for our 4-member te
 
 ---
 
+# MS3 Contribution Summary (Non-Functional Testing)
+
+Each team member performed a unique type of non-functional test using **Grafana k6**. All test scripts are in `tests/nft/`.
+
+| Member | Test Type | Tool | Test Scripts | Results |
+| :--- | :--- | :--- | :--- | :--- |
+| **Kim Shi Tong (A0265858J)** | **Load Testing** | Grafana k6 | `tests/nft/load-product-browsing.js`, `tests/nft/load-search-filter.js`, `tests/nft/load-auth-category.js`, `tests/nft/load-user-journey.js`, `tests/nft/load-mixed-workload.js` | `results/load-*-report.html`, `results/load-*-results.json` |
+| **Yan Weidong (A0258151H)** | **Stress Testing** | Grafana k6 | `tests/nft/stress-test.js` | `results/stress-*` |
+| **Ong Chang Heng Bertrand (A0253013X)** | **Spike Testing** | Grafana k6 | `tests/nft/spike-test.js` | `results/spike-*` |
+| **Shaun Lee Xuan Wei (A0252626E)** | **Soak/Endurance Testing** | Grafana k6 | `tests/nft/soak-test.js` | `results/soak-*` |
+
+### How to Run (Load Testing — Kim Shi Tong)
+
+```bash
+# Install k6
+brew install k6
+
+# Start the backend
+npm run server
+
+# Run individual load tests
+k6 run tests/nft/load-product-browsing.js
+k6 run tests/nft/load-search-filter.js
+k6 run tests/nft/load-auth-category.js
+k6 run tests/nft/load-user-journey.js
+k6 run tests/nft/load-mixed-workload.js
+
+# With live web dashboard
+K6_WEB_DASHBOARD=true k6 run tests/nft/load-product-browsing.js
+```
+
+---
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.
