@@ -174,13 +174,18 @@ Each agent folder contains its own complete workflow:
 ---
 
 ### 6. **experience_consolidate/**
-**Role:** Learn and document patterns
+**Role:** Learn, document patterns, and improve SKILL over time
 - agent.md → What to consolidate from completed tests
 - implementer.md → How to synthesize learnings
 - reviewer.md → Verify completeness of learnings
+- **remediator.md** → Transform raw debugging experiences into SOP improvements
 
-**Input:** Test results, observations, lessons
-**Output:** Documented patterns, recommendations for next cycle
+**Input:** Test results, observations, lessons, debugging experiences
+**Output:** Documented patterns, recommendations, **improved agent files**
+
+**Two modes:**
+- **Consolidate** (after completing tests) → Write learnings to `_memory/`
+- **Remediate** (user-triggered) → Read `_memory/experience.md` → improve agent/implementer/reviewer files across all test types
 
 ---
 
@@ -404,6 +409,64 @@ User → SKILL → Spin-out Agent → Subprocess (isolated)
 - "Commit `_memory/*.md` to your repo so future sessions can read it"
 
 **All levels produce the same quality output. The difference is delivery method only.**
+
+---
+
+## Experience Capture & Remediation (Self-Improvement Loop)
+
+SKILL improves over time through a two-phase feedback loop:
+
+### Phase 1: Capture (Continuous — During Debugging)
+
+**During any debugging/building session**, append raw experiences to `_memory/experience.md`:
+
+```markdown
+### [DATE] [TEST_TYPE] [PHASE] [GOOD/BAD]
+
+**Context:** What were you doing?
+**What happened:** What went wrong or right?
+**Root cause:** Why?
+**Fix/Lesson:** Takeaway
+**Applies to:** Which agent files should learn this?
+```
+
+**When to capture:**
+- Hit a pitfall (something broke, wasn't obvious why)
+- Discovered a fix (after debugging)
+- User says "remember this" / "don't do that again"
+- Same issue appears twice across different tests
+- AI recognizes its own mistake
+
+**AI should hint:** When it observes debugging friction, suggest "Want me to log this as an experience?"
+
+### Phase 2: Remediate (User-Triggered)
+
+**User says:** "remediate experiences" / "improve SKILL" / "consolidate learnings"
+
+**What happens:**
+1. Read `_memory/experience.md`
+2. Classify each entry by test type + agent phase + good/bad
+3. Propose specific improvements to agent/implementer/reviewer files
+4. Apply with user approval
+5. Archive processed entries to `_memory/experience_archive.md`
+
+**Details:** See `experience_consolidate/remediator.md`
+
+```
+     ┌─────────┐     ┌──────────┐     ┌──────────┐
+     │  PLAN   │────▶│IMPLEMENT │────▶│  REVIEW  │
+     └─────────┘     └──────────┘     └────┬─────┘
+          ▲                                │
+          │         ┌──────────┐           │
+          │         │ CAPTURE  │◀──────────┘  (during debugging)
+          │         └────┬─────┘
+          │              │
+          │         ┌────▼─────┐
+          └─────────┤REMEDIATE │  (user-triggered)
+                    └──────────┘
+```
+
+Each cycle makes the SKILL files better. Experiences from project A improve SOPs for project B.
 
 ---
 
