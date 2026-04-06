@@ -4,17 +4,21 @@
  */
 import http from "k6/http";
 import { sleep } from "k6";
-import { RECOVERY_TOLERANCE, STABILITY_THRESHOLD, BASELINE_START, BASELINE_END, SPIKE_END } from "./constants.js";
+import { RECOVERY_TOLERANCE, STABILITY_THRESHOLD, BASELINE_START, BASELINE_END, SPIKE_END, RECOVERY_START } from "./constants.js";
 
 /**
  * Record response time metrics based on test phase
+ * Baseline: 10s-70s (baseline hold)
+ * Spike: 70s-140s (spike ramp up + spike hold)
+ * Recovery: 150s+ (recovery hold only, excludes 140s-150s ramp down)
+ * Note: 140s-150s (spike ramp down) is excluded from tracking
  */
 export function recordPhaseMetrics(res, endpointName, elapsedTime, baselineTrend, spikeTrend, recoveryTrend) {
   if (elapsedTime >= BASELINE_START && elapsedTime < BASELINE_END) {
     baselineTrend.add(res.timings.duration, { endpoint: endpointName });
   } else if (elapsedTime >= BASELINE_END && elapsedTime < SPIKE_END) {
     spikeTrend.add(res.timings.duration, { endpoint: endpointName });
-  } else if (elapsedTime >= SPIKE_END) {
+  } else if (elapsedTime >= RECOVERY_START) {
     recoveryTrend.add(res.timings.duration, { endpoint: endpointName });
   }
 }
@@ -73,6 +77,7 @@ export function measureBaselineLatency(url, iterations = 5, method = 'GET', payl
  * Track recovery time after spike ends
  * Uses stability window: requires STABILITY_THRESHOLD consecutive successful requests
  * within RECOVERY_TOLERANCE of baseline before reporting recovery
+ * Recovery tracking starts at RECOVERY_START (after spike ramp down)
  * 
  * @returns {object} Updated state object
  */
@@ -82,13 +87,13 @@ export function trackRecovery(
   data,
   state,
   recoveryMetric,
-  spikeEndTime = SPIKE_END,
+  recoveryStartTime = RECOVERY_START,
   stabilityThreshold = STABILITY_THRESHOLD,
   recoveryTolerance = RECOVERY_TOLERANCE
 ) {
   const elapsedTime = (Date.now() - data.startTime) / 1000;
   
-  if (elapsedTime > spikeEndTime && !state.recoveryRecorded) {
+  if (elapsedTime > recoveryStartTime && !state.recoveryRecorded) {
     const baselineLatency = data.baselineLatency[endpointName];
     const isWithinAcceptedRange = response.timings.duration <= (baselineLatency * recoveryTolerance);
 
@@ -100,7 +105,7 @@ export function trackRecovery(
 
     // Recovery achieved
     if (state.consecutiveRecovered >= stabilityThreshold) {
-      const secondsToRecover = elapsedTime - spikeEndTime;
+      const secondsToRecover = elapsedTime - recoveryStartTime;
       
       // Record recovery time for this specific endpoint
       recoveryMetric.add(secondsToRecover, { 
