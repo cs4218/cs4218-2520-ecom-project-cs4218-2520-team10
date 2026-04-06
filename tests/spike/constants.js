@@ -11,6 +11,7 @@ export const STABILITY_THRESHOLD = 5;
 export const BASELINE_START = 10;
 export const BASELINE_END = 70;
 export const SPIKE_END = 140;
+export const RECOVERY_START = 150; // Recovery tracking starts after spike ramp down
 
 // Based on sample-db-schema/test.products.spike-test.json
 export const PRODUCT_SLUGS = [
@@ -24,7 +25,7 @@ export const PRODUCT_SLUGS = [
   "smartphone-ultra",
   "usb-c-hub",
   "hdmi-cable-2m",
-  "python-programming-guide",
+"python-programming-guide",
   "javascript-mastery",
   "data-science-handbook",
   "cloud-computing-essentials",
