@@ -24,16 +24,34 @@
 
   .slide.active { display: flex; }
 
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+
   @media print {
+    body {
+      background: #000 !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
     .slide {
       display: flex !important;
-      page-break-after: always;
+      page-break-after: always !important;
+      break-after: page !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
       height: 100vh;
       width: 100vw;
+      overflow: hidden;
     }
-    .slide:last-of-type { page-break-after: avoid; }
-    .nav, .counter { display: none; }
-    body { background: #000; }
+    .slide:last-of-type {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+    .nav, .counter { display: none !important; }
+    img { max-height: 70vh !important; }
   }
 
   /* Title slide */
