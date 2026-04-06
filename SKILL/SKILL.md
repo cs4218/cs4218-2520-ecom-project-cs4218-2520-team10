@@ -29,25 +29,58 @@ version: 2.0
 
 ## Environment Detection
 
-**Before starting, assess what you can do:**
+**Before starting, determine your capability level:**
 
-1. **Can you read project files?**
-   - Yes (local IDE, sandbox, file upload) → Read and discover modules automatically
-   - No (chat only) → Ask the user to paste code or describe structure
+### Level 1: CLI Agent (Full Auto)
+**Platforms:** Claude Code, Codex, Gemini CLI, Cursor
+**Detection:** You can read files, write files, and run shell commands.
+```
+✅ Read project files from filesystem
+✅ Write test files directly to disk
+✅ Run tests (npm test, playwright test)
+✅ Write _memory/*.md files directly
+✅ Commit to git
+→ Proceed normally. You have full capabilities.
+```
 
-2. **Can you write files?**
-   - Yes → Save outputs as files (test files, memory docs)
-   - No → Output everything in chat for user to copy
+### Level 2: Web Chat + GitHub (Read Auto, Write Chat)
+**Platforms:** Claude Web, ChatGPT, Gemini Web — with GitHub connected
+**Detection:** You can read from a connected GitHub repo but cannot write files or run commands.
+```
+✅ Read project files from GitHub connector
+✅ Read SKILL/*.md from GitHub connector
+✅ Read _memory/*.md from GitHub connector
+❌ Cannot write files → Output test code in chat as markdown code blocks
+❌ Cannot run tests → Tell user what commands to run
+❌ Cannot write _memory/ → Output memory content in chat for user to commit
+→ ASK USER: "Do you have your GitHub repo connected? If not:
+   - Claude Web: Project Settings → Add Content → Connect GitHub repo
+   - ChatGPT: Settings → Apps → GitHub → Connect
+   - Gemini: Click '+ Add file' → Import code → Enter GitHub URL"
+```
 
-3. **Can you run shell commands?**
-   - Yes → Run tests directly, check coverage
-   - No → Tell the user what commands to run
+### Level 3: Web Chat Only (All Manual)
+**Platforms:** Claude Web, ChatGPT, Gemini Web — without GitHub
+**Detection:** You cannot read files and the user has not connected a repo.
+```
+❌ Cannot read files → Ask user to paste relevant source code
+❌ Cannot write files → Output everything as markdown in chat
+❌ Cannot run tests → Tell user what commands to run
+❌ Cannot read _memory/ → Ask user to paste patterns.md if it exists
+→ ASK USER: "Please paste the source code for the module you want to test.
+   I'll need to see the controller, model, and helper files."
+```
 
-4. **Can you spin sub-agents / parallel tasks?**
-   - Yes → Delegate agent files to sub-agents for parallel work
-   - No → Read each agent file yourself and execute inline, sequentially
+### Quick Detection Flow
+```
+Can you read project files directly?
+├─ YES → Level 1 (CLI). Proceed normally.
+└─ NO → Is a GitHub repo connected?
+   ├─ YES → Level 2 (Web + GitHub). Read from connector, output in chat.
+   └─ NO → Level 3 (Web only). Ask user to paste code or connect GitHub.
+```
 
-**Adapt your workflow to your actual capabilities. All agents work in any mode.**
+**All agents produce the same quality output regardless of level. The difference is only in how files are read and delivered.**
 
 ---
 
@@ -354,23 +387,23 @@ User → SKILL → Spin-out Agent → Subprocess (isolated)
 
 ---
 
-## Output Format (Based on Your Capabilities)
+## Output Format (Based on Capability Level)
 
-**Agent output adapts to what you can do:**
+**Agent output adapts to your detected level:**
 
-| You Can... | Agent Output | Format |
-|---|---|---|
-| Read + write files (IDE, sandbox) | Write files directly | Test files + markdown docs |
-| Read files + chat only | Output in chat | Markdown for user to save |
-| Chat only (no file access) | Output in chat | Markdown + instructions |
+| Level | Read Code | Write Tests | Write Memory | Run Tests |
+|---|---|---|---|---|
+| **Level 1** (CLI) | From filesystem | Write `.test.js` files to disk | Write `_memory/*.md` to disk | Run `npm test` directly |
+| **Level 2** (Web + GitHub) | From GitHub connector | Output as code block in chat | Output as markdown in chat | Tell user: "Run `npm test`" |
+| **Level 3** (Web only) | User pastes code | Output as code block in chat | Output as markdown in chat | Tell user: "Run `npm test`" |
 
-**Decision logic:**
-- If you can write files → Write test files and docs directly
-- If you can only read → Output code in chat for user to save
-- If you can run commands → Execute tests and report results
-- If you cannot run commands → Tell user what commands to run
+**For Level 2 and 3 — remind user:**
+- "Copy the test code above into `[filename].test.js`"
+- "Copy the memory content above into `_memory/[module].md`"
+- "Run `npm test` to execute the tests"
+- "Commit `_memory/*.md` to your repo so future sessions can read it"
 
-**Key:** All agents work in any environment. Adapt output to your capabilities.
+**All levels produce the same quality output. The difference is delivery method only.**
 
 ---
 
