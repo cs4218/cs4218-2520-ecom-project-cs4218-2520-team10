@@ -3,9 +3,9 @@
  * All tests written by: Ong Chang Heng Bertrand A0253013X
  *
  * Purpose: Verify that search and filter endpoints maintain stable performance under sustained load
- * Duration: 1 hour per test
+ * Duration: 12 hours per test
  * Virtual Users: 30 VUs total across all scenarios in this file
- * Load Profile: Ramp up 2min → Hold 1hr → Ramp down 2min
+ * Load Profile: Ramp up 2min → Hold 12h → Ramp down 2min
  */
 
 import http from 'k6/http';
@@ -19,7 +19,7 @@ const requestCount = new Counter('requests');
 const successRate = new Rate('success_rate');
 
 const BASE_URL = __ENV.API_URL || 'http://localhost:6060/api/v1';
-const SOAK_DURATION = __ENV.SOAK_DURATION || '1h';
+const SOAK_DURATION = __ENV.SOAK_DURATION || '12h';
 const RAMP_DURATION = '2m';
 const SLEEP_TIME = 2;
 const SCENARIO_TARGETS = [10, 10, 10, 10];

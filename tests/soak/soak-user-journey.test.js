@@ -3,9 +3,9 @@
  * All tests written by: Ong Chang Heng Bertrand A0253013X
  *
  * Purpose: Verify that a realistic user journey remains stable under sustained load
- * Duration: 1 hour (or 2 hours via SOAK_DURATION env var)
+ * Duration: 12 hours (override with SOAK_DURATION env var)
  * Virtual Users: 30 VUs
- * Load Profile: Ramp up 2min → Hold 1hr → Ramp down 2min
+ * Load Profile: Ramp up 2min → Hold 12h → Ramp down 2min
  */
 
 import http from 'k6/http';
@@ -20,7 +20,7 @@ const successRate         = new Rate('success_rate');
 const iterationDuration   = new Trend('soak_iteration_duration'); // tracks full journey time
 
 const BASE_URL       = __ENV.API_URL      || 'http://localhost:6060/api/v1';
-const SOAK_DURATION  = __ENV.SOAK_DURATION || '1h';  // override with -e SOAK_DURATION=2h
+const SOAK_DURATION  = __ENV.SOAK_DURATION || '12h';
 const RAMP_DURATION  = '2m';
 const VIRTUAL_USERS  = 40;
 const SLEEP_TIME     = 2;
@@ -181,11 +181,11 @@ Iteration p95:           ${iterP95} ms
 Iteration Median:        ${iterMedian} ms
 Total Journey Requests:  ${totalRequests}
 
-Throughput Stability:    Compare req/s at 5-min vs 60-min in k6 logs above.
+Throughput Stability:    Compare req/s at 5-min vs 12h in k6 logs above.
 Error Accumulation:      Error rate should be <1% and grow linearly with requests.
 
 NOTE: See cpu_log.txt for CPU utilization data.
-NOTE: For 2-hour run: k6 run -e SOAK_DURATION=2h tests/soak/soak-user-journey.js
+NOTE: For shorter runs: k6 run -e SOAK_DURATION=<duration> tests/soak/soak-user-journey.js
     `
   };
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T08:28:28.548Z",
+  "generatedAt": "2026-04-09T20:44:35.356Z",
   "total": 5,
   "passed": 5,
   "failed": 0,
@@ -11,12 +11,17 @@
       "preResetExitCode": 0,
       "k6ExitCode": 0,
       "postResetExitCode": 0,
-      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-auth-category.summary.json",
-      "throughputReqPerSec": 9.579661988544034,
-      "responseP95Ms": 155.1325,
-      "responseP99Ms": 224.64289999999994,
-      "errorRate": 0.0016290624745458988,
-      "totalRequests": 36831
+      "summaryPath": "tests/soak/reports/soak-auth-category.summary.json",
+      "throughputReqPerSec": 9.524613930458875,
+      "responseP95Ms": 174.16649999999998,
+      "responseP99Ms": 190.31525999999997,
+      "errorRate": 0.000054647794961473305,
+      "totalRequests": 439176,
+      "backendPid": 35281,
+      "backendMemoryPeakMb": 109.69415,
+      "backendMemoryFirstMb": 34.97767,
+      "backendMemoryLastMb": 43.00478,
+      "memoryLogPath": "tests/soak/reports/soak-auth-category.memory.json"
     },
     {
       "name": "soak-heavy-payload",
@@ -25,12 +30,17 @@
       "preResetExitCode": 0,
       "k6ExitCode": 0,
       "postResetExitCode": 0,
-      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-heavy-payload.summary.json",
-      "throughputReqPerSec": 20.00992101233346,
-      "responseP95Ms": 2548.86525,
-      "responseP99Ms": 2642.81025,
+      "summaryPath": "tests/soak/reports/soak-heavy-payload.summary.json",
+      "throughputReqPerSec": 21.806027992599436,
+      "responseP95Ms": 2563.5846500000002,
+      "responseP99Ms": 2800.84144,
       "errorRate": 0,
-      "totalRequests": 76876
+      "totalRequests": 1005336,
+      "backendPid": 73806,
+      "backendMemoryPeakMb": 133.14566,
+      "backendMemoryFirstMb": 81.82637,
+      "backendMemoryLastMb": 95.841949,
+      "memoryLogPath": "tests/soak/reports/soak-heavy-payload.memory.json"
     },
     {
       "name": "soak-product-browsing",
@@ -39,12 +49,17 @@
       "preResetExitCode": 0,
       "k6ExitCode": 0,
       "postResetExitCode": 0,
-      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-product-browsing.summary.json",
-      "throughputReqPerSec": 18.474292331312274,
-      "responseP95Ms": 151.86569999999998,
-      "responseP99Ms": 253.7903,
+      "summaryPath": "tests/soak/reports/soak-product-browsing.summary.json",
+      "throughputReqPerSec": 18.80282641358697,
+      "responseP95Ms": 194.32909999999998,
+      "responseP99Ms": 283.97816,
       "errorRate": 0,
-      "totalRequests": 70979
+      "totalRequests": 866820,
+      "backendPid": 12546,
+      "backendMemoryPeakMb": 125.879853,
+      "backendMemoryFirstMb": 116.43847,
+      "backendMemoryLastMb": 32.574114,
+      "memoryLogPath": "tests/soak/reports/soak-product-browsing.memory.json"
     },
     {
       "name": "soak-search-filter",
@@ -53,12 +68,17 @@
       "preResetExitCode": 0,
       "k6ExitCode": 0,
       "postResetExitCode": 0,
-      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-search-filter.summary.json",
-      "throughputReqPerSec": 15.426091863833136,
-      "responseP95Ms": 175.28039999999993,
-      "responseP99Ms": 289.32023999999984,
+      "summaryPath": "tests/soak/reports/soak-search-filter.summary.json",
+      "throughputReqPerSec": 15.62508766303316,
+      "responseP95Ms": 223.87759999999994,
+      "responseP99Ms": 323.21701999999993,
       "errorRate": 0,
-      "totalRequests": 59264
+      "totalRequests": 720336,
+      "backendPid": 51092,
+      "backendMemoryPeakMb": 118.48191,
+      "backendMemoryFirstMb": 75.66048,
+      "backendMemoryLastMb": 85.532445,
+      "memoryLogPath": "tests/soak/reports/soak-search-filter.memory.json"
     },
     {
       "name": "soak-user-journey",
@@ -67,12 +87,17 @@
       "preResetExitCode": 0,
       "k6ExitCode": 0,
       "postResetExitCode": 0,
-      "summaryPath": "/Users/bertrand/Documents/CS/Y4S2/CS4218/cs4218-2520-ecom-project-cs4218-2520-team10/tests/soak/reports/soak-user-journey.summary.json",
-      "throughputReqPerSec": 18.944016758701352,
-      "responseP95Ms": 162.2864,
-      "responseP99Ms": 239.82731999999996,
+      "summaryPath": "tests/soak/reports/soak-user-journey.summary.json",
+      "throughputReqPerSec": 19.329475723858636,
+      "responseP95Ms": 160.73999999999995,
+      "responseP99Ms": 252.74054999999987,
       "errorRate": 0,
-      "totalRequests": 72845
+      "totalRequests": 892392,
+      "backendPid": 89417,
+      "backendMemoryPeakMb": 119.593227,
+      "backendMemoryFirstMb": 78.70853,
+      "backendMemoryLastMb": 118.280086,
+      "memoryLogPath": "tests/soak/reports/soak-user-journey.memory.json"
     }
   ]
 }

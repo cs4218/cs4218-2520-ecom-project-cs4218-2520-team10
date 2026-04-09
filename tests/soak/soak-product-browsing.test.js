@@ -3,9 +3,9 @@
  * All tests written by: Ong Chang Heng Bertrand A0253013X
  *
  * Purpose: Verify that product endpoints maintain stable performance under sustained load
- * Duration: 1 hour per test
+ * Duration: 12 hours per test
  * Virtual Users: 30 VUs total across all scenarios in this file
- * Load Profile: Ramp up 2min → Hold 1hr → Ramp down 2min
+ * Load Profile: Ramp up 2min → Hold 12h → Ramp down 2min
  */
 
 import http from 'k6/http';
@@ -20,7 +20,7 @@ const requestCount = new Counter('requests');
 const successRate = new Rate('success_rate');
 
 const BASE_URL = __ENV.API_URL || 'http://localhost:6060/api/v1';
-const SOAK_DURATION = __ENV.SOAK_DURATION || '1h';
+const SOAK_DURATION = __ENV.SOAK_DURATION || '12h';
 const RAMP_DURATION = '2m';
 const SLEEP_TIME = 2; // seconds between requests per VU
 const SCENARIO_TARGETS = [10, 10, 10, 10];
@@ -95,8 +95,8 @@ function safeJsonPath(response, path) {
 
 /**
  * Test 1: Soak test GET all products
- * Ramp to 30 VUs over 2 min → hold at 30 VUs for 1 hour → ramp down over 2 min
- * Assertion: p95 at 60-min mark is within 20% of p95 at 5-min mark
+ * Ramp to 30 VUs over 2 min → hold at 30 VUs for 12 hours → ramp down over 2 min
+ * Assertion: p95 at the 12h mark is within 20% of p95 at 5-min mark
  */
 export function soakAllProducts() {
   group('GET /product/get-product', () => {
