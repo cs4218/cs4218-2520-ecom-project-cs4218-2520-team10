@@ -123,7 +123,7 @@ export function setup() {
 
     if (response.status !== 201) {
       console.error(
-        `❌ Failed to register login test user ${user.email}: ${response.status}`,
+        `Failed to register login test user ${user.email}: ${response.status}`,
       );
     }
   }
@@ -138,7 +138,7 @@ export function setup() {
 
     if (response.status !== 201) {
       console.error(
-        `❌ Failed to register forgot-password test user ${user.email}: ${response.status}`,
+        `Failed to register forgot-password test user ${user.email}: ${response.status}`,
       );
     }
   }

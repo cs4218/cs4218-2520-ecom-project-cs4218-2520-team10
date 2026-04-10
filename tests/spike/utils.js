@@ -8,19 +8,50 @@ import { RECOVERY_TOLERANCE, STABILITY_THRESHOLD, BASELINE_START, BASELINE_END, 
 
 /**
  * Record response time metrics based on test phase
- * Baseline: 10s-70s (baseline hold)
- * Spike: 70s-140s (spike ramp up + spike hold)
- * Recovery: 150s+ (recovery hold only, excludes 140s-150s ramp down)
- * Note: 140s-150s (spike ramp down) is excluded from tracking
+ * Works with both standard spike (3m30s) and double-spike (6m) scenarios
+ * 
+ * Standard spike timing:
+ * - Baseline: 10-70s
+ * - Spike: 70-140s
+ * - Recovery: 150-210s
+ * 
+ * Double spike timing:
+ * - Baseline: 10-70s
+ * - First spike: 70-140s
+ * - First recovery: 150-210s
+ * - Second spike: 210-280s
+ * - Second recovery: 290-350s
  */
-export function recordPhaseMetrics(res, endpointName, elapsedTime, baselineTrend, spikeTrend, recoveryTrend) {
-  if (elapsedTime >= BASELINE_START && elapsedTime < BASELINE_END) {
-    baselineTrend.add(res.timings.duration, { endpoint: endpointName });
-  } else if (elapsedTime >= BASELINE_END && elapsedTime < SPIKE_END) {
-    spikeTrend.add(res.timings.duration, { endpoint: endpointName });
-  } else if (elapsedTime >= RECOVERY_START) {
-    recoveryTrend.add(res.timings.duration, { endpoint: endpointName });
+export function recordPhaseMetrics(res, endpointName, elapsedTime, baselineTrend, spikeTrend, recoveryTrend, scenario) {
+  const tags = { endpoint: endpointName, scenario: scenario };
+  
+  // Baseline phase (same for both scenarios)
+  if (elapsedTime >= 10 && elapsedTime < 70) {
+    baselineTrend.add(res.timings.duration, tags);
   }
+  // Spike phase(s)
+  else if (elapsedTime >= 70 && elapsedTime < 140) {
+    // First spike (both scenarios)
+    spikeTrend.add(res.timings.duration, tags);
+  }
+  else if (scenario === "full-journey-double-spike" && elapsedTime >= 210 && elapsedTime < 280) {
+    // Second spike (double-spike only)
+    spikeTrend.add(res.timings.duration, tags);
+  }
+  // Recovery phase(s)
+  else if (elapsedTime >= 150 && elapsedTime < 210) {
+    // First recovery (both scenarios)
+    recoveryTrend.add(res.timings.duration, tags);
+  }
+  else if (scenario === "full-journey-double-spike" && elapsedTime >= 290) {
+    // Second recovery (double-spike only)
+    recoveryTrend.add(res.timings.duration, tags);
+  }
+  else if (scenario === "full-journey-standard" && elapsedTime >= 150) {
+    // Standard recovery continues
+    recoveryTrend.add(res.timings.duration, tags);
+  }
+  // Ramp periods (0-10s, 140-150s, 280-290s) are excluded from tracking
 }
 
 /**
