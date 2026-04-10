@@ -145,7 +145,7 @@ export function setup() {
 
   // Measure baseline latency
   const baselineLatency = {
-    "login": measureBaselineLatency(`${BASE_URL}/auth/login`, 5, "POST", {
+    login: measureBaselineLatency(`${BASE_URL}/auth/login`, 5, "POST", {
       email: AUTH_TEST_USERS[0].email,
       password: AUTH_TEST_USERS[0].password,
     }),

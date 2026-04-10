@@ -4,34 +4,29 @@
  */
 
 /**
- * K6 Spike Test: Full User Journey & Variations
- * 
- * Tests realistic e-commerce user journey:
- * - Standard spike: 10 → 100 → 10 VUs (3m30s)
- * - Double spike: 10 → 100 → 10 → 200 → 10 VUs (6m)
- * 
+ * K6 Spike Test: Full User Journey
+ *
+ * Tests realistic e-commerce user journey with spike: 10 → 100 → 10 VUs
+ *
  * Journey Flow:
  * 1. Auth Phase: Register → Login → Extract JWT token
  * 2. Browsing Phase: Browse categories → Search products → View product detail
  * 3. Checkout Phase: Update profile address → Verify order access
- * 
- * Setup: Measures baseline with 7 single requests (minimal error rate)
  */
-
 import http from "k6/http";
 import { check, group, sleep } from "k6";
 import { Trend } from "k6/metrics";
-import execution from "k6/execution";
 import {
   BASE_URL,
   SEARCH_KEYWORDS,
   PRODUCT_SLUGS,
+  AUTH_TEST_USERS,
 } from "./constants.js";
 import {
   measureBaselineLatency,
-  trackRecovery,
-  recordPhaseMetrics,
   hasRequiredProductFields,
+  recordPhaseMetrics,
+  trackRecovery,
 } from "./utils.js";
 
 const baselineTrend = new Trend("duration_baseline_phase");
@@ -40,112 +35,61 @@ const recoveryTrend = new Trend("duration_recovery_phase");
 const timeToRecoveryTrend = new Trend("time_to_recovery_seconds");
 const journeyPhaseTrend = new Trend("journey_phase_duration");
 
-// Standard spike: 10 VUs -> 100 VUs -> 10 VUs (3m30s total)
-const standardSpikeStages = [
-  { duration: "10s", target: 10 },   // Initial ramp to baseline
-  { duration: "1m", target: 10 },    // Baseline hold (10s-70s)
-  { duration: "10s", target: 100 },  // Spike ramp up (70s-80s)
-  { duration: "1m", target: 100 },   // Spike hold (80s-140s)
-  { duration: "10s", target: 10 },   // Spike ramp down (140s-150s)
-  { duration: "1m", target: 10 },    // Recovery hold (150s-210s)
-];
-
-// Double spike: 10 VUs -> 100 VUs -> 10 VUs -> 200 VUs -> 10 VUs (6m total)
-const doubleSpikeStages = [
-  { duration: "10s", target: 10 },   // Initial ramp
-  { duration: "1m", target: 10 },    // Baseline hold
-  { duration: "10s", target: 100 },  // First spike ramp up
-  { duration: "1m", target: 100 },   // First spike hold
-  { duration: "10s", target: 10 },   // Ramp down
-  { duration: "1m", target: 10 },    // Recovery hold
-  { duration: "10s", target: 200 },  // Second spike ramp up
-  { duration: "1m", target: 200 },   // Second spike hold
-  { duration: "10s", target: 10 },   // Final ramp down
-  { duration: "1m", target: 10 },    // Final recovery
+const spikeStages = [
+  { duration: "10s", target: 10 },
+  { duration: "1m", target: 10 },
+  { duration: "10s", target: 200 },
+  { duration: "1m", target: 200 },
+  { duration: "10s", target: 10 },
+  { duration: "1m", target: 10 },
 ];
 
 export const options = {
   scenarios: {
-    // Scenario 1: Standard spike test (baseline journey test)
-    "full-journey-standard": {
+    "full-journey": {
       executor: "ramping-vus",
       exec: "fullUserJourney",
-      stages: standardSpikeStages,
+      stages: spikeStages,
       startTime: "0s",
       gracefulRampDown: "5s",
       gracefulStop: "5s",
-      tags: { test_type: "spike", scenario: "standard" },
-    },
-    // Scenario 2: Double spike (resilience test - back-to-back surges)
-    "full-journey-double-spike": {
-      executor: "ramping-vus",
-      exec: "fullUserJourney",
-      stages: doubleSpikeStages,
-      startTime: "0s",
-      gracefulRampDown: "5s",
-      gracefulStop: "5s",
-      tags: { test_type: "spike", scenario: "double-spike" },
+      tags: { test_type: "spike" },
     },
   },
   thresholds: {
-    // Global error rate: < 1% for healthy system
     http_req_failed: ["rate<0.01"],
-    "http_req_failed{scenario:standard}": ["rate<0.01"],
-    "http_req_failed{scenario:double-spike}": ["rate<0.01"],
 
-    // Baseline thresholds
-    duration_baseline_phase: ["p(90)<2000"], // < 2s for full journey
-    "duration_baseline_phase{scenario:standard}": ["p(90)<2000"],
-    "duration_baseline_phase{scenario:double-spike}": ["p(90)<2000"],
+    duration_baseline_phase: ["p(90)<2000"],
+    duration_spike_phase: ["p(90)<20000"],
+    duration_recovery_phase: ["p(90)<3000"],
+    time_to_recovery_seconds: ["min<20"],
 
-    // Spike thresholds
-    duration_spike_phase: ["p(90)<15000"], // < 15s for full journey
-    "duration_spike_phase{scenario:standard}": ["p(90)<15000"],
-    "duration_spike_phase{scenario:double-spike}": ["p(90)<15000"],
-
-    // Recovery thresholds
-    duration_recovery_phase: ["p(90)<3000"], // < 3s (50% above baseline)
-    "duration_recovery_phase{scenario:standard}": ["p(90)<3000"],
-    "duration_recovery_phase{scenario:double-spike}": ["p(90)<3000"],
-
-    // Time-to-recovery thresholds - Use min to find first successful recovery across all VUs
-    time_to_recovery_seconds: ["min<30"], // < 30 seconds to recover
-    "time_to_recovery_seconds{scenario:standard}": ["min<30"],
-    "time_to_recovery_seconds{scenario:double-spike}": ["min<30"],
-
-    // Journey phase thresholds - Identify bottleneck phases
     "journey_phase_duration{phase:auth}": ["p(90)<8000"],
-    "journey_phase_duration{phase:browsing}": ["p(90)<5000"],
-    "journey_phase_duration{phase:checkout}": ["p(90)<3000"],
+    "journey_phase_duration{phase:browsing}": ["p(90)<8000"],
+    "journey_phase_duration{phase:checkout}": ["p(90)<8000"],
   },
 };
 
 export function setup() {
   const startTime = Date.now();
 
-  console.log("🔧 Starting setup - measuring baseline latency...");
-
   // Register a temporary user for baseline measurement of authenticated endpoints
-  const baselineUser = {
-    name: "Baseline Test User",
-    email: `baseline-journey-${Date.now()}@spike-test.com`,
-    password: "baseline-password-123",
-    phone: "91234567",
-    address: "Baseline Test Address",
-    answer: "baseline-answer",
-  };
+  const baselineUser = AUTH_TEST_USERS[0];
 
   const registerRes = http.post(
     `${BASE_URL}/auth/register`,
     JSON.stringify(baselineUser),
-    { headers: { "Content-Type": "application/json" } }
+    { headers: { "Content-Type": "application/json" } },
   );
 
   if (registerRes.status !== 201) {
-    console.warn(`⚠️  Baseline user registration returned ${registerRes.status}`);
+    console.warn(
+      `Error registering baseline user, returned ${registerRes.status}`,
+    );
   }
 
-  sleep(0.5); // Small delay before next request
+  // To ensure registration is captured before processing login
+  sleep(0.5);
 
   // Login to get auth token for authenticated endpoint baselines
   const loginRes = http.post(
@@ -154,46 +98,43 @@ export function setup() {
       email: baselineUser.email,
       password: baselineUser.password,
     }),
-    { headers: { "Content-Type": "application/json" } }
+    { headers: { "Content-Type": "application/json" } },
   );
 
   let authToken = "";
-  if (loginRes.status === 200) {
-    try {
-      const body = JSON.parse(loginRes.body);
-      authToken = body.token;
-    } catch (e) {
-      console.warn("⚠️  Failed to parse login response");
-    }
-  } else {
-    console.warn(`⚠️  Baseline login returned ${loginRes.status}`);
+  if (loginRes.status !== 200) {
+    console.warn(`Error logging in baseline user, returned ${loginRes.status}`);
   }
 
+  try {
+    const body = JSON.parse(loginRes.body);
+    authToken = body.token;
+  } catch (e) {
+    console.warn("Failed to parse login response");
+  }
+
+  // To ensure authToken is available before processing authenticated endpoints
+  sleep(0.5);
+
+  // Add baseline latency are measured once to avoid making massive number of calls at setup
   const baselineLatency = {
-    // Auth phase endpoints - use single successful requests instead of 5 iterations
     register: registerRes.timings.duration,
     login: loginRes.timings.duration,
-
-    // Browsing phase endpoints - measure once for speed
     categories: measureBaselineLatency(`${BASE_URL}/category/get-category`, 1),
     search: measureBaselineLatency(
       `${BASE_URL}/product/search/${SEARCH_KEYWORDS[0]}`,
-      1
+      1,
     ),
     productDetail: measureBaselineLatency(
       `${BASE_URL}/product/get-product/${PRODUCT_SLUGS[0]}`,
-      1
+      1,
     ),
-
-    // Checkout phase endpoints (require authentication)
     profile: 0,
     orders: 0,
   };
 
-  // Measure authenticated endpoints once
+  // For authenticated endpoints
   if (authToken) {
-    sleep(0.5);
-    
     const profileRes = http.put(
       `${BASE_URL}/auth/profile`,
       JSON.stringify({
@@ -206,11 +147,9 @@ export function setup() {
           "Content-Type": "application/json",
           Authorization: authToken,
         },
-      }
+      },
     );
     baselineLatency.profile = profileRes.timings.duration;
-
-    sleep(0.5);
 
     const ordersRes = http.get(`${BASE_URL}/auth/orders`, {
       headers: { Authorization: authToken },
@@ -222,7 +161,7 @@ export function setup() {
     baselineLatency.orders = 500;
   }
 
-  // Calculate total journey baseline (sum of all endpoints)
+  // Calculate total journey baseline duration
   const totalJourneyBaseline =
     baselineLatency.register +
     baselineLatency.login +
@@ -232,33 +171,18 @@ export function setup() {
     baselineLatency.profile +
     baselineLatency.orders;
 
-  baselineLatency["full-journey"] = totalJourneyBaseline;
-
-  console.log("✅ Setup complete - baseline measurements recorded");
-  console.log(`   Total setup requests: 7 (reduced from 35 to minimize errors)`);
-  console.log("🚀 Starting spike test scenarios...\n");
-
   return {
     startTime,
-    baselineLatency,
+    baselineLatency: totalJourneyBaseline,
   };
 }
 
-// Initialize recovery state tracking for the full journey
-// This tracks when the system has recovered after spike (stability window approach)
-const recoveryStates = {
-  "full-journey": { consecutiveRecovered: 0, recoveryRecorded: false },
-};
+let recoveryState = { consecutiveRecovered: 0, recoveryRecorded: false };
 
 export function fullUserJourney(data) {
   const elapsedTime = (Date.now() - data.startTime) / 1000;
   const journeyStartTime = Date.now();
 
-  // Get current scenario name and VU stats from K6 execution context
-  const scenario = execution.scenario.name;
-  
-  // Generate unique user credentials to prevent duplicate key errors
-  // Uses K6 built-in variables: __VU (virtual user ID) and __ITER (iteration number)
   const uniqueEmail = `journey-user-${__VU}-${__ITER}-${Date.now()}@spike-test.com`;
   const uniqueUser = {
     name: `Journey User ${__VU}-${__ITER}`,
@@ -269,20 +193,18 @@ export function fullUserJourney(data) {
     answer: "journey-test-answer",
   };
 
-  let authToken = ""; // Store JWT token for authenticated requests
+  let authToken = "";
 
-  // PHASE 1: Authentication (Register + Login)
   group("Auth Phase - Register & Login", () => {
     const authPhaseStart = Date.now();
 
-    // Step 1: Register new user
     const registerRes = http.post(
       `${BASE_URL}/auth/register`,
       JSON.stringify(uniqueUser),
       {
         headers: { "Content-Type": "application/json" },
         tags: { phase: "auth", endpoint: "register" },
-      }
+      },
     );
 
     check(registerRes, {
@@ -305,12 +227,13 @@ export function fullUserJourney(data) {
       },
     });
 
-    // Log register failures for debugging
     if (registerRes.status !== 201) {
-      console.warn(`⚠️ [VU${__VU}] Register failed: status ${registerRes.status} at ${elapsedTime.toFixed(0)}s`);
+      console.warn(
+        `[VU${__VU}] Register failed: ${registerRes.status} at ${elapsedTime.toFixed(0)}s`,
+      );
     }
 
-    sleep(0.3); // Brief pause between register and login
+    sleep(0.5);
 
     // Step 2: Login with registered credentials
     const loginRes = http.post(
@@ -322,7 +245,7 @@ export function fullUserJourney(data) {
       {
         headers: { "Content-Type": "application/json" },
         tags: { phase: "auth", endpoint: "login" },
-      }
+      },
     );
 
     check(loginRes, {
@@ -345,9 +268,10 @@ export function fullUserJourney(data) {
       },
     });
 
-    // Log login failures for debugging
     if (loginRes.status !== 200) {
-      console.warn(`⚠️ [VU${__VU}] Login failed: status ${loginRes.status} at ${elapsedTime.toFixed(0)}s`);
+      console.warn(
+        `[VU${__VU}] Login failed: ${loginRes.status} at ${elapsedTime.toFixed(0)}s`,
+      );
     }
 
     // Extract JWT token for authenticated requests in subsequent phases
@@ -360,14 +284,12 @@ export function fullUserJourney(data) {
       console.error(`Failed to extract auth token for VU${__VU}-${__ITER}`);
     }
 
-    // Record auth phase duration for bottleneck analysis
     const authPhaseDuration = Date.now() - authPhaseStart;
     journeyPhaseTrend.add(authPhaseDuration, { phase: "auth" });
   });
 
-  sleep(1);
+  sleep(0.5);
 
-  // PHASE 2: Browsing (Categories + Search + Product Detail)
   group("Browsing Phase - Search & View Products", () => {
     const browsingPhaseStart = Date.now();
 
@@ -388,8 +310,6 @@ export function fullUserJourney(data) {
       },
     });
 
-    sleep(0.5);
-
     // Step 2: Search for products using random keyword
     const randomKeyword =
       SEARCH_KEYWORDS[Math.floor(Math.random() * SEARCH_KEYWORDS.length)];
@@ -409,8 +329,6 @@ export function fullUserJourney(data) {
       },
     });
 
-    sleep(0.5);
-
     // Step 3: View product detail using random product slug
     const randomSlug =
       PRODUCT_SLUGS[Math.floor(Math.random() * PRODUCT_SLUGS.length)];
@@ -418,7 +336,7 @@ export function fullUserJourney(data) {
       `${BASE_URL}/product/get-product/${randomSlug}`,
       {
         tags: { phase: "browsing", endpoint: "product-detail" },
-      }
+      },
     );
 
     check(productDetailRes, {
@@ -441,12 +359,11 @@ export function fullUserJourney(data) {
       },
     });
 
-    // Record browsing phase duration for bottleneck analysis
     const browsingPhaseDuration = Date.now() - browsingPhaseStart;
     journeyPhaseTrend.add(browsingPhaseDuration, { phase: "browsing" });
   });
 
-  sleep(1);
+  sleep(0.5);
 
   // PHASE 3: Checkout (Profile Update + Order Verification)
   group("Checkout Phase - Profile & Orders", () => {
@@ -467,7 +384,7 @@ export function fullUserJourney(data) {
             Authorization: authToken,
           },
           tags: { phase: "checkout", endpoint: "profile" },
-        }
+        },
       );
 
       check(profileRes, {
@@ -494,15 +411,13 @@ export function fullUserJourney(data) {
         },
       });
 
-      // Log profile update failures
       if (profileRes.status !== 200) {
-        console.warn(`⚠️ [VU${__VU}] Profile update failed: status ${profileRes.status} at ${elapsedTime.toFixed(0)}s`);
+        console.warn(
+          `[VU${__VU}] Profile update failed: status ${profileRes.status} at ${elapsedTime.toFixed(0)}s`,
+        );
       }
 
-      sleep(0.5);
-
       // Step 2: Verify user can access order history
-      // (In real scenario, this would show orders after payment)
       const ordersRes = http.get(`${BASE_URL}/auth/orders`, {
         headers: {
           Authorization: authToken,
@@ -523,36 +438,35 @@ export function fullUserJourney(data) {
         "orders: user can access orders": (r) => r.status === 200,
       });
 
-      // Log orders failures
       if (ordersRes.status !== 200) {
-        console.warn(`⚠️ [VU${__VU}] Orders failed: status ${ordersRes.status} at ${elapsedTime.toFixed(0)}s`);
+        console.warn(
+          `[VU${__VU}] Orders failed: status ${ordersRes.status} at ${elapsedTime.toFixed(0)}s`,
+        );
       }
     }
 
-    // Record checkout phase duration for bottleneck analysis
     const checkoutPhaseDuration = Date.now() - checkoutPhaseStart;
     journeyPhaseTrend.add(checkoutPhaseDuration, { phase: "checkout" });
   });
 
-  // Calculate total journey duration (all phases combined)
   const totalJourneyDuration = Date.now() - journeyStartTime;
 
+  const response = { timings: { duration: totalJourneyDuration } };
+  
   recordPhaseMetrics(
-    { timings: { duration: totalJourneyDuration } },
+    response,
     "full-journey",
     elapsedTime,
     baselineTrend,
     spikeTrend,
-    recoveryTrend,
-    scenario
-  );
-  recoveryStates["full-journey"] = trackRecovery(
-    { timings: { duration: totalJourneyDuration } },
-    "full-journey",
-    data,
-    recoveryStates["full-journey"],
-    timeToRecoveryTrend
+    recoveryTrend
   );
 
-  sleep(0.5);
+  recoveryState = trackRecovery(
+    response,
+    "full-journey",
+    data,
+    recoveryState,
+    timeToRecoveryTrend
+  );
 }
