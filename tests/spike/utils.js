@@ -94,7 +94,9 @@ export function trackRecovery(
   const elapsedTime = (Date.now() - data.startTime) / 1000;
   
   if (elapsedTime > recoveryStartTime && !state.recoveryRecorded) {
-    const baselineLatency = data.baselineLatency[endpointName];
+    const baselineLatency = typeof data.baselineLatency === 'number' 
+      ? data.baselineLatency 
+      : data.baselineLatency[endpointName];
     const isWithinAcceptedRange = response.timings.duration <= (baselineLatency * recoveryTolerance);
 
     if (isWithinAcceptedRange) {

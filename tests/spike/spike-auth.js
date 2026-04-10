@@ -123,7 +123,7 @@ export function setup() {
 
     if (response.status !== 201) {
       console.error(
-        `❌ Failed to register login test user ${user.email}: ${response.status}`,
+        `Failed to register login test user ${user.email}: ${response.status}`,
       );
     }
   }
@@ -138,14 +138,14 @@ export function setup() {
 
     if (response.status !== 201) {
       console.error(
-        `❌ Failed to register forgot-password test user ${user.email}: ${response.status}`,
+        `Failed to register forgot-password test user ${user.email}: ${response.status}`,
       );
     }
   }
 
   // Measure baseline latency
   const baselineLatency = {
-    "login": measureBaselineLatency(`${BASE_URL}/auth/login`, 5, "POST", {
+    login: measureBaselineLatency(`${BASE_URL}/auth/login`, 5, "POST", {
       email: AUTH_TEST_USERS[0].email,
       password: AUTH_TEST_USERS[0].password,
     }),
