@@ -177,7 +177,15 @@ export function setup() {
   };
 }
 
-let recoveryState = { consecutiveRecovered: 0, recoveryRecorded: false };
+// Per-VU recovery state tracking (Map keyed by VU ID)
+const recoveryStates = new Map();
+
+function getRecoveryState() {
+  if (!recoveryStates.has(__VU)) {
+    recoveryStates.set(__VU, { consecutiveRecovered: 0, recoveryRecorded: false });
+  }
+  return recoveryStates.get(__VU);
+}
 
 export function fullUserJourney(data) {
   const elapsedTime = (Date.now() - data.startTime) / 1000;
@@ -462,11 +470,14 @@ export function fullUserJourney(data) {
     recoveryTrend
   );
 
-  recoveryState = trackRecovery(
+  // Get per-VU state and update it
+  const vuState = getRecoveryState();
+  const updatedState = trackRecovery(
     response,
     "full-journey",
     data,
-    recoveryState,
+    vuState,
     timeToRecoveryTrend
   );
+  recoveryStates.set(__VU, updatedState);
 }
