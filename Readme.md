@@ -42,6 +42,55 @@ The following table outlines the UI E2E testing contribution for our 4-member te
 
 ---
 
+# MS3 Contribution Summary (Non-Functional Test)
+
+The following table outlines the non-functional testing contribution from our team using Grafana k6.
+
+| Member / Test Type | Files Created | Focus Areas | Key Test Scenarios |
+| :--- | :--- | :--- | :--- |
+| **Kim Shi Tong (A0265858J)** - **Load Testing** | <ul><li>load-product-browsing.js</li><li>load-search-filter.js</li><li>load-auth-category.js</li><li>load-user-journey.js</li><li>load-mixed-workload.js</li></ul> | <ul><li>Product browsing</li><li>Search & filter</li><li>Auth & category APIs</li><li>User journey simulation</li><li>Concurrent read-write workload</li></ul> | Evaluates system behavior under expected, normal traffic conditions of 50 VUs. |
+| **Yan Weidong (A0258151H)** - **Spike Testing** | <ul><li>spike-product-browsing.js</li><li>spike-search-filter.js</li><li>spike-auth.js</li><li>spike-user-journey.js</li><li>spike-categories.js</li></ul> | <ul><li>Product browsing surge</li><li>Search & filter flash sale</li><li>Auth login surge</li><li>Full user journey spike</li><li>Lightweight endpoints spike</li></ul> | Analyze the system behavior when subjected to sudden and extreme spikes in user traffic: Baseline 10 VUs → Instant surge to 500 VUs → Recovery testing at 10 VUs |
+| **Shaun Lee Xuan Wei (A0252626E)** - **Stress Testing** | <ul><li>stress-auth.js</li><li>stress-search-filter.js</li><li>stress-product-browsing.js</li><li>stress-combined.js</li><li>stress-category-recovery.js</li></ul> | <ul><li>Auth endpoint breaking point</li><li>Search & filter limits</li><li>Product browsing capacity</li><li>Combined workload stress</li><li>Recovery behavior</li></ul> | Identify breaking points when system escalates to intense load gradually: 50 → 500 VUs |
+| **Ong Chang Heng Bertrand (A0253013X)** - **Soak/Endurance Testing** | <ul><li>soak-product-browsing.js</li><li>soak-search-filter.js</li><li>soak-auth-category.js</li><li>soak-user-journey.js</li><li>soak-heavy-payload.js</li></ul> | <ul><li>Product browsing stability</li><li>Search & filter endurance</li><li>Auth & category long-duration</li><li>User journey consistency</li><li>Heavy payload stability</li></ul> | Expose the system to sustained realistic load over an extended duration: 1-hour sustained testing at 30 VUs |
+
+---
+
+## Running Spike Tests (Yan Weidong -A0258151H)
+
+### To run All Spike Tests
+
+```bash
+npm run test:spike
+```
+
+This will:
+1. Seed the database with spike test data
+2. Start the server in the background
+3. Execute all spike test files in sequence:
+   - `spike-auth.js` - Authentication endpoints under spike load
+   - `spike-categories.js` - Category browsing under spike load
+   - `spike-full-user-journey.js` - Complete user journey simulation
+   - `spike-product-browsing.js` - Product browsing endpoints
+   - `spike-search-filter.js` - Search and filter functionality
+4. Generate JSON reports with detailed metrics
+5. Clean up and stop the server
+
+### Running a Specific Spike Test
+
+To run a single spike test file:
+
+```bash
+npm run test:spike -- tests/spike/spike-auth.js
+```
+
+Or directly with bash:
+
+```bash
+bash tests/spike/run-spike-tests.sh tests/spike/spike-product-browsing.js
+```
+
+---
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.

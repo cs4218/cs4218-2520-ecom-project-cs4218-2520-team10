@@ -11,7 +11,7 @@ export default {
     "<rootDir>/helpers/*.test.js",
     "<rootDir>/middlewares/*.test.js",
     "<rootDir>/models/*.test.js",
-    "<rootDir>/tests/**/*.test.js",
+    "<rootDir>/tests/integration/*.test.js",
   ],
 
   // jest code coverage
@@ -22,7 +22,7 @@ export default {
     "helpers/**",
     "middlewares/**",
     "models/**",
-    "tests/**",
+    "tests/integration/**",
   ],
   coverageThreshold: {
     global: {

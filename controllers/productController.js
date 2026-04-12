@@ -257,7 +257,8 @@ export const productFiltersController = async (req, res) => {
     let args = {};
     if (checked.length > 0) args.category = checked;
     if (radio.length) args.price = { $gte: radio[0], $lte: radio[1] };
-    const products = await productModel.find(args);
+    // Bug fix: Remove photo from results to reduce payload size and improve performance - Ong Chang Heng Bertrand A0253013X
+    const products = await productModel.find(args).select("-photo").lean();
     res.status(200).send({
       success: true,
       products,
@@ -319,15 +320,13 @@ export const productListController = async (req, res) => {
 export const searchProductController = async (req, res) => {
   try {
     const { keyword } = req.params;
-    const resutls = await productModel
-      .find({
-        $or: [
-          { name: { $regex: keyword, $options: "i" } },
-          { description: { $regex: keyword, $options: "i" } },
-        ],
-      })
-      .select("-photo");
-    res.json(resutls);
+
+    const results = await productModel
+      // Bug fix: Use text index search for better relevance and performance instead of regex - Ong Chang Heng Bertrand A0253013X
+      .find({ $text: { $search: keyword } })
+      .select("-photo")
+      .lean();
+    res.json(results);
   } catch (error) {
     console.log(error);
     res.status(400).send({
@@ -349,6 +348,7 @@ export const realtedProductController = async (req, res) => {
       })
       .select("-photo")
       .limit(3)
+      .lean()
       .populate("category");
     res.status(200).send({
       success: true,
@@ -379,6 +379,9 @@ export const productCategoryController = async (req, res) => {
 
     const products = await productModel
       .find({ category: category._id })
+      // Bug fix: Remove photo from results to reduce payload size and improve performance - Ong Chang Heng Bertrand A0253013X
+      .select("-photo")
+      .lean()
       .populate("category");
 
     res.status(200).send({
