@@ -1,0 +1,433 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "Product Search by keyword": {
+                "name": "Product Search by keyword",
+                "path": "::Product Search by keyword",
+                "id": "f5c93e86e961a001024ae66b5e680c4c",
+                "groups": {},
+                "checks": {
+                        "search-products: status is healthy": {
+                            "passes": 5720,
+                            "fails": 0,
+                            "name": "search-products: status is healthy",
+                            "path": "::Product Search by keyword::search-products: status is healthy",
+                            "id": "654bd51fb92e27cedafce6c7fb55a386"
+                        },
+                        "search-products: response is array": {
+                            "name": "search-products: response is array",
+                            "path": "::Product Search by keyword::search-products: response is array",
+                            "id": "9e43ccc9987b21fc77795e0496e8af1c",
+                            "passes": 5720,
+                            "fails": 0
+                        },
+                        "search-products: products have required fields": {
+                            "fails": 0,
+                            "name": "search-products: products have required fields",
+                            "path": "::Product Search by keyword::search-products: products have required fields",
+                            "id": "4d70c0656286b6f7e2df82b4c1002f18",
+                            "passes": 5720
+                        }
+                    }
+            },
+            "Product Filters by price": {
+                "name": "Product Filters by price",
+                "path": "::Product Filters by price",
+                "id": "e4c66e69d29e59135eb6b10ee456f8f0",
+                "groups": {},
+                "checks": {
+                        "filter-products: status is healthy": {
+                            "passes": 5094,
+                            "fails": 0,
+                            "name": "filter-products: status is healthy",
+                            "path": "::Product Filters by price::filter-products: status is healthy",
+                            "id": "9e84ccc0528b45f3ac5072f3f26e4c0d"
+                        },
+                        "filter-products: has success and products": {
+                            "passes": 5094,
+                            "fails": 0,
+                            "name": "filter-products: has success and products",
+                            "path": "::Product Filters by price::filter-products: has success and products",
+                            "id": "22371d6a81fa18f256bf3629ff215b19"
+                        },
+                        "filter-products: products have required fields": {
+                            "fails": 0,
+                            "name": "filter-products: products have required fields",
+                            "path": "::Product Filters by price::filter-products: products have required fields",
+                            "id": "2c163941c6b55c974d0585ebaa529011",
+                            "passes": 5094
+                        }
+                    }
+            },
+            "Category Products by category slug": {
+                "name": "Category Products by category slug",
+                "path": "::Category Products by category slug",
+                "id": "4498a3692d9c2e6177547f57f3d81525",
+                "groups": {},
+                "checks": {
+                        "category-products: status is healthy": {
+                            "fails": 0,
+                            "name": "category-products: status is healthy",
+                            "path": "::Category Products by category slug::category-products: status is healthy",
+                            "id": "ad5b88ce7b69cc85a164a937f5ebadb2",
+                            "passes": 3560
+                        },
+                        "category-products: has success, category, and products": {
+                            "passes": 3560,
+                            "fails": 0,
+                            "name": "category-products: has success, category, and products",
+                            "path": "::Category Products by category slug::category-products: has success, category, and products",
+                            "id": "be1484545507e92973691ca17b51e1fa"
+                        },
+                        "category-products: category has name and slug": {
+                            "name": "category-products: category has name and slug",
+                            "path": "::Category Products by category slug::category-products: category has name and slug",
+                            "id": "6d704ab0f46e5d34de65beebd6fe1a6e",
+                            "passes": 3560,
+                            "fails": 0
+                        },
+                        "category-products: products have required fields": {
+                            "name": "category-products: products have required fields",
+                            "path": "::Category Products by category slug::category-products: products have required fields",
+                            "id": "40181e101a091f3db122968fac733f58",
+                            "passes": 3560,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {}
+    },
+    "metrics": {
+        "iteration_duration": {
+            "avg": 2774.319146854095,
+            "min": 506.752375,
+            "med": 899.5734585,
+            "max": 14973.05975,
+            "p(90)": 7030.1327545,
+            "p(95)": 10002.2063999
+        },
+        "duration_spike_phase": {
+            "max": 14470.318,
+            "p(90)": 9535.5152,
+            "p(95)": 10560.645799999998,
+            "avg": 4336.640568076617,
+            "min": 6.871,
+            "med": 3508.67,
+            "thresholds": {
+                "p(90)<10000": false
+            }
+        },
+        "group_duration": {
+            "avg": 2774.2704928150188,
+            "min": 506.725334,
+            "med": 899.526333,
+            "max": 14973.012667,
+            "p(90)": 7030.0672626000005,
+            "p(95)": 10002.1472108
+        },
+        "duration_spike_phase{endpoint:filter-products}": {
+            "avg": 3812.7604382556183,
+            "min": 9.055,
+            "med": 3503.8869999999997,
+            "max": 9635.279,
+            "p(90)": 6592.296,
+            "p(95)": 7494.74225,
+            "thresholds": {
+                "p(90)<10000": false
+            }
+        },
+        "time_to_recovery_seconds{endpoint:category-products}": {
+            "min": 11.525000000000006,
+            "med": 12.558999999999997,
+            "max": 13.584000000000003,
+            "p(90)": 13.57589999999999,
+            "p(95)": 13.579949999999997,
+            "avg": 12.555299999999999,
+            "thresholds": {
+                "min<30": false
+            }
+        },
+        "duration_spike_phase{endpoint:category-products}": {
+            "min": 23.485,
+            "med": 9547.521,
+            "max": 14470.318,
+            "p(90)": 11521.353799999999,
+            "p(95)": 12404.8594,
+            "avg": 8349.312910485936,
+            "thresholds": {
+                "p(90)<15000": false
+            }
+        },
+        "duration_baseline_phase{endpoint:category-products}": {
+            "avg": 35.7668688212928,
+            "min": 21.648,
+            "med": 30.0315,
+            "max": 200.388,
+            "p(90)": 43.046800000000005,
+            "p(95)": 67.51419999999999,
+            "thresholds": {
+                "p(90)<100": false
+            }
+        },
+        "http_req_waiting": {
+            "avg": 2272.6513653485367,
+            "min": 6.345,
+            "med": 381.445,
+            "max": 14470.289,
+            "p(90)": 6525.935,
+            "p(95)": 9498.4974
+        },
+        "http_req_tls_handshaking": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "duration_recovery_phase": {
+            "min": 6.435,
+            "med": 22.4665,
+            "max": 6510.881,
+            "p(90)": 1469.9799,
+            "p(95)": 2498.555,
+            "avg": 310.49607654385096,
+            "thresholds": {
+                "p(90)<1000": true
+            }
+        },
+        "vus_max": {
+            "value": 501,
+            "min": 501,
+            "max": 501
+        },
+        "duration_spike_phase{endpoint:search-products}": {
+            "avg": 3078.154157060516,
+            "min": 6.871,
+            "med": 3484.339,
+            "max": 6453.768,
+            "p(90)": 3624.6510000000003,
+            "p(95)": 4431.33925,
+            "thresholds": {
+                "p(90)<15000": false
+            }
+        },
+        "time_to_recovery_seconds{endpoint:search-products}": {
+            "p(90)": 11.416199999999998,
+            "p(95)": 11.417100000000001,
+            "avg": 10.836799999999993,
+            "min": 10.449999999999989,
+            "med": 10.451499999999996,
+            "max": 11.418000000000006,
+            "thresholds": {
+                "min<30": false
+            }
+        },
+        "http_reqs": {
+            "count": 14389,
+            "rate": 65.84029297351744
+        },
+        "http_req_blocked": {
+            "avg": 0.04065633470011261,
+            "min": 0,
+            "med": 0.005,
+            "max": 3.456,
+            "p(90)": 0.011,
+            "p(95)": 0.018
+        },
+        "duration_baseline_phase": {
+            "med": 16.894,
+            "max": 259.82,
+            "p(90)": 35.16520000000001,
+            "p(95)": 43.11129999999999,
+            "avg": 22.843718162195447,
+            "min": 6.376,
+            "thresholds": {
+                "p(90)<100": false
+            }
+        },
+        "time_to_recovery_seconds": {
+            "avg": 11.730033333333331,
+            "min": 10.449999999999989,
+            "med": 11.500500000000002,
+            "max": 13.584000000000003,
+            "p(90)": 13.560800000000004,
+            "p(95)": 13.57185,
+            "thresholds": {
+                "min<30": false
+            }
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 2272.715891931346,
+            "min": 6.376,
+            "med": 381.497,
+            "max": 14470.318,
+            "p(90)": 6525.9916,
+            "p(95)": 9498.5776
+        },
+        "duration_baseline_phase{endpoint:filter-products}": {
+            "avg": 21.037667590027706,
+            "min": 8.216,
+            "med": 15.428,
+            "max": 259.82,
+            "p(90)": 31.1,
+            "p(95)": 38.26959999999997,
+            "thresholds": {
+                "p(90)<100": false
+            }
+        },
+        "http_req_connecting": {
+            "p(95)": 0,
+            "avg": 0.03259170199457918,
+            "min": 0,
+            "med": 0,
+            "max": 3.342,
+            "p(90)": 0
+        },
+        "http_req_sending": {
+            "avg": 0.022105566752379395,
+            "min": 0.002,
+            "med": 0.017,
+            "max": 1.324,
+            "p(90)": 0.037,
+            "p(95)": 0.052
+        },
+        "duration_baseline_phase{endpoint:search-products}": {
+            "p(90)": 16.5916,
+            "p(95)": 21.261599999999994,
+            "avg": 12.339023465703974,
+            "min": 6.376,
+            "med": 10.534,
+            "max": 169.267,
+            "thresholds": {
+                "p(90)<100": false
+            }
+        },
+        "iterations": {
+            "count": 14364,
+            "rate": 65.72589952544335
+        },
+        "http_req_duration": {
+            "avg": 2272.715891931346,
+            "min": 6.376,
+            "med": 381.497,
+            "max": 14470.318,
+            "p(90)": 6525.9916,
+            "p(95)": 9498.5776
+        },
+        "time_to_recovery_seconds{endpoint:filter-products}": {
+            "avg": 11.797999999999998,
+            "min": 10.462999999999994,
+            "med": 11.500500000000002,
+            "max": 13.540999999999997,
+            "p(90)": 13.501400000000013,
+            "p(95)": 13.521200000000004,
+            "thresholds": {
+                "min<30": false
+            }
+        },
+        "http_req_failed{endpoint:category-products}": {
+            "passes": 0,
+            "fails": 3560,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "vus": {
+            "value": 30,
+            "min": 0,
+            "max": 501
+        },
+        "duration_recovery_phase{endpoint:category-products}": {
+            "avg": 269.734095360825,
+            "min": 21.865,
+            "med": 30.9495,
+            "max": 6510.881,
+            "p(90)": 82.73560000000002,
+            "p(95)": 2496.7684499999996,
+            "thresholds": {
+                "p(90)<1000": false
+            }
+        },
+        "data_sent": {
+            "count": 1885095,
+            "rate": 8625.700679888307
+        },
+        "duration_recovery_phase{endpoint:search-products}": {
+            "avg": 325.03871220930154,
+            "min": 6.435,
+            "med": 11.067,
+            "max": 3496.29,
+            "p(90)": 1593.2415,
+            "p(95)": 2493.904,
+            "thresholds": {
+                "p(90)<1500": true
+            }
+        },
+        "data_received": {
+            "count": 228976398,
+            "rate": 1047735.9877921143
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 14389,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "duration_recovery_phase{endpoint:filter-products}": {
+            "avg": 331.3760456621012,
+            "min": 8.419,
+            "med": 18.4155,
+            "max": 5439.443,
+            "p(90)": 1516.8377,
+            "p(95)": 2504.7380999999996,
+            "thresholds": {
+                "p(90)<1000": true
+            }
+        },
+        "http_req_failed{endpoint:filter-products}": {
+            "passes": 0,
+            "fails": 5094,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "checks": {
+            "passes": 46682,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_failed{endpoint:search-products}": {
+            "passes": 0,
+            "fails": 5720,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_receiving": {
+            "avg": 0.04242101605392946,
+            "min": 0.007,
+            "med": 0.029,
+            "max": 1.568,
+            "p(90)": 0.085,
+            "p(95)": 0.12
+        }
+    },
+    "setup_data": {
+        "baselineLatency": {
+            "category-products": 45.6498,
+            "filter-products": 52.916399999999996,
+            "search-products": 18.4828
+        },
+        "startTime": 1775887384065
+    }
+}

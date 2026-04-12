@@ -1,0 +1,377 @@
+{
+    "metrics": {
+        "http_req_duration{expected_response:true}": {
+            "avg": 1079.562395516344,
+            "min": 5.813,
+            "med": 1005.8744999999999,
+            "max": 5908.358,
+            "p(90)": 2831.7130000000016,
+            "p(95)": 3014.007
+        },
+        "http_req_waiting": {
+            "p(90)": 2831.650000000002,
+            "p(95)": 3013.97025,
+            "avg": 1079.5159870508223,
+            "min": 5.785,
+            "med": 1005.8305,
+            "max": 5908.33
+        },
+        "data_received": {
+            "rate": 46562.34829846304,
+            "count": 10057937
+        },
+        "http_req_sending": {
+            "min": 0.001,
+            "med": 0.01,
+            "max": 1.318,
+            "p(90)": 0.03,
+            "p(95)": 0.043,
+            "avg": 0.015297264486888269
+        },
+        "journey_phase_duration": {
+            "avg": 2689.837637675655,
+            "min": 23,
+            "med": 3441,
+            "max": 8417,
+            "p(90)": 5376.5,
+            "p(95)": 6088.75
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 12356,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "vus_max": {
+            "max": 200,
+            "value": 200,
+            "min": 200
+        },
+        "http_req_connecting": {
+            "avg": 0.007587892521851733,
+            "min": 0,
+            "med": 0,
+            "max": 1.143,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "journey_phase_duration{phase:auth}": {
+            "min": 631,
+            "med": 4058.5,
+            "max": 8233,
+            "p(90)": 5961.6,
+            "p(95)": 6134.05,
+            "avg": 3156.597222222222,
+            "thresholds": {
+                "p(90)<8000": false
+            }
+        },
+        "http_req_receiving": {
+            "max": 1.05,
+            "p(90)": 0.064,
+            "p(95)": 0.086,
+            "avg": 0.03111120103593316,
+            "min": 0.005,
+            "med": 0.021
+        },
+        "duration_baseline_phase": {
+            "avg": 1770.3915662650602,
+            "min": 1687,
+            "med": 1767,
+            "max": 1945,
+            "p(90)": 1825.7,
+            "p(95)": 1852.35,
+            "thresholds": {
+                "p(90)<2000": false
+            }
+        },
+        "duration_recovery_phase": {
+            "avg": 2059.683615819209,
+            "min": 1698,
+            "med": 1768,
+            "max": 6977,
+            "p(90)": 2223,
+            "p(95)": 4473.4,
+            "thresholds": {
+                "p(90)<3000": false
+            }
+        },
+        "group_duration": {
+            "avg": 2689.8601646433726,
+            "min": 23.187292,
+            "med": 3441.1296875,
+            "max": 8417.096875,
+            "p(90)": 5376.403604,
+            "p(95)": 6088.5239790000005
+        },
+        "iterations": {
+            "count": 1716,
+            "rate": 7.944073390016519
+        },
+        "http_reqs": {
+            "count": 12356,
+            "rate": 57.2010319388369
+        },
+        "data_sent": {
+            "count": 2843957,
+            "rate": 13165.85263755898
+        },
+        "time_to_recovery_seconds": {
+            "max": 17.03,
+            "p(90)": 17.02640000000001,
+            "p(95)": 17.028200000000005,
+            "avg": 16.528100000000002,
+            "min": 15.808999999999997,
+            "med": 16.442999999999998,
+            "thresholds": {
+                "min<20": false
+            }
+        },
+        "http_req_duration": {
+            "p(90)": 2831.7130000000016,
+            "p(95)": 3014.007,
+            "avg": 1079.562395516344,
+            "min": 5.813,
+            "med": 1005.8744999999999,
+            "max": 5908.358
+        },
+        "checks": {
+            "passes": 33485,
+            "fails": 0,
+            "value": 1
+        },
+        "iteration_duration": {
+            "p(95)": 16978.78184375,
+            "avg": 8982.724979893941,
+            "min": 1686.731959,
+            "med": 12088.121166500001,
+            "max": 19949.687333,
+            "p(90)": 16021.8651045
+        },
+        "journey_phase_duration{phase:checkout}": {
+            "avg": 2102.193473193473,
+            "min": 23,
+            "med": 2548.5,
+            "max": 7399,
+            "p(90)": 4505.5,
+            "p(95)": 4524,
+            "thresholds": {
+                "p(90)<8000": false
+            }
+        },
+        "duration_spike_phase": {
+            "max": 19950,
+            "p(90)": 16971,
+            "p(95)": 17316.399999999998,
+            "avg": 14035.008403361344,
+            "min": 1719,
+            "med": 14903.5,
+            "thresholds": {
+                "p(90)<20000": false
+            }
+        },
+        "http_req_blocked": {
+            "avg": 0.012534558109421208,
+            "min": 0,
+            "med": 0.002,
+            "max": 1.319,
+            "p(90)": 0.01,
+            "p(95)": 0.016
+        },
+        "journey_phase_duration{phase:browsing}": {
+            "p(95)": 6277.55,
+            "avg": 2785.9691428571427,
+            "min": 26,
+            "med": 4231,
+            "max": 8417,
+            "p(90)": 5466,
+            "thresholds": {
+                "p(90)<8000": false
+            }
+        },
+        "vus": {
+            "value": 4,
+            "min": 0,
+            "max": 200
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0
+        }
+    },
+    "setup_data": {
+        "baselineLatency": 2055.906,
+        "startTime": 1775893808486
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "Auth Phase - Register & Login": {
+                "checks": {
+                    "register: status is 201": {
+                        "name": "register: status is 201",
+                        "path": "::Auth Phase - Register & Login::register: status is 201",
+                        "id": "0dc3fe25999ebae28231e5d8c3134428",
+                        "passes": 1801,
+                        "fails": 0
+                    },
+                    "register: response has success field": {
+                        "name": "register: response has success field",
+                        "path": "::Auth Phase - Register & Login::register: response has success field",
+                        "id": "d864b7bc2ad2554bb42b33928998ecf1",
+                        "passes": 1801,
+                        "fails": 0
+                    },
+                    "register: user email matches": {
+                        "name": "register: user email matches",
+                        "path": "::Auth Phase - Register & Login::register: user email matches",
+                        "id": "d5e748165b678c4efc076e2f6eba4b5e",
+                        "passes": 1801,
+                        "fails": 0
+                    },
+                    "login: status is 200": {
+                        "name": "login: status is 200",
+                        "path": "::Auth Phase - Register & Login::login: status is 200",
+                        "id": "d5c99d646ff2b988ab8cedb9fdec9d41",
+                        "passes": 1800,
+                        "fails": 0
+                    },
+                    "login: response has token": {
+                        "id": "e647966613a422865364e8e58d75c3fa",
+                        "passes": 1800,
+                        "fails": 0,
+                        "name": "login: response has token",
+                        "path": "::Auth Phase - Register & Login::login: response has token"
+                    },
+                    "login: user email matches": {
+                        "path": "::Auth Phase - Register & Login::login: user email matches",
+                        "id": "55c0f781d98cb4d21c6d0ce5fa4185ad",
+                        "passes": 1800,
+                        "fails": 0,
+                        "name": "login: user email matches"
+                    }
+                },
+                "name": "Auth Phase - Register & Login",
+                "path": "::Auth Phase - Register & Login",
+                "id": "b939e08b260214820d9bc074ae727e9b",
+                "groups": {}
+            },
+            "Browsing Phase - Search & View Products": {
+                "checks": {
+                    "categories: status is 200": {
+                        "name": "categories: status is 200",
+                        "path": "::Browsing Phase - Search & View Products::categories: status is 200",
+                        "id": "666887202803d911f8f4ba64b44dbb82",
+                        "passes": 1788,
+                        "fails": 0
+                    },
+                    "categories: response has category array": {
+                        "name": "categories: response has category array",
+                        "path": "::Browsing Phase - Search & View Products::categories: response has category array",
+                        "id": "92383cd156937c4fcf3ed91d98ad4109",
+                        "passes": 1788,
+                        "fails": 0
+                    },
+                    "search: status is 200": {
+                        "name": "search: status is 200",
+                        "path": "::Browsing Phase - Search & View Products::search: status is 200",
+                        "id": "8db476fda9ef1cd902a632876fafa806",
+                        "passes": 1774,
+                        "fails": 0
+                    },
+                    "search: response is array": {
+                        "name": "search: response is array",
+                        "path": "::Browsing Phase - Search & View Products::search: response is array",
+                        "id": "e6d0b7f6a5f4ba97e24e016c972c8ae2",
+                        "passes": 1774,
+                        "fails": 0
+                    },
+                    "product-detail: status is 200": {
+                        "passes": 1750,
+                        "fails": 0,
+                        "name": "product-detail: status is 200",
+                        "path": "::Browsing Phase - Search & View Products::product-detail: status is 200",
+                        "id": "420a69da684f6020d4c84bd633b81e2a"
+                    },
+                    "product-detail: has product object": {
+                        "id": "d5d057d46b3c4014e60f06af0f3c4b23",
+                        "passes": 1750,
+                        "fails": 0,
+                        "name": "product-detail: has product object",
+                        "path": "::Browsing Phase - Search & View Products::product-detail: has product object"
+                    },
+                    "product-detail: has required fields": {
+                        "fails": 0,
+                        "name": "product-detail: has required fields",
+                        "path": "::Browsing Phase - Search & View Products::product-detail: has required fields",
+                        "id": "56250a8492d158531098ccec0db908e2",
+                        "passes": 1750
+                    }
+                },
+                "name": "Browsing Phase - Search & View Products",
+                "path": "::Browsing Phase - Search & View Products",
+                "id": "51d27a93e04ea1eb19812ec91db1015e",
+                "groups": {}
+            },
+            "Checkout Phase - Profile & Orders": {
+                "name": "Checkout Phase - Profile & Orders",
+                "path": "::Checkout Phase - Profile & Orders",
+                "id": "e9a9631261d912fe427d7f4d1f55d205",
+                "groups": {},
+                "checks": {
+                        "profile: status is 200": {
+                            "path": "::Checkout Phase - Profile & Orders::profile: status is 200",
+                            "id": "8694edf6c4e1eed3c6707c95a74dd8b0",
+                            "passes": 1720,
+                            "fails": 0,
+                            "name": "profile: status is 200"
+                        },
+                        "profile: has updated user": {
+                            "name": "profile: has updated user",
+                            "path": "::Checkout Phase - Profile & Orders::profile: has updated user",
+                            "id": "3509dacf01370bbb44a84131806aeabf",
+                            "passes": 1720,
+                            "fails": 0
+                        },
+                        "profile: address was updated": {
+                            "id": "745dfc2c456c0170d0bc62ee6705feeb",
+                            "passes": 1720,
+                            "fails": 0,
+                            "name": "profile: address was updated",
+                            "path": "::Checkout Phase - Profile & Orders::profile: address was updated"
+                        },
+                        "orders: status is 200": {
+                            "id": "1307002294badf2e2d029a6f5c7b10ec",
+                            "passes": 1716,
+                            "fails": 0,
+                            "name": "orders: status is 200",
+                            "path": "::Checkout Phase - Profile & Orders::orders: status is 200"
+                        },
+                        "orders: response is array": {
+                            "name": "orders: response is array",
+                            "path": "::Checkout Phase - Profile & Orders::orders: response is array",
+                            "id": "bd3615fd66adcfde733bf138d384e3c1",
+                            "passes": 1716,
+                            "fails": 0
+                        },
+                        "orders: user can access orders": {
+                            "name": "orders: user can access orders",
+                            "path": "::Checkout Phase - Profile & Orders::orders: user can access orders",
+                            "id": "2e5e8b73ef0d1d988277d97ab619b690",
+                            "passes": 1716,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {}
+    }
+}
