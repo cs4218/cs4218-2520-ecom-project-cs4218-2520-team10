@@ -44,14 +44,14 @@ The following table outlines the UI E2E testing contribution for our 4-member te
 
 # MS3 Contribution Summary (Non-Functional Testing)
 
-Each team member performed a unique type of non-functional test using **Grafana k6**. All test scripts are in `tests/nft/`.
+Each team member performed a unique type of non-functional test using **Grafana k6**. All test scripts are in `tests/load/`.
 
 | Member | Test Type | Tool | Test Scripts | Results |
 | :--- | :--- | :--- | :--- | :--- |
-| **Kim Shi Tong (A0265858J)** | **Load Testing** | Grafana k6 | `tests/nft/load-product-browsing.js`, `tests/nft/load-search-filter.js`, `tests/nft/load-auth-category.js`, `tests/nft/load-user-journey.js`, `tests/nft/load-mixed-workload.js` | `results/load-*-report.html`, `results/load-*-results.json` |
-| **Yan Weidong (A0258151H)** | **Stress Testing** | Grafana k6 | `tests/nft/stress-test.js` | `results/stress-*` |
-| **Ong Chang Heng Bertrand (A0253013X)** | **Spike Testing** | Grafana k6 | `tests/nft/spike-test.js` | `results/spike-*` |
-| **Shaun Lee Xuan Wei (A0252626E)** | **Soak/Endurance Testing** | Grafana k6 | `tests/nft/soak-test.js` | `results/soak-*` |
+| **Kim Shi Tong (A0265858J)** | **Load Testing** | Grafana k6 | `tests/load/load-product-browsing.js`, `tests/load/load-search-filter.js`, `tests/load/load-auth-category.js`, `tests/load/load-user-journey.js`, `tests/load/load-mixed-workload.js` | `results/load-*-report.html`, `results/load-*-results.json` |
+| **Yan Weidong (A0258151H)** | **Stress Testing** | Grafana k6 | `tests/load/stress-test.js` | `results/stress-*` |
+| **Ong Chang Heng Bertrand (A0253013X)** | **Spike Testing** | Grafana k6 | `tests/load/spike-test.js` | `results/spike-*` |
+| **Shaun Lee Xuan Wei (A0252626E)** | **Soak/Endurance Testing** | Grafana k6 | `tests/load/soak-test.js` | `results/soak-*` |
 
 ### How to Run (Load Testing — Kim Shi Tong)
 
@@ -63,14 +63,14 @@ brew install k6
 npm run server
 
 # Run individual load tests
-k6 run tests/nft/load-product-browsing.js
-k6 run tests/nft/load-search-filter.js
-k6 run tests/nft/load-auth-category.js
-k6 run tests/nft/load-user-journey.js
-k6 run tests/nft/load-mixed-workload.js
+k6 run tests/load/load-product-browsing.js
+k6 run tests/load/load-search-filter.js
+k6 run tests/load/load-auth-category.js
+k6 run tests/load/load-user-journey.js
+k6 run tests/load/load-mixed-workload.js
 
 # With live web dashboard
-K6_WEB_DASHBOARD=true k6 run tests/nft/load-product-browsing.js
+K6_WEB_DASHBOARD=true k6 run tests/load/load-product-browsing.js
 ```
 
 ---
