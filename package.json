@@ -14,7 +14,10 @@
     "test:backend": "NODE_NO_WARNINGS=1 node --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.backend.config.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "test:nft:seed": "node tests/db-seed.js",
+    "test:spike": "bash tests/spike/run-spike-tests.sh",
+    "test:soak": "node tests/soak/run-soak-suite.cjs"
   },
   "keywords": [],
   "author": "RP",

@@ -1,0 +1,332 @@
+{
+  "metrics": {
+    "vus": {
+      "value": 1,
+      "min": 0,
+      "max": 40
+    },
+    "success_rate": {
+      "passes": 892392,
+      "fails": 0,
+      "thresholds": {
+        "rate>0.99": false
+      },
+      "value": 1
+    },
+    "http_req_failed": {
+      "passes": 0,
+      "fails": 892392,
+      "value": 0
+    },
+    "vus_max": {
+      "min": 40,
+      "max": 40,
+      "value": 40
+    },
+    "data_received": {
+      "count": 1217020980,
+      "rate": 26361.03583216417
+    },
+    "http_req_sending": {
+      "p(95)": 0.087,
+      "p(99)": 0.258,
+      "avg": 0.04047211091089965,
+      "min": 0.002,
+      "med": 0.027,
+      "max": 12.354,
+      "p(90)": 0.069
+    },
+    "errors": {
+      "passes": 0,
+      "fails": 892392,
+      "thresholds": {
+        "rate<0.01": false
+      },
+      "value": 0
+    },
+    "latency": {
+      "avg": 48.88494098109354,
+      "min": 12.523,
+      "med": 32.201,
+      "max": 453.744,
+      "p(90)": 104.51700000000001,
+      "p(95)": 160.73999999999995,
+      "p(99)": 252.74054999999987,
+      "thresholds": {
+        "p(95)<250": false,
+        "p(99)<500": false
+      }
+    },
+    "http_req_duration": {
+      "med": 32.201,
+      "max": 453.744,
+      "p(90)": 104.51700000000001,
+      "p(95)": 160.73999999999995,
+      "p(99)": 252.74054999999987,
+      "avg": 48.88494098109354,
+      "min": 12.523,
+      "thresholds": {
+        "p(95)<250": false,
+        "p(99)<500": false
+      }
+    },
+    "data_sent": {
+      "count": 117110052,
+      "rate": 2536.638503206912
+    },
+    "http_req_blocked": {
+      "max": 4.865,
+      "p(90)": 0.024,
+      "p(95)": 0.029,
+      "p(99)": 0.08534999999999934,
+      "avg": 0.014179141005295872,
+      "min": 0,
+      "med": 0.009
+    },
+    "http_req_tls_handshaking": {
+      "p(90)": 0,
+      "p(95)": 0,
+      "p(99)": 0,
+      "avg": 0,
+      "min": 0,
+      "med": 0,
+      "max": 0
+    },
+    "http_req_receiving": {
+      "min": 0.005,
+      "med": 0.06,
+      "max": 14.495,
+      "p(90)": 0.184,
+      "p(95)": 0.244,
+      "p(99)": 0.518,
+      "avg": 0.09649509184304643
+    },
+    "soak_total_requests": {
+      "count": 892392,
+      "rate": 19.329475723858636
+    },
+    "group_duration": {
+      "avg": 49.21333995270692,
+      "min": 12.603833,
+      "med": 32.575458,
+      "max": 453.848958,
+      "p(90)": 104.80737500000001,
+      "p(95)": 161.12420774999993,
+      "p(99)": 253.15555615
+    },
+    "http_req_waiting": {
+      "med": 32.054500000000004,
+      "max": 453.621,
+      "p(90)": 104.3705,
+      "p(95)": 160.59575,
+      "p(99)": 252.65239999999991,
+      "avg": 48.747973778339976,
+      "min": 12.477
+    },
+    "iterations": {
+      "count": 217788,
+      "rate": 4.717352754112234
+    },
+    "http_reqs": {
+      "count": 892392,
+      "rate": 19.329475723858636
+    },
+    "http_req_duration{expected_response:true}": {
+      "p(95)": 160.73999999999995,
+      "p(99)": 252.74054999999987,
+      "avg": 48.88494098109354,
+      "min": 12.523,
+      "med": 32.201,
+      "max": 453.744,
+      "p(90)": 104.51700000000001
+    },
+    "http_req_connecting": {
+      "max": 2.088,
+      "p(90)": 0,
+      "p(95)": 0,
+      "p(99)": 0,
+      "avg": 0.000554890675846489,
+      "min": 0,
+      "med": 0
+    },
+    "soak_iteration_duration": {
+      "p(99)": 8472.52,
+      "avg": 8207.621025951843,
+      "min": 8102,
+      "med": 8170,
+      "max": 8647,
+      "p(90)": 8353,
+      "p(95)": 8408,
+      "thresholds": {
+        "p(95)<9500": false
+      }
+    },
+    "checks": {
+      "passes": 2677176,
+      "fails": 0,
+      "value": 1
+    },
+    "iteration_duration": {
+      "avg": 8207.624447739721,
+      "min": 8101.251917,
+      "med": 8169.57375,
+      "max": 8647.180417,
+      "p(90)": 8352.4668744,
+      "p(95)": 8407.893274799999,
+      "p(99)": 8472.5168
+    }
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": {
+      "Step 1: GET /category/get-category": {
+        "path": "::Step 1: GET /category/get-category",
+        "id": "8e97707823d00e6b3a1c92ebb0474fc1",
+        "groups": {},
+        "checks": {
+          "status is 2xx": {
+            "name": "status is 2xx",
+            "path": "::Step 1: GET /category/get-category::status is 2xx",
+            "id": "6ad8b69dfcce45822948ef57dee5a770",
+            "passes": 217788,
+            "fails": 0
+          },
+          "no server errors": {
+            "id": "f80a2b193519781e081810cda09350d7",
+            "passes": 217788,
+            "fails": 0,
+            "name": "no server errors",
+            "path": "::Step 1: GET /category/get-category::no server errors"
+          },
+          "response body not null": {
+            "id": "eda2dc65b056ce3c4056e2dc893bc16c",
+            "passes": 217788,
+            "fails": 0,
+            "name": "response body not null",
+            "path": "::Step 1: GET /category/get-category::response body not null"
+          }
+        },
+        "name": "Step 1: GET /category/get-category"
+      },
+      "Step 2: GET /product/get-product": {
+        "name": "Step 2: GET /product/get-product",
+        "path": "::Step 2: GET /product/get-product",
+        "id": "a425b6d6a143fb718f7989412e4816a5",
+        "groups": {},
+        "checks": {
+          "status is 2xx": {
+            "name": "status is 2xx",
+            "path": "::Step 2: GET /product/get-product::status is 2xx",
+            "id": "5421a5c05283f4dd0fe22314b1bacbb6",
+            "passes": 217788,
+            "fails": 0
+          },
+          "no server errors": {
+            "name": "no server errors",
+            "path": "::Step 2: GET /product/get-product::no server errors",
+            "id": "6a363354132f9ef669254c57eba43ab0",
+            "passes": 217788,
+            "fails": 0
+          },
+          "response body not null": {
+            "path": "::Step 2: GET /product/get-product::response body not null",
+            "id": "e809e28ce132d462ebc7f6fabe9d0eeb",
+            "passes": 217788,
+            "fails": 0,
+            "name": "response body not null"
+          }
+        }
+      },
+      "Step 3: GET /product/search/laptop": {
+        "path": "::Step 3: GET /product/search/laptop",
+        "id": "958904b8ae17bf565c7ae5146988478f",
+        "groups": {},
+        "checks": {
+          "status is 2xx": {
+            "name": "status is 2xx",
+            "path": "::Step 3: GET /product/search/laptop::status is 2xx",
+            "id": "978271a1e7cd942339bbe534b2200461",
+            "passes": 217788,
+            "fails": 0
+          },
+          "no server errors": {
+            "id": "838af51621c6eea8d03b74ef4cbe13e3",
+            "passes": 217788,
+            "fails": 0,
+            "name": "no server errors",
+            "path": "::Step 3: GET /product/search/laptop::no server errors"
+          },
+          "response body not null": {
+            "name": "response body not null",
+            "path": "::Step 3: GET /product/search/laptop::response body not null",
+            "id": "a8d0d5edcc81967d7d8f0eb447bff738",
+            "passes": 217788,
+            "fails": 0
+          }
+        },
+        "name": "Step 3: GET /product/search/laptop"
+      },
+      "Step 4: GET /product/product-list/1": {
+        "groups": {},
+        "checks": {
+          "status is 2xx": {
+            "name": "status is 2xx",
+            "path": "::Step 4: GET /product/product-list/1::status is 2xx",
+            "id": "1023838d1333c0ce2f14f7a5728fbab1",
+            "passes": 217788,
+            "fails": 0
+          },
+          "no server errors": {
+            "path": "::Step 4: GET /product/product-list/1::no server errors",
+            "id": "a6391ecba425fe45cacac0abacdea350",
+            "passes": 217788,
+            "fails": 0,
+            "name": "no server errors"
+          },
+          "response body not null": {
+            "name": "response body not null",
+            "path": "::Step 4: GET /product/product-list/1::response body not null",
+            "id": "fe22a44b42510fe924241f617bb232bf",
+            "passes": 217788,
+            "fails": 0
+          }
+        },
+        "name": "Step 4: GET /product/product-list/1",
+        "path": "::Step 4: GET /product/product-list/1",
+        "id": "5be6f7d3eeb289016460d2f29ef5c0c1"
+      },
+      "Step 5: POST /auth/login": {
+        "name": "Step 5: POST /auth/login",
+        "path": "::Step 5: POST /auth/login",
+        "id": "909437e0ef260c07f2f11fee3a33f4f3",
+        "groups": {},
+        "checks": {
+          "status is 2xx": {
+            "name": "status is 2xx",
+            "path": "::Step 5: POST /auth/login::status is 2xx",
+            "id": "5b6d14d32ffa2cc621fd047bca033912",
+            "passes": 21240,
+            "fails": 0
+          },
+          "no server errors": {
+            "name": "no server errors",
+            "path": "::Step 5: POST /auth/login::no server errors",
+            "id": "19e0ac48b4e492d7c7569c81c2caf039",
+            "passes": 21240,
+            "fails": 0
+          },
+          "response body not null": {
+            "path": "::Step 5: POST /auth/login::response body not null",
+            "id": "a126928fa926f8addb50ec5e30d527fb",
+            "passes": 21240,
+            "fails": 0,
+            "name": "response body not null"
+          }
+        }
+      }
+    },
+    "checks": {}
+  }
+}
