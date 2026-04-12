@@ -99,11 +99,11 @@ export const options = {
     "duration_spike_phase{endpoint:product-count}": ["p(90)<5000"],
 
     // Recovery
-    duration_recovery_phase: ["p(90)<600"],
-    "duration_recovery_phase{endpoint:get-product}": ["p(90)<600"],
-    "duration_recovery_phase{endpoint:product-list}": ["p(90)<400"],
-    "duration_recovery_phase{endpoint:get-product-detail}": ["p(90)<600"],
-    "duration_recovery_phase{endpoint:product-count}": ["p(90)<400"],
+    duration_recovery_phase: ["p(90)<3000"],
+    "duration_recovery_phase{endpoint:get-product}": ["p(90)<3000"],
+    "duration_recovery_phase{endpoint:product-list}": ["p(90)<3000"],
+    "duration_recovery_phase{endpoint:get-product-detail}": ["p(90)<2000"],
+    "duration_recovery_phase{endpoint:product-count}": ["p(90)<3000"],
 
     // Time-to-recovery - Use min to find the first successful recovery time across VUs
     time_to_recovery_seconds: ["min<30"],

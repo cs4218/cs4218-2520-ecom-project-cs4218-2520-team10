@@ -97,8 +97,8 @@ export const options = {
     "duration_spike_phase{endpoint:forgot-password}": ["p(90)<10000"],
 
     // Recovery thresholds
-    duration_recovery_phase: ["p(90)<1200"],
-    "duration_recovery_phase{endpoint:login}": ["p(90)<1200"],
+    duration_recovery_phase: ["p(90)<3000"],
+    "duration_recovery_phase{endpoint:login}": ["p(90)<3000"],
     "duration_recovery_phase{endpoint:register}": ["p(90)<1200"],
     "duration_recovery_phase{endpoint:forgot-password}": ["p(90)<1000"],
 

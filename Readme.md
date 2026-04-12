@@ -55,6 +55,42 @@ The following table outlines the non-functional testing contribution from our te
 
 ---
 
+## Running Spike Tests (Yan Weidong -A0258151H)
+
+### To run All Spike Tests
+
+```bash
+npm run test:spike
+```
+
+This will:
+1. Seed the database with spike test data
+2. Start the server in the background
+3. Execute all spike test files in sequence:
+   - `spike-auth.js` - Authentication endpoints under spike load
+   - `spike-categories.js` - Category browsing under spike load
+   - `spike-full-user-journey.js` - Complete user journey simulation
+   - `spike-product-browsing.js` - Product browsing endpoints
+   - `spike-search-filter.js` - Search and filter functionality
+4. Generate JSON reports with detailed metrics
+5. Clean up and stop the server
+
+### Running a Specific Spike Test
+
+To run a single spike test file:
+
+```bash
+npm run test:spike -- tests/spike/spike-auth.js
+```
+
+Or directly with bash:
+
+```bash
+bash tests/spike/run-spike-tests.sh tests/spike/spike-product-browsing.js
+```
+
+---
+
 ## 1. Project Introduction
 
 Virtual Vault is a full-stack MERN (MongoDB, Express.js, React.js, Node.js) e-commerce website, offering seamless connectivity and user-friendly features. The platform provides a robust framework for online shopping. The website is designed to adapt to evolving business needs and can be efficiently extended.

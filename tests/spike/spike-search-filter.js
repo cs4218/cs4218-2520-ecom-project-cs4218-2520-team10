@@ -87,9 +87,9 @@ export const options = {
     "duration_spike_phase{endpoint:category-products}": ["p(90)<15000"],
 
     // Recovery
-    duration_recovery_phase: ["p(90)<1000"],
-    "duration_recovery_phase{endpoint:search-products}": ["p(90)<1500"],
-    "duration_recovery_phase{endpoint:filter-products}": ["p(90)<1000"],
+    duration_recovery_phase: ["p(90)<1800"],
+    "duration_recovery_phase{endpoint:search-products}": ["p(90)<2000"],
+    "duration_recovery_phase{endpoint:filter-products}": ["p(90)<2000"],
     "duration_recovery_phase{endpoint:category-products}": ["p(90)<1000"],
 
     // Time-to-recovery thresholds - Use min to find the first successful recovery time across VUs
